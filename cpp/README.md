@@ -18,7 +18,8 @@ cmake --build build && ctest --test-dir build --output-on-failure
 macOS: `brew install qt libusb hidapi eigen`. Windows: Qt from the online installer or aqtinstall,
 `vcpkg install libusb hidapi eigen3`.
 
-Widget tests are `tests/gui_test_*.cpp` (linked with the `libreramen_gui` object library = `src/gui`
+`LibreRamen --selftest` starts the GUI against the simulator (offscreen), takes and saves one spectrum and
+exits 0/1 (for checking packaged apps). Widget tests are `tests/gui_test_*.cpp` (linked with the `libreramen_gui` object library = `src/gui`
 without `main.cpp`; run offscreen). `-DLIBRERAMEN_GUI_PREVIEW=ON` builds `gui_preview`, which renders
 plots, status strip, splash and icon to PNG files for visual checks:
 `QT_QPA_PLATFORM=offscreen ./gui_preview <dir>`.
@@ -45,7 +46,11 @@ cmake configure line (Qt from aqtinstall, -dev packages extracted with `dpkg -x`
 | `src/core/standards.*` | `standards.py` | reference standards |
 | `src/core/fileio.*` | `fileio.py` | readers/writers (own CSV, vendor CSV/TXT/SPC, JCAMP-DX, columns) |
 | `src/cli/` | `__main__.py` | command line |
-| `src/gui/` | `gui/` | Qt Widgets application with its own plot widget |
+| `src/gui/controller.*` | `gui/controller.py` | instrument jobs in a worker thread, status poll, watchdog, saving |
+| `src/gui/mainwindow.*`, `measurepage.*` | `gui/app.py` | main window, Measure area |
+| `src/gui/page.h`, `pages.cpp` | – | `Page` interface and registry of the side-bar areas (Data, Library, …) |
+| `src/gui/main.cpp` | `gui/app.py` main, `selftest.py` | `LibreRamen [--sim] [--screenshot F]`, `--selftest`, `--watchdog` |
+| `src/gui/` (other) | `gui/` | plot widget, theme, status strip, splash, icon |
 | `tests/` | – | QtTest; `tests/golden/` holds outputs of the Python reference |
 
 ## Conventions
