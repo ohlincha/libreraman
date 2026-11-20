@@ -16,10 +16,12 @@ tools, not the finished program.
 ![LibreRamen measuring a time series (simulator, ZnS)](docs/screenshot-measure.png)
 
 ```
-pip install PySide6 pyqtgraph numpy scipy pyserial pyusb
-python3 -m libreramen gui          # with the instrument
-python3 -m libreramen gui --sim    # simulator: spectra recorded on a real Cora 5000
+python3 -m venv --system-site-packages .venv          # Debian/Ubuntu: don't pip into the system Python
+.venv/bin/pip install PySide6 pyqtgraph numpy scipy pyserial pyusb
+.venv/bin/python -m libreramen gui          # with the instrument
+.venv/bin/python -m libreramen gui --sim    # simulator: spectra recorded on a real Cora 5000
 ```
+(Installers that need none of this are planned.)
 
 The full feature plan is in [docs/SPECIFICATION.md](docs/SPECIFICATION.md).
 
