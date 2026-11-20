@@ -14,7 +14,7 @@ import time
 
 from . import calibrate as calib
 from . import calibration as calmod
-from .hardware import (CP210X, PROLIFIC, ArmStatus, HardwareError, IOBoard, LaserDriver, Spectrometer,
+from .hardware import (CP210X, PROLIFIC, ArmStatus, HardwareError, IOBoard, LaserDriver, Pl2303Usb, Spectrometer,
                        find_tty, open_mcp2200, tty_candidates)
 from .spectrum import Spectrum
 
@@ -66,6 +66,9 @@ class Cora:
     def connect(self):
         port = find_tty(PROLIFIC, inside_cora=True)
         candidates = [port] if port else tty_candidates(PROLIFIC)
+        import sys
+        if sys.platform == "win32":          # prefer the chip driven directly (WinUSB); the COM port may be refused
+            candidates = Pl2303Usb.find_all() + candidates
         for cand in candidates:            # several Prolific adapters (e.g. a Titrino cable): ask each politely
             try:
                 io = IOBoard(cand)
@@ -78,9 +81,16 @@ class Cora:
                 except Exception:  # noqa: BLE001
                     pass
         if not self.io:
+            import sys
+            hint = ""
+            if sys.platform == "win32":
+                hint = (" On Windows the I/O board's old Prolific chip is refused by Prolific's current driver "
+                        "('PL2303HXA PHASED OUT'). Install the WinUSB driver for it with Zadig (zadig.akeo.ie: "
+                        "Options > List All Devices, select 'USB-Serial Controller' 067B:2303, WinUSB), "
+                        "like for the spectrometers.")
             raise CoraError("Cora not found (I/O board). Is the USB cable connected and the instrument on "
-                            "(On pressed, screen ready)?")
-        self.io_port = port
+                            "(On pressed, screen ready)?" + hint)
+        self.io_port = port if isinstance(port, str) else None     # (watchdog needs a serial port name)
         try:                               # safety: whatever happened before, start with the 532 nm laser off
             self.io.set_line("09", True, _allow_laser=True)
         except Exception:  # noqa: BLE001

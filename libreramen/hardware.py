@@ -357,7 +357,10 @@ class IOBoard:
     The vendor software sends one character at a time ~80 ms apart; we keep a (shorter) pacing."""
 
     def __init__(self, port, pacing=0.03):
-        self.s = serial.Serial(port, 115200, timeout=0.1)
+        if isinstance(port, Pl2303Usb):
+            self.s = port                    # the chip driven directly over libusb (Windows)
+        else:
+            self.s = serial.Serial(port, 115200, timeout=0.1, write_timeout=2)
         self.s.dtr = False
         self.s.rts = False
         self.pacing = pacing
@@ -390,6 +393,87 @@ class IOBoard:
 
     def close(self):
         self.s.close()
+
+
+class Pl2303Usb:
+    """Minimal user-space driver for the I/O board's Prolific PL2303 (HXA) over libusb.
+
+    Windows' current Prolific driver refuses this chip ("PL2303HXA PHASED OUT SINCE 2012"). With the WinUSB
+    driver bound to it instead (Zadig), we talk to it directly, using the same requests the vendor's driver
+    sent in the captures: vendor set-up sequence, CDC line coding and control lines, bulk OUT 0x02 / IN 0x83.
+    Offers the small part of the pyserial API that IOBoard uses."""
+
+    def __init__(self, dev, baud=115200):
+        self.dev = dev
+        self.port = f"usb:{dev.bus}-{dev.address}"
+        try:
+            dev.get_active_configuration()
+        except Exception:  # noqa: BLE001
+            dev.set_configuration()
+        r = lambda v: dev.ctrl_transfer(0xC0, 0x01, v, 0, 1, timeout=1000)          # noqa: E731
+        w = lambda v, i: dev.ctrl_transfer(0x40, 0x01, v, i, b"", timeout=1000)     # noqa: E731
+        r(0x8484); w(0x0404, 0); r(0x8484); r(0x8383); r(0x8484); w(0x0404, 1); r(0x8484); r(0x8383)  # noqa: E702
+        w(0x0000, 1); w(0x0001, 0); w(0x0002, 0x44)                                                    # noqa: E702
+        dev.ctrl_transfer(0x21, 0x20, 0, 0, struct.pack("<IBBB", baud, 0, 0, 8), timeout=1000)        # 8N1
+        dev.ctrl_transfer(0x21, 0x22, 0, 0, b"", timeout=1000)                                         # DTR/RTS off
+        self.timeout = 0.1
+        self.buf = b""
+        self.dtr = self.rts = False
+
+    @classmethod
+    def find_all(cls):
+        try:
+            import usb.core
+        except ImportError:
+            return []
+        backend = None
+        try:
+            import libusb_package
+            backend = libusb_package.get_libusb1_backend()
+        except ImportError:
+            pass
+        out = []
+        for d in usb.core.find(find_all=True, idVendor=0x067B, idProduct=0x2303, backend=backend):
+            try:
+                out.append(cls(d))
+            except Exception:  # noqa: BLE001 - e.g. still bound to the Prolific driver
+                pass
+        return out
+
+    def write(self, data):
+        self.dev.write(0x02, bytes(data), timeout=2000)
+        return len(data)
+
+    def flush(self):
+        pass
+
+    def read(self, n=1):
+        t_end = time.monotonic() + (self.timeout or 0)
+        while len(self.buf) < n:
+            remaining = int(max(1, (t_end - time.monotonic()) * 1000))
+            try:
+                self.buf += bytes(self.dev.read(0x83, 64, timeout=remaining))
+            except Exception:  # noqa: BLE001 - usb timeout
+                pass
+            if time.monotonic() >= t_end:
+                break
+        out, self.buf = self.buf[:n], self.buf[n:]
+        return out
+
+    def reset_input_buffer(self):
+        self.buf = b""
+        old = self.timeout
+        self.timeout = 0.05
+        while self.read(64):
+            pass
+        self.timeout = old
+
+    def close(self):
+        try:
+            import usb.util
+            usb.util.dispose_resources(self.dev)
+        except Exception:  # noqa: BLE001
+            pass
 
 
 # ----------------------------------------------------------------------------- ARM status (MCP2200)
