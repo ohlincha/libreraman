@@ -147,8 +147,15 @@ The probe found everything, identified by sitting behind the 0424:2517 hub. MCP2
   - Vendor Shutdown = `USB` → `USB:00`, then `OFF`, exactly what we sent from Linux.
   - Export: 2201 points, 100–2300 cm⁻¹, `LS WL=1064, LS Pwr=50mW`.
 
+## 532 nm power (vendor capture `2026-11-20d/power.pcapng`, 12:02–12:05)
+
+Scans at 50, 300, then 50 mW (ZnS): **no power-related command on any device**, and the signal went
+10 800 → 6 500 → 5 200 counts (ZnS luminescence fading, not following the setting). So the 532 nm power
+is **not computer-controlled**; the vendor software only writes the value into the file. Our software
+records it as metadata.
+
 ## Still unknown
 
 - Wavelength calibration: not in the EEPROM; look in the vendor software folders ("Anton Paar", "Anton PaariNST").
-- 1064 nm emission current (only `current 0.00` seen); whether 532 power can be set at all.
+- (Solved: 1064 power = driver current; 532 power is not settable from the PC.)
 - param2 of 0xAE; the roles of the other I/O lines and of the `VOL` reading.
