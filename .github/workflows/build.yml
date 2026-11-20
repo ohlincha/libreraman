@@ -24,6 +24,15 @@ jobs:
           $p = Start-Process -FilePath dist\LibreRamen\LibreRamen.exe -ArgumentList selftest -Wait -PassThru -NoNewWindow
           if ($p.ExitCode -ne 0) { throw "selftest failed ($($p.ExitCode))" }
       - run: Compress-Archive -Path dist\LibreRamen -DestinationPath dist\LibreRamen-Windows.zip
+      - name: Console build (command line and remote diagnostics)
+        run: >
+          pyinstaller --noconfirm --console --name LibreRamenCLI --icon libreramen/data/icon.png
+          --add-data libreramen/data:libreramen/data --collect-all libusb_package --collect-submodules serial
+          --hidden-import usb.backend.libusb1 --exclude-module PySide6 --exclude-module pyqtgraph libreramen_app.py
+      - run: dist\LibreRamenCLI\LibreRamenCLI.exe standards
+      - run: Compress-Archive -Path dist\LibreRamenCLI -DestinationPath dist\LibreRamenCLI-Windows.zip
+      - uses: actions/upload-artifact@v4
+        with: { name: windows-cli-zip, path: dist/LibreRamenCLI-Windows.zip }
       - uses: actions/upload-artifact@v4
         with: { name: windows-zip, path: dist/LibreRamen-Windows.zip }
 
