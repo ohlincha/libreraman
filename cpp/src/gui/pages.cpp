@@ -2,6 +2,7 @@
 #include "page.h"
 
 #include "datapagehost.h"
+#include "librarypagehost.h"
 
 #include <QLabel>
 #include <QVBoxLayout>
@@ -16,6 +17,7 @@ namespace {
 std::map<QString, PageFactory> builtinPageFactories() {
     return {
         {QStringLiteral("Data"), [](const PageContext& c) -> Page* { return new DataPageHost(c); }},
+        {QStringLiteral("Library"), [](const PageContext& c) -> Page* { return new LibraryPageHost(c); }},
     };
 }
 
