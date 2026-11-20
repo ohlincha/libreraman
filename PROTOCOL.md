@@ -103,7 +103,7 @@ Wavelength (nm) = c0 + c1·p + c2·p² + c3·p³ for pixel p; Raman shift = 1e7/
 corresponds to calibration pixel p = 2057 − i. The first ~10 values are dark reference pixels (p > 2047).
 With that, water gives the O–H stretch at 3234/3360, the bend at 1646 and the combination band at ~2110 cm⁻¹.
 
-## Linux, first contact (beryllium, 2026-11-20)
+## Linux, first contact (2026-11-20)
 
 The probe found everything, identified by sitting behind the 0424:2517 hub. MCP2200 READ_ALL works over hidraw:
 `80 00 00 00 8f 00 ff 00 04 e1 ff …` (GPIO port 0xff, disarmed; baud divisor 1249 = 9600).
