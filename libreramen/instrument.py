@@ -105,7 +105,7 @@ class Cora:
             if s:
                 self.spec[ch] = s
         self.load_user_calibration()
-        self.log(f"Connected: I/O board {port}, ARM status {hid}, spectrometers {sorted(self.spec)}")
+        self.log(f"Connected: I/O board {getattr(port, 'port', port)}, ARM status {hid}, spectrometers {sorted(self.spec)}")
         return self
 
     def keepalive(self):

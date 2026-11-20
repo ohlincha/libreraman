@@ -192,13 +192,13 @@ class _MacHid:
 
 
 class _WinHid:
-    """hid.dll/setupapi via ctypes (no driver needed). Output reports with WriteFile; a reader thread
-    collects input reports (ReadFile blocks; closing the handle ends it)."""
+    """hid.dll/setupapi via ctypes (no driver needed). Overlapped WriteFile/ReadFile on one handle.
+
+    Not synchronous I/O with a reader thread: Windows serialises synchronous I/O per handle, so a pending
+    ReadFile blocks every WriteFile, and the MCP2200 only reports after a command (deadlock)."""
 
     def __init__(self, vid_pid):
         import ctypes
-        import queue
-        import threading
         from ctypes import wintypes
         self.ct, self.wt = ctypes, wintypes
         path = self._find(int(vid_pid[0], 16), int(vid_pid[1], 16))
@@ -213,24 +213,45 @@ class _WinHid:
         k32.WriteFile.argtypes = [wintypes.HANDLE, ctypes.c_void_p, wintypes.DWORD, ctypes.POINTER(wintypes.DWORD),
                                   ctypes.c_void_p]
         k32.CloseHandle.argtypes = [wintypes.HANDLE]
+        k32.CreateEventW.restype = wintypes.HANDLE
+        k32.CreateEventW.argtypes = [ctypes.c_void_p, wintypes.BOOL, wintypes.BOOL, wintypes.LPCWSTR]
+        k32.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+        k32.WaitForSingleObject.restype = wintypes.DWORD
+        k32.GetOverlappedResult.argtypes = [wintypes.HANDLE, ctypes.c_void_p, ctypes.POINTER(wintypes.DWORD),
+                                            wintypes.BOOL]
+        k32.CancelIoEx.argtypes = [wintypes.HANDLE, ctypes.c_void_p]
         self.k32 = k32
-        h = k32.CreateFileW(path, 0xC0000000, 3, None, 3, 0, None)          # read/write, shared, existing
+        h = k32.CreateFileW(path, 0xC0000000, 3, None, 3, 0x40000000, None)  # read/write, shared, OVERLAPPED
         if h in (None, wintypes.HANDLE(-1).value):
             raise HardwareError(f"cannot open the MCP2200 (error {ctypes.get_last_error()})")
         self.h = h
+        self.hid = ctypes.WinDLL("hid")
+        self.hid.HidD_FlushQueue.argtypes = [wintypes.HANDLE]
         self.in_len, self.out_len = self._caps()
-        self.q = queue.Queue()
-        self.running = True
 
-        def reader():
-            buf = ctypes.create_string_buffer(self.in_len)
-            n = wintypes.DWORD()
-            while self.running:
-                if not k32.ReadFile(self.h, buf, self.in_len, ctypes.byref(n), None):
-                    break
-                self.q.put(buf.raw[1:n.value])        # strip the report-ID byte
-        self.thread = threading.Thread(target=reader, daemon=True)
-        self.thread.start()
+        class OVERLAPPED(ctypes.Structure):
+            _fields_ = [("Internal", ctypes.c_void_p), ("InternalHigh", ctypes.c_void_p),
+                        ("Offset", wintypes.DWORD), ("OffsetHigh", wintypes.DWORD), ("hEvent", wintypes.HANDLE)]
+        self.OVERLAPPED = OVERLAPPED
+        self.event = k32.CreateEventW(None, True, False, None)
+
+    def _io(self, func, buf, length, timeout):
+        """One overlapped ReadFile/WriteFile; returns bytes transferred, or None on timeout."""
+        ct, wt, k32 = self.ct, self.wt, self.k32
+        ov = self.OVERLAPPED()
+        ov.hEvent = self.event
+        n = wt.DWORD()
+        if not func(self.h, buf, length, ct.byref(n), ct.byref(ov)):
+            err = ct.get_last_error()
+            if err != 997:                                   # ERROR_IO_PENDING
+                raise HardwareError(f"MCP2200 I/O failed (error {err})")
+        if k32.WaitForSingleObject(self.event, int(timeout * 1000)) != 0:
+            k32.CancelIoEx(self.h, ct.byref(ov))
+            k32.GetOverlappedResult(self.h, ct.byref(ov), ct.byref(n), True)   # wait for the cancel
+            return None
+        if not k32.GetOverlappedResult(self.h, ct.byref(ov), ct.byref(n), False):
+            raise HardwareError(f"MCP2200 I/O failed (error {ct.get_last_error()})")
+        return n.value
 
     def _caps(self):
         ct = self.ct
@@ -302,23 +323,19 @@ class _WinHid:
         return found
 
     def transact(self, data, reply=True, timeout=2.0):
-        import queue
-        while not self.q.empty():
-            self.q.get_nowait()
-        buf = self.ct.create_string_buffer(bytes([0]) + bytes(data).ljust(self.out_len - 1, b"\0"), self.out_len)
-        n = self.wt.DWORD()
-        if not self.k32.WriteFile(self.h, buf, self.out_len, self.ct.byref(n), None):
-            raise HardwareError(f"MCP2200 write failed (error {self.ct.get_last_error()})")
+        self.hid.HidD_FlushQueue(self.h)                     # drop stale input reports
+        out = self.ct.create_string_buffer(bytes([0]) + bytes(data).ljust(self.out_len - 1, b"\0"), self.out_len)
+        if self._io(self.k32.WriteFile, out, self.out_len, timeout) is None:
+            raise HardwareError("MCP2200 write timed out")
         if not reply:
             return b""
-        try:
-            return self.q.get(timeout=timeout)
-        except queue.Empty:
-            return b""
+        buf = self.ct.create_string_buffer(self.in_len)
+        n = self._io(self.k32.ReadFile, buf, self.in_len, timeout)
+        return buf.raw[1:n] if n else b""                    # strip the report-ID byte
 
     def close(self):
-        self.running = False
         self.k32.CloseHandle(self.h)
+        self.k32.CloseHandle(self.event)
 
 
 def open_mcp2200():
