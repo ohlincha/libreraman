@@ -56,13 +56,17 @@ public:
     Tile* laserTile() const { return m_laser; }
     Tile* compartmentTile() const { return m_comp; }
     Tile* channelTile() const { return m_chan; }
+    // Local API / remote control (gui/apiserver.h): off, read-only or control; sub e.g. "127.0.0.1:8765".
+    enum class Remote { Off, ReadOnly, Control };
+    void setRemote(Remote state, const QString& sub = {});
+    Tile* remoteTile() const { return m_remote; }
     QPushButton* stopButton() const { return m_stop; }
 
 signals:
     void stopClicked();
 
 private:
-    Tile *m_conn, *m_laser, *m_comp, *m_chan;
+    Tile *m_conn, *m_laser, *m_comp, *m_chan, *m_remote;
     QPushButton* m_stop;
     StatusView m_status;
 };

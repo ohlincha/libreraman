@@ -83,9 +83,10 @@ public slots:
     void connectInstrument(bool simulate);
     // Closes the instrument (laser off) and forgets it (Windows driver repair). Refused while busy.
     void disconnectInstrument();
-    bool measureOnce(const lr::gui::MeasureSettings& s);
+    // origin: who asked ("GUI", "API (cli)", ...); logged with the settings (spec: every action with origin).
+    bool measureOnce(const lr::gui::MeasureSettings& s, const QString& origin = QStringLiteral("GUI"));
     // Time series (runTimeSeries); channel 0 keeps the current channel.
-    bool startSeries(const lr::SeriesSettings& s, int channel = 0);
+    bool startSeries(const lr::SeriesSettings& s, int channel = 0, const QString& origin = QStringLiteral("GUI"));
     // Stop button: stop flag + laser(s) off right away, without waiting for the running job.
     void stop();
     void setPaused(bool paused);              // series waits before its next spectrum while paused
