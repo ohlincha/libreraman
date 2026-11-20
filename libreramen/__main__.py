@@ -26,7 +26,7 @@ from .series import run_series
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="libreramen")
-    ap.add_argument("cmd", choices=["gui", "watchdog", "status", "init", "dark", "acquire", "series", "calibrate", "standards", "shutdown"])
+    ap.add_argument("cmd", choices=["gui", "selftest", "watchdog", "status", "init", "dark", "acquire", "series", "calibrate", "standards", "shutdown"])
     ap.add_argument("-e", "--exposure", type=float, default=1.0)
     ap.add_argument("-n", "--averages", type=int, default=1)
     ap.add_argument("--channel", type=int, choices=[532, 1064], default=532)
@@ -44,6 +44,9 @@ def main(argv=None):
     ap.add_argument("--port", help="watchdog: I/O board serial port")
     ap.add_argument("--parent", type=int, help="watchdog: pid of the main program")
     a = ap.parse_args(argv)
+    if a.cmd == "selftest":
+        from .selftest import main as selftest
+        return selftest()
     if a.cmd == "watchdog":
         from .watchdog import run
         return run(a.port, parent_pid=a.parent)

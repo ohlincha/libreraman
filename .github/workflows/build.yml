@@ -18,6 +18,11 @@ jobs:
           --collect-data libreramen --collect-all libusb_package --collect-submodules serial
           --hidden-import usb.backend.libusb1 libreramen_app.py
       - run: dist\LibreRamen\LibreRamen.exe standards
+      - name: Self-test of the packaged app (GUI + simulator)
+        env: { QT_QPA_PLATFORM: offscreen }
+        run: |
+          $p = Start-Process -FilePath dist\LibreRamen\LibreRamen.exe -ArgumentList selftest -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode -ne 0) { throw "selftest failed ($($p.ExitCode))" }
       - run: Compress-Archive -Path dist\LibreRamen -DestinationPath dist\LibreRamen-Windows.zip
       - uses: actions/upload-artifact@v4
         with: { name: windows-zip, path: dist/LibreRamen-Windows.zip }
@@ -56,5 +61,7 @@ jobs:
           mkdir -p dmg && cp -R dist/LibreRamen.app dmg/ && ln -s /Applications dmg/Applications
           hdiutil create -volname LibreRamen -srcfolder dmg -ov -format UDZO dist/LibreRamen-macOS-Intel.dmg
       - run: dist/LibreRamen.app/Contents/MacOS/LibreRamen standards | head -3
+      - name: Self-test of the packaged app (GUI + simulator)
+        run: QT_QPA_PLATFORM=offscreen dist/LibreRamen.app/Contents/MacOS/LibreRamen selftest
       - uses: actions/upload-artifact@v4
         with: { name: macos-intel-dmg, path: dist/LibreRamen-macOS-Intel.dmg }

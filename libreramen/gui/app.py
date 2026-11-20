@@ -145,7 +145,7 @@ def spectrum_plot(**kw):
 
 # ----------------------------------------------------------------------------- Measure page
 def form(parent):
-    f = form(parent)
+    f = QFormLayout(parent)
     f.setLabelAlignment(Qt.AlignLeft | Qt.AlignVCenter)
     f.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
     f.setRowWrapPolicy(QFormLayout.DontWrapRows)
