@@ -58,8 +58,9 @@ def main(argv=None):
 
     def on_signal(signum, frame):
         raise KeyboardInterrupt
-    for s in (signal.SIGTERM, signal.SIGHUP):
-        signal.signal(s, on_signal)
+    for name in ("SIGTERM", "SIGHUP"):          # SIGHUP doesn't exist on Windows
+        if hasattr(signal, name):
+            signal.signal(getattr(signal, name), on_signal)
 
     cal = calibration.load_ini(a.ini) if a.ini else None
     if a.cmd == "standards":
