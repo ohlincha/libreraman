@@ -179,6 +179,14 @@ computer first spent a while "killing" a program, which isn't normal (with the v
 promptly). The vendor capture shows the same two commands, so the difference is timing or state. The engine
 now uses the vendor timing (80 ms/char, VOL query, 0.4 s gap); to be verified.
 
+## macOS (2026-11-20, Intel Mac, macOS 12.7.6)
+
+The packaged app (CI build, Qt 6.9, `LibreRamen-macOS-Intel.dmg`) works with the instrument: macOS's own drivers
+provide `/dev/cu.usbserial-*` (Prolific I/O board) and `/dev/cu.usbmodem*` (MCP2200 CDC); the MCP2200 HID
+side is accessed via IOKit (output reports with IOHIDDeviceSetReport, input reports via a CFRunLoop thread);
+the spectrometers via the bundled libusb (pip `libusb-package`). Status, initialisation, dark frames and a
+532 nm CCl₄ measurement gave the same results as on Linux.
+
 ## Still unknown
 
 - Wavelength calibration: not in the EEPROM; look in the vendor software folders ("Anton Paar", "Anton PaariNST").
