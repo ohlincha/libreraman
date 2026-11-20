@@ -66,10 +66,21 @@ public:
     virtual void selectChannel(int ch, bool waitCooling = true) = 0;
     virtual Vec dark(double exposure_s, int averages = 1) = 0;
     virtual Spectrum acquire(const AcquireOptions& o) = 0;
+    // "Laser stays on" series (GUI controller _series_fastest): laser on once (same checks as acquire()),
+    // then signal-only spectra with this background (data order, e.g. from dark()) until more() returns
+    // false or o.stop is set; each spectrum is passed to each(). Returns normally when stopped.
+    virtual void acquireLaserOn(const AcquireOptions& o, const Vec& background, const std::function<bool()>& more,
+                                const std::function<void(Spectrum&)>& each) = 0;
+    // Stop button (GUI controller stop()): laser(s) off right away, from any thread, without waiting for the
+    // running measurement. Errors are ignored.
+    virtual void laserOffNow() = 0;
+    // Calibration pixel numbers of channel ch in data order (the order of dark()/frames).
+    virtual Vec pixelNumbers(int ch) const = 0;
     virtual void close(bool powerDown = false) = 0;
 
     virtual QString serial() = 0;                             // spectrometer serial (EEPROM)
     virtual QString ioPort() const { return {}; }             // serial port name for the watchdog (if any)
+    virtual QString driverPort() const { return {}; }         // 1064 nm driver port while open (watchdog "driver")
     virtual bool simulated() const { return false; }
 
     int channel() const { return channel_; }
@@ -77,7 +88,7 @@ public:
     const Calibration& calibration() const { return cal_; }
     const std::map<int, UserCalibration>& userCalibration() const { return userCal_; }
     void setUserCalibration(int ch, const UserCalibration& c) { userCal_[ch] = c; }
-    double laserSettleS() const { return channel_ == 1064 ? 1.5 : 3.6; }
+    virtual double laserSettleS() const { return channel_ == 1064 ? 1.5 : 3.6; }
     // Minimum time for one spectrum with these settings (s).
     double cycleTime(double exposure_s, int averages, bool background = true, bool laserStaysOn = false) const {
         const int frames = averages * (background ? 2 : 1);
@@ -98,7 +109,7 @@ protected:
 
     Calibration cal_;
     LogFn log_;
-    int channel_ = 0;
+    std::atomic<int> channel_{0};                             // read by status() from other threads
     std::atomic<bool> laserOn_{false};
     std::map<int, UserCalibration> userCal_;
 };
