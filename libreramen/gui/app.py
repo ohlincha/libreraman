@@ -65,7 +65,7 @@ class StatusStrip(QWidget):
         for t, s in ((self.conn, 3), (self.laser, 3), (self.comp, 2), (self.chan, 1)):
             lay.addWidget(t, s)
         self.stop = QPushButton("■  STOP")
-        self.stop.setMinimumSize(120, 56)
+        self.stop.setMinimumSize(120, 48)
         self.stop.setStyleSheet("QPushButton { background: #b3261e; color: white; font-weight: bold; font-size: 14pt;"
                                 " border-radius: 8px; } QPushButton:pressed { background: #7f1a15; }")
         self.stop.clicked.connect(on_stop)
@@ -206,7 +206,7 @@ class MeasurePage(QWidget):
         row.addStretch()
         tl.addLayout(row)
         self.tplot = spectrum_plot()
-        self.tplot.setMinimumHeight(120)
+        self.tplot.setMinimumHeight(90)
         self.tplot.showGrid(x=True, y=True, alpha=0.2)
         tl.addWidget(self.tplot)
         grid.addWidget(tb, 1, 1, 1, 2)
@@ -244,10 +244,42 @@ class MeasurePage(QWidget):
 
     # --- settings panel (right)
     def _settings_panel(self):
+        outer = QWidget()
+        outer.setFixedWidth(345)
+        ov = QVBoxLayout(outer)
+        ov.setContentsMargins(0, 0, 0, 0)
+        big = ("QPushButton {{ background: {c}; color: white; font-size: 15pt; font-weight: bold; border-radius: 8px;"
+               " padding: 6px; }} QPushButton:disabled {{ background: #b9bfca; color: #eef0f4; }}"
+               " QPushButton:pressed {{ background: {d}; }}")
+        self.btn_once = QPushButton("▶  MEASURE")
+        self.btn_series = QPushButton("⟳  START SERIES")
+        self.btn_stop = QPushButton("■  Stop")
+        self.btn_once.setStyleSheet(big.format(c="#2e9e5b", d="#227a45"))
+        self.btn_series.setStyleSheet(big.format(c="#3b7dd8", d="#2c5fa6"))
+        for b in (self.btn_once, self.btn_series):
+            b.setMinimumHeight(54)
+        self.btn_stop.setMinimumHeight(30)
+        self.btn_once.setToolTip("Take one spectrum with the settings below (laser on only while measuring)")
+        self.btn_series.setToolTip("Start the time series set up below")
+        self.btn_once.clicked.connect(self.measure_once)
+        self.btn_series.clicked.connect(self.start_series)
+        self.btn_stop.clicked.connect(self.ctl.stop)
+        ov.addWidget(self.btn_once)
+        ov.addWidget(self.btn_series)
+        ov.addWidget(self.btn_stop)
+        self.btn_once.setEnabled(False)
+        self.btn_series.setEnabled(False)
+
+        from PySide6.QtWidgets import QScrollArea
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         w = QWidget()
-        w.setFixedWidth(330)
+        scroll.setWidget(w)
+        ov.addWidget(scroll, 1)
         v = QVBoxLayout(w)
-        v.setContentsMargins(0, 0, 0, 0)
+        v.setContentsMargins(0, 0, 8, 0)
 
         s = box("Sample")
         f = QFormLayout(s)
@@ -342,24 +374,8 @@ class MeasurePage(QWidget):
         f.addRow("Show", row)
         v.addWidget(s)
 
-        self.btn_once = QPushButton("Measure once")
-        self.btn_series = QPushButton("Start series")
-        self.btn_stop = QPushButton("Stop")
-        for b in (self.btn_once, self.btn_series):
-            b.setMinimumHeight(36)
-            b.setStyleSheet("font-weight: bold;")
-        self.btn_once.clicked.connect(self.measure_once)
-        self.btn_series.clicked.connect(self.start_series)
-        self.btn_stop.clicked.connect(self.ctl.stop)
-        row = QHBoxLayout()
-        row.addWidget(self.btn_once)
-        row.addWidget(self.btn_series)
-        v.addLayout(row)
-        v.addWidget(self.btn_stop)
         v.addStretch()
-        self.btn_once.setEnabled(False)
-        self.btn_series.setEnabled(False)
-        return w
+        return outer
 
     def min_interval(self):
         inst = self.ctl.inst
@@ -576,7 +592,8 @@ class MainWindow(QMainWindow):
         self.ctl = ctl
         self.info = {}
         self.setWindowTitle(f"LibreRamen {__version__}")
-        self.resize(1440, 900)
+        self.setMinimumSize(1000, 640)
+        self.fit_to_screen()
         central = QWidget()
         outer = QVBoxLayout(central)
         outer.setContentsMargins(0, 0, 0, 0)
@@ -658,6 +675,17 @@ class MainWindow(QMainWindow):
         ctl.busy.connect(self.measure.set_busy)
         ctl.connected.connect(self.on_connected)
         ctl.connect_failed.connect(self.on_connect_failed)
+
+    def fit_to_screen(self):
+        """Use at most the available screen area (macOS: without menu bar and Dock)."""
+        scr = QApplication.primaryScreen()
+        if scr is None:
+            self.resize(1440, 900)
+            return
+        a = scr.availableGeometry()
+        w, h = min(1440, int(a.width() * 0.97)), min(900, int(a.height() * 0.95))
+        self.resize(w, h)
+        self.move(a.x() + (a.width() - w) // 2, a.y() + (a.height() - h) // 2)
 
     def show_area(self, k):
         self.stack.setCurrentIndex(k)
