@@ -234,26 +234,39 @@ jobs:
   # ------------------------------------------------------------------ C++: Linux
   cpp-linux-deb:
     name: C++ Linux .deb
-    # Ubuntu 24.04's Qt 6.4 and t64 package names: installs on Ubuntu 24.04+ and Debian 13+.
+    # Built natively per distribution: Ubuntu 24.04 names its Qt packages with "t64" (libqt6gui6t64),
+    # Debian 13 doesn't (libqt6gui6), so one .deb can't serve both.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { image: "ubuntu:24.04", tag: ubuntu24.04 }
+          - { image: "debian:trixie", tag: debian13 }
     runs-on: ubuntu-24.04
+    container: ${{ matrix.image }}
     steps:
+      - name: Build tools and libraries
+        run: |
+          apt-get update -qq
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq git cmake ninja-build g++ dpkg-dev file \
+            qt6-base-dev libqt6serialport6-dev libqt6svg6-dev libqt6sql6-sqlite \
+            libusb-1.0-0-dev libhidapi-dev libeigen3-dev libgl1-mesa-dev
       - uses: actions/checkout@v4
-      - run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq cmake ninja-build dpkg-dev qt6-base-dev libqt6serialport6-dev libqt6svg6-dev \
-            libqt6sql6-sqlite libusb-1.0-0-dev libhidapi-dev libeigen3-dev libgl1-mesa-dev
       - name: Version
-        run: echo "LR_VERSION=$(cpp/packaging/version.sh)" >> "$GITHUB_ENV"
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          echo "LR_VERSION=$(cpp/packaging/version.sh)" >> "$GITHUB_ENV"
       - run: cmake -S cpp -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIBRERAMEN_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr
       - run: cmake --build build
       - name: Package (CPack, dpkg-shlibdeps for Depends)
         run: |
           (cd build && cpack)
-          mkdir -p dist && mv build/libreramen_*.deb dist/
+          mkdir -p dist
+          for f in build/libreramen_*.deb; do mv "$f" "dist/$(basename "${f%.deb}")_${{ matrix.tag }}.deb"; done
           dpkg-deb -I dist/*.deb
           dpkg-deb -c dist/*.deb
       - uses: actions/upload-artifact@v4
-        with: { name: cpp-linux-deb, path: dist/*.deb, if-no-files-found: error }
+        with: { name: "cpp-linux-deb-${{ matrix.tag }}", path: dist/*.deb, if-no-files-found: error }
 
   cpp-linux-deb-test:
     name: C++ .deb test
@@ -261,18 +274,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ["ubuntu:24.04", "debian:trixie"]
+        include:
+          - { image: "ubuntu:24.04", tag: ubuntu24.04 }
+          - { image: "debian:trixie", tag: debian13 }
     runs-on: ubuntu-24.04
     container: ${{ matrix.image }}
     steps:
       - uses: actions/download-artifact@v4
-        with: { name: cpp-linux-deb, path: deb }
+        with: { name: "cpp-linux-deb-${{ matrix.tag }}", path: deb }
       - name: Install with apt (clean system) and test
         run: |
           apt-get update -qq
           DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ./deb/*.deb xvfb xauth
           dpkg -s libreramen | grep -E '^(Version|Depends|Recommends):'
-          for f in /usr/bin/LibreRamen /usr/bin/LibreRamenCLI /usr/lib/udev/rules.d/70-libreramen.rules \
+          for f in /usr/bin/LibreRamen /usr/bin/LibreRamenCLI /usr/bin/LibreRamenMCP \
+                   /usr/lib/udev/rules.d/70-libreramen.rules \
                    /usr/share/applications/io.github.ohlincha.libreramen.desktop \
                    /usr/share/icons/hicolor/256x256/apps/io.github.ohlincha.libreramen.png \
                    /usr/share/doc/libreramen/copyright; do
@@ -467,7 +483,7 @@ jobs:
             **Installers of the C++ version** (recommended):
             - Windows 10/11: `LibreRamen-<version>-Windows-x64-Setup.exe` (also installs the USB drivers)
             - macOS 12+ (Apple Silicon and Intel): `LibreRamen-<version>-macOS-universal.dmg`
-            - Ubuntu 24.04+, Debian 13+: `libreramen_<version>_amd64.deb`; other Linux: `LibreRamen-<version>-Linux-x86_64.AppImage`
+            - Ubuntu 24.04+: `libreramen_<version>_amd64_ubuntu24.04.deb`; Debian 13+: `libreramen_<version>_amd64_debian13.deb`; other Linux: `LibreRamen-<version>-Linux-x86_64.AppImage`
 
             Python version (previous implementation): `LibreRamen-Setup-<version>.exe`, `LibreRamen-Windows.zip`,
             `LibreRamenCLI-Windows.zip`, `LibreRamen-macOS-Intel.dmg`.
