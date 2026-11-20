@@ -6,12 +6,17 @@
 //   LibreRamenCLI drivers                      (Windows: repair the USB drivers, elevated)
 //   LibreRamenCLI gui [--sim]                  (starts the LibreRamen application)
 //   LibreRamenCLI watchdog --port P --parent PID   (also: --watchdog ..., as started by WatchdogClient)
+//   LibreRamenCLI calibrate --standard chloroform [--standard ethanol ...] [-e 1 -n 5] [--degree 3]
+//         (measures each standard in turn, asking you to swap samples and press ARM)
+//   LibreRamenCLI calibrate --standard chloroform --from chcl3.csv ...   (offline, from saved spectra)
+//   LibreRamenCLI standards                    (list the reference standards)
 // Options: --ini BS_Device_Settings.ini (calibration; default: built-in values of the development unit);
 //          --sim: use the simulator (its ARM button is pressed for you), --speed: simulator time factor.
-// calibrate, standards and selftest need the numerics/GUI ports and are not available yet.
+// selftest needs the GUI port and is not available yet.
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QProcess>
 #include <QThread>
@@ -20,6 +25,8 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <iostream>
+#include <string>
 #include <map>
 #include <optional>
 #include <thread>
@@ -30,12 +37,14 @@
 #include <csignal>
 #endif
 
+#include "core/calibrate.h"
 #include "core/calibration.h"
 #include "core/errors.h"
 #include "core/instrument.h"
 #include "core/pyformat.h"
 #include "core/series.h"
 #include "core/simulator.h"
+#include "core/standards.h"
 #include "core/watchdog.h"
 #include "core/windrivers.h"
 
@@ -187,6 +196,124 @@ double mean(const lr::Vec& v) {
     return s / double(v.size());
 }
 
+QString padRight(const QString& s, int width) { return s.size() >= width ? s : s + QString(width - s.size(), ' '); }
+
+// Python input(prompt): prompt without newline, one line from stdin (EOF: empty answer).
+QString input(const QString& prompt) {
+    std::fputs(prompt.toUtf8().constData(), stdout);
+    std::fflush(stdout);
+    std::string line;
+    if (!std::getline(std::cin, line)) return {};
+    return QString::fromUtf8(line.c_str()).remove('\r');
+}
+
+// `standards`: name, kind, source and band positions, sorted by name (Python sorted(STANDARDS.items())).
+int listStandards() {
+    std::vector<const lr::standards::Standard*> all;
+    for (const auto& s : lr::standards::all()) all.push_back(&s);
+    std::sort(all.begin(), all.end(), [](auto* a, auto* b) { return a->name < b->name; });
+    for (const auto* s : all) {
+        QStringList bands;
+        for (const auto& b : s->bands) bands << py::g(b.position);
+        out(padRight(s->name, 28) + " " + padRight(s->kind, 6) + " " + padRight(s->source, 4) + "  " +
+            bands.join(", "));
+    }
+    return 0;
+}
+
+std::optional<int> degreeOf(const Args& a) { return a.degree < 0 ? std::nullopt : std::optional<int>(a.degree); }
+
+// Spectrum intensities in calibration-pixel order (what calibrate works with; Python _pixel_order).
+lr::Vec pixelOrder(const lr::Spectrum& sp) {
+    if (sp.pixels.size() != sp.intensity.size()) return sp.intensity;
+    std::vector<std::pair<double, double>> pv;
+    for (std::size_t i = 0; i < sp.pixels.size(); ++i) pv.emplace_back(sp.pixels[i], sp.intensity[i]);
+    std::sort(pv.begin(), pv.end());
+    lr::Vec y;
+    for (const auto& p : pv) y.push_back(p.second);
+    return y;
+}
+
+// Column 1 of a saved spectrum CSV, one row per pixel (Python offline_calibration: '#' lines skipped,
+// header row dropped).
+lr::Vec readIntensities(const QString& path) {
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+        throw lr::Error(QString("[Errno 2] No such file or directory: %1").arg(py::repr(path)).toStdString());
+    lr::Vec y;
+    bool header = true;
+    for (const QString& line : QString::fromUtf8(f.readAll()).split('\n')) {
+        if (line.startsWith('#') || line.trimmed().isEmpty()) continue;
+        if (header) {
+            header = false;
+            continue;
+        }
+        const QStringList cells = line.split(',');
+        bool ok = false;
+        const double v = cells.size() > 1 ? cells[1].trimmed().toDouble(&ok) : 0.0;
+        if (!ok)
+            throw lr::Error(QString("%1: could not read the intensity in row %2")
+                                .arg(QFileInfo(path).fileName(), py::repr(line.trimmed()))
+                                .toStdString());
+        y.push_back(v);
+    }
+    return y;
+}
+
+// `calibrate --from file ...` (Python offline_calibration).
+int offlineCalibration(const Args& a) {
+    const lr::Calibration cal = a.ini.isEmpty() ? lr::defaultCalibration() : lr::loadIni(a.ini);
+    if (a.fromFiles.size() != a.standards.size()) {
+        out("give one --from file per --standard");
+        return 1;
+    }
+    if (!cal.channels.count(a.channel))
+        throw lr::Error(QString("no calibration for the %1 nm channel").arg(a.channel).toStdString());
+    const lr::ChannelCal ch = cal.channels.at(a.channel);
+    const lr::calib::ShiftFn shift = [ch](double p) { return ch.shift(p); };
+    std::vector<std::pair<lr::Vec, QString>> samples;
+    for (int i = 0; i < a.standards.size(); ++i) samples.emplace_back(readIntensities(a.fromFiles[i]), a.standards[i]);
+    const lr::calib::Result r = lr::calib::calibrate(samples, shift, degreeOf(a));
+    out(lr::calib::report(r, shift));
+    if (!a.output.isEmpty()) out("saved " + lr::calib::save(r, a.channel, cal.serial, a.output));
+    return 0;
+}
+
+// `calibrate --standard ...` with the instrument (Python live_calibration).
+void liveCalibration(lr::Instrument& c, const Args& a) {
+    if (a.standards.isEmpty()) throw lr::Error("give at least one --standard");
+    std::vector<std::pair<lr::Vec, QString>> samples;
+    for (const QString& name : a.standards) {
+        input("Put in " + name + ", close the compartment, press ARM, then press Enter here… ");
+        if (auto* sim = dynamic_cast<lr::SimControls*>(&c)) {     // simulator: load the standard, press ARM
+            QString sample = name;
+            try {
+                sample = lr::standards::find(name).name;
+            } catch (const lr::Error&) {
+            }
+            if (sim->sampleNames().contains(sample)) sim->setSample(sample);
+            sim->closeCompartment();
+            sim->pressArm();
+        }
+        while (!c.status().armed) {
+            if (g_stop) throw lr::Stopped();
+            QThread::msleep(500);
+        }
+        lr::AcquireOptions o;
+        o.exposure_s = a.exposure;
+        o.averages = std::max(a.averages, 3);
+        o.stop = &g_stop;
+        samples.emplace_back(pixelOrder(c.acquire(o)), name);
+    }
+    const int channel = c.channel();
+    const lr::ChannelCal ch = c.calibration().channels.at(channel);
+    const lr::calib::ShiftFn before = [ch](double p) { return ch.shift(p); };
+    const lr::calib::Result r = lr::calib::calibrate(samples, before, degreeOf(a));
+    out(lr::calib::report(r, before));
+    if (input("Save this calibration? [y/N] ").trimmed().toLower() == "y")
+        out("saved " + lr::calib::save(r, channel, c.calibration().serial));
+}
+
 int runInstrument(const Args& a) {
     const lr::Calibration cal = a.ini.isEmpty() ? lr::defaultCalibration() : lr::loadIni(a.ini);
     std::unique_ptr<lr::Instrument> c = a.sim ? lr::makeSimulator(cal, out, a.speed) : lr::makeCora(cal, out);
@@ -264,6 +391,8 @@ int runInstrument(const Args& a) {
                                       lr::py::fixed(mean(sp.intensity), 0));
                               });
                 out("saved " + path);
+            } else if (a.cmd == "calibrate") {
+                liveCalibration(*c, a);
             }
             if (g_stop) throw lr::Stopped();
             if (a.channel == 1064) c->selectChannel(532);
@@ -300,7 +429,16 @@ int main(int argc, char** argv) {
         std::fflush(nullptr);
         std::_Exit(code);
     }
-    if (a.cmd == "selftest" || a.cmd == "calibrate" || a.cmd == "standards") {
+    if (a.cmd == "standards") return listStandards();
+    if (a.cmd == "calibrate" && !a.fromFiles.isEmpty()) {
+        try {
+            return offlineCalibration(a);
+        } catch (const lr::Error& e) {
+            out(QString("error: ") + QString::fromUtf8(e.what()));
+            return 1;
+        }
+    }
+    if (a.cmd == "selftest") {
         out(a.cmd + ": not yet available in the C++ version");
         return 1;
     }
