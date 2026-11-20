@@ -21,8 +21,12 @@ from .. import __version__, peaks as peakmod, processing
 from .controller import Controller
 from .splash import Splash
 
-COLORS = {"grey": "#8a93a6", "green": "#2e9e5b", "yellow": "#d9a400", "red": "#d43c3c",
-          "orange": "#e07b00", "blue": "#3b7dd8"}
+# Calm palette: dark slate tiles with an accent bar; only "laser on" fills a tile (alarm red).
+TILE_BG = "#27303b"
+COLORS = {"grey": "#7b8594", "green": "#2f9e8f", "yellow": "#c9922b", "red": "#c0392b",
+          "orange": "#d4892b", "blue": "#7f93b8"}
+ACCENT = {"measure": "#1f6f68", "series": "#34477a", "danger": "#b42318"}
+PLOT = {"main": "#1f4e79", "baseline": "#c8892a", "old": (31, 78, 121), "label": "#3a3f47"}
 
 
 # ----------------------------------------------------------------------------- status strip
@@ -47,8 +51,14 @@ class Tile(QFrame):
             lay.addWidget(w)
         self.set("grey", "—", "")
 
-    def set(self, color, main, sub=""):
-        self.setStyleSheet(f"#tile {{ background: {COLORS[color]}; border-radius: 8px; }}")
+    def set(self, color, main, sub="", alarm=False):
+        c = COLORS[color]
+        if alarm:            # the one state that must be impossible to miss
+            self.setStyleSheet(f"#tile {{ background: {c}; border-radius: 6px; }}")
+            self.main.setStyleSheet("color: white;")
+        else:
+            self.setStyleSheet(f"#tile {{ background: {TILE_BG}; border-radius: 6px; border-left: 6px solid {c}; }}")
+            self.main.setStyleSheet(f"color: {c};")
         self.main.setText(main)
         self.sub.setText(sub)
 
@@ -66,8 +76,8 @@ class StatusStrip(QWidget):
             lay.addWidget(t, s)
         self.stop = QPushButton("■  STOP")
         self.stop.setMinimumSize(120, 48)
-        self.stop.setStyleSheet("QPushButton { background: #b3261e; color: white; font-weight: bold; font-size: 14pt;"
-                                " border-radius: 8px; } QPushButton:pressed { background: #7f1a15; }")
+        self.stop.setStyleSheet("QPushButton { background: #b42318; color: white; font-weight: bold; font-size: 14pt;"
+                                " border-radius: 6px; } QPushButton:pressed { background: #7f1a15; }")
         self.stop.clicked.connect(on_stop)
         lay.addWidget(self.stop)
 
@@ -81,7 +91,7 @@ class StatusStrip(QWidget):
         elif c == "initialising":
             self.conn.set("yellow", "◐ INITIALISING…", "switching on spectrometers and cooling")
         elif c == "lost":
-            self.conn.set("red", "✖ CONNECTION LOST", "check the USB cable")
+            self.conn.set("red", "✖ CONNECTION LOST", "check the USB cable", alarm=True)
         elif c == "not found":
             self.conn.set("grey", "○ NOT FOUND", "no instrument")
         else:
@@ -92,7 +102,7 @@ class StatusStrip(QWidget):
             self.chan.set("grey", "—", "")
             return
         if st.get("laser_on"):
-            self.laser.set("red", "✹ LASER ON", f"{st.get('channel')} nm emitting")
+            self.laser.set("red", "✹ LASER ON", f"{st.get('channel')} nm emitting", alarm=True)
         elif st.get("armed"):
             self.laser.set("orange", "▲ ARMED", "laser can be switched on")
         else:
@@ -188,8 +198,8 @@ class SpectrumViewBox(pg.ViewBox):
 
 def spectrum_plot(**kw):
     w = pg.PlotWidget(background="w", viewBox=SpectrumViewBox(), **kw)
-    w.setToolTip("Wheel: zoom intensity (baseline stays) · drag: pan along the spectrum · "
-                 "wheel on the x axis or Ctrl+wheel: zoom wavenumbers · double-click: full view")
+    w.setToolTip("<b>Wheel</b>: zoom intensity (baseline stays)<br><b>Drag</b>: pan along the spectrum<br>"
+                 "<b>Ctrl+wheel</b> or wheel on the x axis: zoom wavenumbers<br><b>Double-click</b>: full view")
     return w
 
 
@@ -228,9 +238,9 @@ class MeasurePage(QWidget):
         self.plot.setXRange(150, 3500)
         self.plot.getViewBox().home_x = (150, 3500)
         self.plot.getViewBox().on_auto = self.redraw
-        self.curve = self.plot.plot(pen=pg.mkPen("#1f5fbf", width=1.6))
-        self.base_curve = self.plot.plot(pen=pg.mkPen("#e07b00", width=1.2, style=Qt.DashLine))
-        self.old_curves = [self.plot.plot(pen=pg.mkPen((31, 95, 191, 40 + 20 * i), width=1)) for i in range(4)]
+        self.curve = self.plot.plot(pen=pg.mkPen(PLOT["main"], width=1.6))
+        self.base_curve = self.plot.plot(pen=pg.mkPen(PLOT["baseline"], width=1.2, style=Qt.DashLine))
+        self.old_curves = [self.plot.plot(pen=pg.mkPen((*PLOT["old"], 35 + 20 * i), width=1)) for i in range(4)]
         self.peak_labels = []
         grid.addWidget(self.plot, 0, 0, 1, 3)
 
@@ -314,12 +324,12 @@ class MeasurePage(QWidget):
         self.btn_once = QPushButton("▶  MEASURE")
         self.btn_series = QPushButton("⟳  START SERIES")
         self.btn_stop = QPushButton("■  Stop")
-        self.btn_once.setStyleSheet(big.format(c="#2e9e5b", d="#227a45"))
-        self.btn_series.setStyleSheet(big.format(c="#3b7dd8", d="#2c5fa6"))
+        self.btn_once.setStyleSheet(big.format(c=ACCENT["measure"], d="#15524d"))
+        self.btn_series.setStyleSheet(big.format(c=ACCENT["series"], d="#25335a"))
         for b in (self.btn_once, self.btn_series):
             b.setMinimumHeight(54)
         self.btn_stop.setMinimumHeight(30)
-        self.btn_once.setToolTip("Take one spectrum with the settings below (laser on only while measuring)")
+        self.btn_once.setToolTip("<p>Take one spectrum with the settings below (laser on only while measuring)</p>")
         self.btn_series.setToolTip("Start the time series set up below")
         self.btn_once.clicked.connect(self.measure_once)
         self.btn_series.clicked.connect(self.start_series)
@@ -618,7 +628,7 @@ class MeasurePage(QWidget):
             i = int(np.argmin(np.abs(x - p)))
             level = level + 1 if last is not None and p - last < min_gap else 0
             last = p
-            lab = pg.TextItem(f"{p:.0f}", color="#333", anchor=(0.5, 1.2 + 1.1 * (level % 3)))
+            lab = pg.TextItem(f"{p:.0f}", color=PLOT["label"], anchor=(0.5, 1.2 + 1.1 * (level % 3)))
             lab.setPos(p, ref[i])
             self.plot.addItem(lab)
             self.peak_labels.append(lab)
@@ -635,8 +645,8 @@ class MeasurePage(QWidget):
             if self.trend:
                 t = np.array([a for a, _ in self.trend]) / div
                 v = np.array([b for _, b in self.trend])
-                self.tplot.plot(t, v, pen=pg.mkPen("#1f5fbf", width=1.5), symbol="o", symbolSize=5,
-                                symbolBrush="#1f5fbf")
+                self.tplot.plot(t, v, pen=pg.mkPen(PLOT["main"], width=1.5), symbol="o", symbolSize=5,
+                                symbolBrush=PLOT["main"])
         else:
             self.tplot.setLabel("bottom", "Raman shift (cm⁻¹)")
             self.tplot.setLabel("left", "spectrum (offset)")
@@ -691,7 +701,7 @@ class Placeholder(QWidget):
 
 
 class MainWindow(QMainWindow):
-    AREAS = [("Measure", "⚡"), ("Data", "📈"), ("Library", "📚"), ("Analysis", "🧮"), ("Calibration", "🎯")]
+    AREAS = ["Measure", "Data", "Library", "Analysis", "Calibration"]
 
     def __init__(self, ctl):
         super().__init__()
@@ -738,11 +748,17 @@ class MainWindow(QMainWindow):
                  Placeholder("Analysis", "PCA, EFA, OPA, SIMPLISMA, MCR-ALS, NNLS; comparison with computed spectra."),
                  Placeholder("Calibration", "Calibration against reference standards (wizard), quick checks, history. "
                                             "Already available on the command line: python3 -m libreramen calibrate")]
-        for i, ((name, icon), page) in enumerate(zip(self.AREAS, pages)):
-            b = QToolButton(text=f"{icon}\n{name}")
+        side_css = ("QToolButton { border: none; border-left: 4px solid transparent; padding: 8px 6px; "
+                    "text-align: left; color: #3a3f47; font-size: 11pt; } "
+                    "QToolButton:hover { background: rgba(0,0,0,0.05); } "
+                    f"QToolButton:checked {{ border-left: 4px solid {ACCENT['measure']}; background: rgba(31,111,104,0.10);"
+                    " font-weight: bold; color: #1b1f24; }")
+        for i, (name, page) in enumerate(zip(self.AREAS, pages)):
+            b = QToolButton(text=name)
             b.setCheckable(True)
             b.setToolButtonStyle(Qt.ToolButtonTextOnly)
-            b.setFixedSize(86, 64)
+            b.setFixedSize(104, 44)
+            b.setStyleSheet(side_css)
             b.clicked.connect(lambda _=False, k=i: self.show_area(k))
             side.addWidget(b)
             self.side_buttons.append(b)
@@ -859,6 +875,7 @@ def main(argv=None):
     pg.setConfigOptions(antialias=True)
     app = QApplication.instance() or QApplication([sys.argv[0]])
     app.setApplicationName("LibreRamen")
+    app.setStyleSheet("QToolTip { max-width: 340px; padding: 4px; }")     # long tooltips wrap
     from .icon import app_icon
     app.setWindowIcon(app_icon())
     splash = Splash()

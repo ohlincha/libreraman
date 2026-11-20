@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QFileDia
 
 from .. import fileio, peaks as peakmod, processing
 
-COLORS = ["#1f5fbf", "#d43c3c", "#2e9e5b", "#e07b00", "#7b3fbf", "#0f8b8d", "#b8336a", "#6b6b00", "#555555"]
+COLORS = ["#1f4e79", "#b5543c", "#3c8d6e", "#c8892a", "#6a4c93", "#2a7f9e", "#9c3d5a", "#7a7a2a", "#555b63"]
 OPEN_FILTER = ("Spectra (*.csv *.txt *.spc *.jdx *.dx *.dat);;LibreRamen / vendor CSV (*.csv);;"
                "Vendor text (*.txt);;Galactic SPC (*.spc);;JCAMP-DX (*.jdx *.dx);;All files (*)")
 
@@ -94,7 +94,7 @@ class DataPage(QWidget):
         self.baseline.toggled.connect(self.redraw)
         bar.addWidget(self.baseline)
         self.diff = QCheckBox("difference A − B")
-        self.diff.setToolTip("First ticked spectrum minus the second, both processed as shown")
+        self.diff.setToolTip("<p>First ticked spectrum minus the second, both processed as shown</p>")
         self.diff.toggled.connect(self.redraw)
         bar.addWidget(self.diff)
         bar.addWidget(QLabel("offset"))
@@ -139,7 +139,7 @@ class DataPage(QWidget):
         self.profile.addItems(["pvoigt", "voigt", "lorentz", "gauss"])
         prow.addWidget(self.profile)
         b = QPushButton("Fit peaks in view")
-        b.setToolTip("Fits the peaks of the current spectrum inside the visible x range (zoom in first)")
+        b.setToolTip("<p>Fits the peaks of the current spectrum inside the visible x range (zoom in first)</p>")
         b.clicked.connect(self.fit_view)
         prow.addWidget(b)
         b = QPushButton("Clear fit")
