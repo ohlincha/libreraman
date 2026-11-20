@@ -152,7 +152,9 @@ The probe found everything, identified by sitting behind the 0424:2517 hub. MCP2
 Scans at 50, 300, then 50 mW (ZnS): **no power-related command on any device**, and the signal went
 10 800 → 6 500 → 5 200 counts (ZnS luminescence fading, not following the setting). So the 532 nm power
 is **not computer-controlled**; the vendor software only writes the value into the file. Our software
-records it as metadata.
+records it as metadata. (Expert view, András: such instruments typically run the laser at full power and set
+lower powers with an aperture/stop; without a computer-controlled aperture only exposure time and pre-bleaching
+remain as software controls.)
 
 ## Standards measured with the engine (2026-11-20, 532 nm, 3 × 1 s)
 
@@ -186,6 +188,15 @@ provide `/dev/cu.usbserial-*` (Prolific I/O board) and `/dev/cu.usbmodem*` (MCP2
 side is accessed via IOKit (output reports with IOHIDDeviceSetReport, input reports via a CFRunLoop thread);
 the spectrometers via the bundled libusb (pip `libusb-package`). Status, initialisation, dark frames and a
 532 nm CCl₄ measurement gave the same results as on Linux.
+
+## Windows (caesium, Windows 11, 2026-11-20)
+
+- MCP2200: CDC COM port + HID, works with Windows' own drivers.
+- Prolific PL2303HXA: Prolific's current driver refuses the chip ("PL2303HXA PHASED OUT SINCE 2012"); writes to
+  the COM port block. LibreRamen drives the chip itself over libusb (`hardware.Pl2303Usb`) once WinUSB is bound
+  to it (Zadig), the same driver the spectrometers need.
+- BaySpec spectrometers: no driver ("Error") until WinUSB is installed (Zadig).
+- Bug found: `signal.SIGHUP` doesn't exist on Windows (every CLI command crashed; fixed).
 
 ## Still unknown
 
