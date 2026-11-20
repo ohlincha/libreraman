@@ -39,7 +39,11 @@ jobs:
         shell: bash
         run: echo "LR_VERSION=$(cpp/packaging/version.sh)" >> "$GITHUB_ENV"
       - name: Keep only Qt's SQLite driver (the others need client libraries we don't ship)
-        run: Get-ChildItem "$env:QT_ROOT_DIR\plugins\sqldrivers\*" -Exclude "qsqlite*" | Remove-Item -Verbose
+        # plugin binaries and their CMake package files (else find_package(Qt6 Sql) fails on the missing files)
+        run: |
+          Get-ChildItem "$env:QT_ROOT_DIR\plugins\sqldrivers\*" -Exclude "qsqlite*" | Remove-Item -Verbose
+          Get-ChildItem "$env:QT_ROOT_DIR\lib\cmake\Qt6Sql\Qt6Q*DriverPlugin*.cmake" |
+            Where-Object { $_.Name -notlike "Qt6QSQLiteDriverPlugin*" } | Remove-Item -Verbose
       - name: Configure (Release, MSVC)
         run: >
           cmake -S cpp -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIBRERAMEN_TESTS=OFF
@@ -157,7 +161,9 @@ jobs:
           cmake --install hidapi-build
           lipo -info "$DEPS"/lib/libhidapi*.dylib
       - name: Keep only Qt's SQLite driver (the others need client libraries we don't ship)
-        run: find "$QT_ROOT_DIR/plugins/sqldrivers" -type f ! -name 'libqsqlite*' -print -delete
+        run: |
+          find "$QT_ROOT_DIR/plugins/sqldrivers" -type f ! -name 'libqsqlite*' -print -delete
+          find "$QT_ROOT_DIR/lib/cmake/Qt6Sql" -name 'Qt6Q*DriverPlugin*.cmake' ! -name 'Qt6QSQLiteDriverPlugin*' -print -delete
       - name: Configure (universal, macOS 12)
         run: |
           PKG_CONFIG_PATH="$DEPS/lib/pkgconfig" cmake -S cpp -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
@@ -297,7 +303,9 @@ jobs:
       - name: Version
         run: echo "LR_VERSION=$(cpp/packaging/version.sh)" >> "$GITHUB_ENV"
       - name: Keep only Qt's SQLite driver (linuxdeploy fails on drivers whose client libraries are missing)
-        run: find "$QT_ROOT_DIR/plugins/sqldrivers" -type f ! -name 'libqsqlite*' -print -delete
+        run: |
+          find "$QT_ROOT_DIR/plugins/sqldrivers" -type f ! -name 'libqsqlite*' -print -delete
+          find "$QT_ROOT_DIR/lib/cmake/Qt6Sql" -name 'Qt6Q*DriverPlugin*.cmake' ! -name 'Qt6QSQLiteDriverPlugin*' -print -delete
       - run: cmake -S cpp -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIBRERAMEN_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr
       - run: cmake --build build
       - run: DESTDIR="$PWD/AppDir" cmake --install build
