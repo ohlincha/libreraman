@@ -3,7 +3,7 @@
 Open-source, cross-platform software for Raman spectrometers that deserve a second life.
 The first supported instrument is the **Anton Paar Cora 5000** (BaySpec hardware inside, 532 nm
 and 1064 nm lasers), whose vendor software needs an old, never-updated Windows. LibreRamen talks
-to the instrument directly over USB from Linux (Windows and macOS to follow) and adds what the
+to the instrument directly over USB from Linux, Windows 10/11 and macOS and adds what the
 vendor software lacks: scheduled scans, time series and calibration against common standards.
 
 *LibreRamen is an independent project, not affiliated with or endorsed by Anton Paar or BaySpec.
@@ -22,6 +22,24 @@ python3 -m venv --system-site-packages .venv          # Debian/Ubuntu: don't pip
 .venv/bin/python -m libreramen gui --sim    # simulator: spectra recorded on a real Cora 5000
 ```
 (Installers that need none of this are planned.)
+
+### Windows
+
+Run `LibreRamen-Setup-<version>.exe` (from the CI artifacts / releases) and accept the administrator
+prompt: it also installs the USB drivers. The instrument's USB devices need Microsoft's generic WinUSB
+driver; the installer binds it with [libwdi](https://github.com/pbatard/libwdi)'s `wdi-simple`
+(the library behind Zadig), so nothing has to be downloaded separately:
+
+- **spectrometers** (BaySpec `BA8C:1688`): always, also if the instrument isn't connected yet;
+- **I/O board** (Prolific PL2303 `067B:2303`, which Prolific's current driver refuses as
+  "PL2303HXA PHASED OUT"): only if it is connected and refused. Ordinary USB-serial cables use the same
+  ID and keep their own driver; with several connected, unplug the others first;
+- the MCP2200 (`04D8:00DF`, ARM button and compartment) uses Windows' own driver.
+
+If the instrument was not connected during installation, or Windows Update later puts Prolific's driver
+back, use **Instrument → Repair USB drivers…** (or *Start menu → LibreRamen → Repair USB drivers*).
+A log is kept in `%ProgramData%\LibreRamen\drivers.log`. After this, the vendor software no longer
+works on that PC.
 
 The full feature plan is in [docs/SPECIFICATION.md](docs/SPECIFICATION.md).
 

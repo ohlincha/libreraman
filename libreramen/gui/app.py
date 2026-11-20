@@ -884,6 +884,11 @@ class MainWindow(QMainWindow):
         a = QAction("Reconnect", self)
         a.triggered.connect(lambda: self.connect_instrument(False))
         m.addAction(a)
+        if sys.platform == "win32":
+            m.addSeparator()
+            a = QAction("Repair USB drivers…", self)
+            a.triggered.connect(self.repair_drivers)
+            m.addAction(a)
 
         ctl.status.connect(self.on_status)
         ctl.log.connect(self.add_log)
@@ -920,6 +925,37 @@ class MainWindow(QMainWindow):
 
     def connect_instrument(self, simulate):
         self.ctl.connect_instrument(simulate)
+
+    def repair_drivers(self):
+        """Windows: run the installer's driver script elevated, then reconnect."""
+        from .. import windrivers
+        if self.ctl.is_busy:
+            QMessageBox.information(self, "LibreRamen", "Stop the running measurement first.")
+            return
+        if self.ctl.inst is not None and not self.ctl.simulated:
+            try:
+                self.ctl.inst.close()                    # release the USB devices while their driver changes
+            except Exception:  # noqa: BLE001
+                pass
+            self.ctl.inst = None
+            self.ctl.connection = "not found"
+        try:
+            proc = windrivers.repair()
+        except RuntimeError as e:
+            QMessageBox.warning(self, "LibreRamen", str(e))
+            return
+        self.add_log("Installing USB drivers…")
+        timer = QTimer(self)
+
+        def check():
+            code = proc.poll()
+            if code is None:
+                return
+            timer.stop()
+            self.add_log(f"USB driver set-up finished (code {code}); reconnecting")
+            QTimer.singleShot(3000, lambda: self.connect_instrument(False))   # let Windows re-enumerate
+        timer.timeout.connect(check)
+        timer.start(500)
 
     def add_log(self, msg):
         self.logview.appendPlainText(time.strftime("%H:%M:%S  ") + msg)

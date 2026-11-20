@@ -84,10 +84,9 @@ class Cora:
             import sys
             hint = ""
             if sys.platform == "win32":
+                from .windrivers import HINT
                 hint = (" On Windows the I/O board's old Prolific chip is refused by Prolific's current driver "
-                        "('PL2303HXA PHASED OUT'). Install the WinUSB driver for it with Zadig (zadig.akeo.ie: "
-                        "Options > List All Devices, select 'USB-Serial Controller' 067B:2303, WinUSB), "
-                        "like for the spectrometers.")
+                        "('PL2303HXA PHASED OUT') and needs the WinUSB driver instead. " + HINT)
             raise CoraError("Cora not found (I/O board). Is the USB cable connected and the instrument on "
                             "(On pressed, screen ready)?" + hint)
         self.io_port = port if isinstance(port, str) else None     # (watchdog needs a serial port name)
@@ -143,9 +142,9 @@ class Cora:
             hint = ""
             import sys
             if sys.platform == "win32":
-                hint = (" On Windows the spectrometers need the WinUSB driver once: run Zadig (zadig.akeo.ie), "
-                        "Options > List All Devices, select each 'ba8c:1688' device and install WinUSB. "
-                        "(The vendor software then can't use them on this PC.)")
+                from .windrivers import HINT
+                hint = (" On Windows the spectrometers need the WinUSB driver (installed by LibreRamen-Setup; "
+                        "the vendor software then can't use them on this PC). " + HINT)
             raise CoraError(f"spectrometer for {ch} nm did not appear on USB.{hint}")
         self.spec[ch] = s
 

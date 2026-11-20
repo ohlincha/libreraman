@@ -26,7 +26,7 @@ from .series import run_series
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="libreramen")
-    ap.add_argument("cmd", choices=["gui", "selftest", "watchdog", "status", "init", "dark", "acquire", "series", "calibrate", "standards", "shutdown"])
+    ap.add_argument("cmd", choices=["gui", "selftest", "watchdog", "status", "init", "dark", "acquire", "series", "calibrate", "standards", "shutdown", "drivers"])
     ap.add_argument("-e", "--exposure", type=float, default=1.0)
     ap.add_argument("-n", "--averages", type=int, default=1)
     ap.add_argument("--channel", type=int, choices=[532, 1064], default=532)
@@ -51,6 +51,17 @@ def main(argv=None):
     if a.cmd == "watchdog":
         from .watchdog import run
         return run(a.port, parent_pid=a.parent)
+    if a.cmd == "drivers":
+        from . import windrivers
+        try:
+            proc = windrivers.repair(quiet=True)
+        except RuntimeError as e:
+            print("error:", e)
+            return 1
+        while (code := proc.poll()) is None:
+            time.sleep(0.5)
+        print(f"driver set-up finished (code {code}); details in %ProgramData%\\LibreRamen\\drivers.log")
+        return code
     if a.cmd == "gui":
         from .gui.app import main as gui_main
         extra = ["--screenshot", a.screenshot] if a.screenshot else []
