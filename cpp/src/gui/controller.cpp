@@ -293,6 +293,25 @@ bool Controller::measureOnce(const MeasureSettings& s) {
     });
 }
 
+bool Controller::acquire(const MeasureSettings& s, const QString& tag) {
+    if (!m_inst || m_conn != Connection::Connected) {
+        emit error(QStringLiteral("No instrument connected."));
+        return false;
+    }
+    return run([this, s, tag] {
+        selectChannel(s.channel);
+        lr::AcquireOptions o;
+        o.exposure_s = s.exposure_s;
+        o.averages = s.averages;
+        o.background = s.background != QLatin1String("none");
+        o.prebleach_s = s.prebleach_s;
+        o.stop = &m_stop;
+        lr::Spectrum sp = m_inst->acquire(o);
+        sp.setMeta(QStringLiteral("sample"), s.sample);
+        emit acquired(sp, tag);
+    });
+}
+
 bool Controller::startSeries(const lr::SeriesSettings& s, int channel) {
     if (!m_inst || m_conn != Connection::Connected) {
         emit error(QStringLiteral("No instrument connected."));

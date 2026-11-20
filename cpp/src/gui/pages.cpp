@@ -1,6 +1,7 @@
 // Page registry and the placeholder page (see page.h).
 #include "page.h"
 
+#include "calibrationpage.h"
 #include "datapagehost.h"
 
 #include <QLabel>
@@ -16,6 +17,7 @@ namespace {
 std::map<QString, PageFactory> builtinPageFactories() {
     return {
         {QStringLiteral("Data"), [](const PageContext& c) -> Page* { return new DataPageHost(c); }},
+        {QStringLiteral("Calibration"), [](const PageContext& c) -> Page* { return new CalibrationPage(c); }},
     };
 }
 

@@ -1,6 +1,7 @@
 // Widget test of the main window with the simulator at high speed (offscreen): window and pages, connect,
 // ARM, measure once (spectrum shown and saved), a series of 3 spectra, pause/resume, Stop (laser off at
 // once), closing without dialogs.
+#include "gui/calibrationpage.h"
 #include "gui/controller.h"
 #include "gui/datapagehost.h"
 #include "gui/mainwindow.h"
@@ -105,7 +106,7 @@ void GuiTestMainWindow::windowAndPages() {
     QVERIFY(m_win->measurePage());
     QCOMPARE(m_win->page(QStringLiteral("Measure")), static_cast<Page*>(m_win->measurePage()));
     QVERIFY(dynamic_cast<DataPageHost*>(m_win->page(QStringLiteral("Data"))));      // the real Data area
-    QVERIFY(qobject_cast<PlaceholderPage*>(m_win->page(QStringLiteral("Calibration"))));
+    QVERIFY(qobject_cast<CalibrationPage*>(m_win->page(QStringLiteral("Calibration"))));   // the real area
     QVERIFY(g_recorder);
     QCOMPARE(m_win->page(QStringLiteral("Library")), static_cast<Page*>(g_recorder));
     QCOMPARE(g_recorder->ctx.controller, m_ctl);
