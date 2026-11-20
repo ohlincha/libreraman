@@ -17,8 +17,12 @@ jobs:
         with: { python-version: "3.12" }
       - run: pip install pyinstaller pillow "PySide6==6.9.*" pyqtgraph pyserial pyusb libusb-package
       # numpy/scipy: the runner (macOS 15) would pick wheels linked against the new Accelerate (macOS 13.3+),
-      # which crash at start-up on macOS 12. Pretending to be an older macOS selects the OpenBLAS wheels.
-      - run: SYSTEM_VERSION_COMPAT=1 pip install --force-reinstall --no-deps numpy scipy
+      # which crash at start-up on macOS 12. Install the wheels tagged for macOS 12 (OpenBLAS) explicitly.
+      - run: |
+          pip uninstall -y numpy scipy || true
+          SP=$(python -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")
+          pip install --only-binary=:all: --platform macosx_12_0_x86_64 --python-version 3.12 \
+            --implementation cp --target "$SP" --upgrade --no-deps numpy scipy
       - run: |
           python - <<'PY'
           import glob, numpy, scipy, subprocess
