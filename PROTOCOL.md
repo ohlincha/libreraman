@@ -154,6 +154,24 @@ Scans at 50, 300, then 50 mW (ZnS): **no power-related command on any device**, 
 is **not computer-controlled**; the vendor software only writes the value into the file. Our software
 records it as metadata.
 
+## Standards measured with the engine (2026-11-20, 532 nm, 3 × 1 s)
+
+| Sample | Measured (cm⁻¹) | Literature |
+|---|---|---|
+| CCl₄ | 221, 316, 461, 787 | 218, 314, 459, 762/790 |
+| CHCl₃ | 262, 367, 668, 761, 1217, 3021 | 261, 364, 667, 760, 1216, 3019 |
+| Water | 1646, 3234/3360 | ~1640, ~3230/3400 |
+
+The factory calibration (2017) holds within 1–3 cm⁻¹ from 260 to 3020 cm⁻¹, with a roughly uniform +2 cm⁻¹ offset
+(could be corrected by adjusting the laser wavelength slightly).
+
+## 1064 nm channel: probably faulty hardware
+
+CCl₄ at 200 mW, 3 × 5 s showed **no** Raman bands (not even 459 cm⁻¹), only a uniform rise of ~290 counts.
+The vendor software's 1064 nm export of water is also flat noise, and the user reports no 1064 signal in the
+vendor software either. Suspect the laser, fibre/beam path or driver. Decisive test: vendor software, CCl₄,
+1064 nm, maximum power, 10 s. Our switching sequence matches the vendor's exactly.
+
 ## Still unknown
 
 - Wavelength calibration: not in the EEPROM; look in the vendor software folders ("Anton Paar", "Anton PaariNST").
