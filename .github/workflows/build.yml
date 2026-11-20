@@ -1,45 +1,351 @@
 name: Build installers
+# Python (PyInstaller) and C++ (Qt 6) installers. Pushing a tag v* also publishes a GitHub release with
+# whatever built (a failing platform doesn't block the others; re-running it later adds its file).
+#   C++:    cpp-windows (Setup.exe), cpp-macos (universal .dmg) + Intel test, cpp-linux-deb (.deb) + tests
+#           on Ubuntu 24.04 / Debian 13, cpp-appimage (AppImage) + test on Debian 12
+#   Python: windows (Setup.exe, zips), macos-intel (.dmg)
+# Both Windows installers use installer/windows/libreramen.iss and the wdi-simple driver tool from wdi.yml.
 on:
   push:
     branches: [main]
     tags: ["v*"]
   workflow_dispatch:
 
+env:
+  QT_VERSION: "6.8.3"
+
 jobs:
   wdi:
-    # USB driver installer: wdi-simple from libwdi (the library behind Zadig), built like libwdi's own CI.
-    # windows-2022: libwdi's projects need the VS 2022 (v143) toolsets incl. ARM64.
-    runs-on: windows-2022
+    uses: ./.github/workflows/wdi.yml
+
+  # ------------------------------------------------------------------ C++: Windows
+  cpp-windows:
+    name: C++ Windows installer
+    needs: wdi
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-        with: { repository: pbatard/libwdi, ref: v1.5.1, path: libwdi }
-      - name: libwdi support files (WDK 8.0 redistributables with WinUSB); WinUSB only
-        shell: pwsh
-        working-directory: libwdi
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          arch: win64_msvc2022_64
+          modules: qtserialport
+          cache: true
+          cache-key-prefix: qt-packaging     # (own cache: the SQL drivers are pruned below)
+      - name: libusb, hidapi, Eigen (vcpkg)
+        run: vcpkg install libusb hidapi eigen3 --triplet x64-windows
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Version
+        shell: bash
+        run: echo "LR_VERSION=$(cpp/packaging/version.sh)" >> "$GITHUB_ENV"
+      - name: Keep only Qt's SQLite driver (the others need client libraries we don't ship)
+        run: Get-ChildItem "$env:QT_ROOT_DIR\plugins\sqldrivers\*" -Exclude "qsqlite*" | Remove-Item -Verbose
+      - name: Configure (Release, MSVC)
+        run: >
+          cmake -S cpp -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIBRERAMEN_TESTS=OFF
+          -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows
+      - run: cmake --build build
+      # programs, libusb/hidapi DLLs, MSVC runtime DLLs (app-local), licence files
+      - run: cmake --install build --prefix dist-cpp/LibreRamen
+      - name: Deploy Qt (windeployqt) and check the folder
         run: |
-          curl.exe -sSL "https://go.microsoft.com/fwlink/p/?LinkID=253170" -o wdk-redist.msi
-          Start-Process msiexec -ArgumentList "/a wdk-redist.msi /qn TARGETDIR=$PWD\wdk" -Wait
-          # Only WinUSB is needed: drop the libusb0/libusbK defaults from the MSVC config (embedder_files.h
-          # and libwdi.c only embed those drivers when LIBUSB0_DIR/LIBUSBK_DIR are defined).
-          $c = Get-Content -Raw msvc\config.h
-          $c = $c -replace '(?s)#ifndef LIBUSB0_DIR.*?#endif', '' -replace '(?s)#ifndef LIBUSBK_DIR.*?#endif', ''
-          Set-Content msvc\config.h $c
-          Select-String -Path msvc\config.h -Pattern 'LIBUSB' | ForEach-Object { $_.Line }
-      - uses: microsoft/setup-msbuild@v2
-      - name: Build wdi-simple (Win32 first, as libwdi's CI does, then x64)
-        shell: cmd
-        working-directory: libwdi
+          $d = "dist-cpp\LibreRamen"
+          foreach ($exe in "LibreRamen.exe", "LibreRamenCLI.exe") {
+            windeployqt --release --no-compiler-runtime --no-translations --no-system-d3d-compiler --no-opengl-sw "$d\$exe"
+            if ($LASTEXITCODE -ne 0) { throw "windeployqt $exe failed" }
+          }
+          # offscreen platform plugin: selftest and headless use
+          Copy-Item "$env:QT_ROOT_DIR\plugins\platforms\qoffscreen.dll" "$d\platforms\"
+          Copy-Item build\libreramen.ico dist-cpp\
+          $need = "LibreRamen.exe", "LibreRamenCLI.exe", "Qt6Core.dll", "Qt6Gui.dll", "Qt6Widgets.dll", "Qt6Svg.dll",
+                  "Qt6Sql.dll", "Qt6SerialPort.dll", "Qt6Network.dll", "platforms\qwindows.dll",
+                  "platforms\qoffscreen.dll", "sqldrivers\qsqlite.dll", "libusb-1.0.dll", "hidapi.dll",
+                  "vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll", "LICENSE.txt", "THIRD-PARTY-NOTICES.txt"
+          $missing = @($need | Where-Object { -not (Test-Path "$d\$_") })
+          Get-ChildItem -Recurse -File $d | ForEach-Object { $_.FullName.Substring((Resolve-Path $d).Path.Length + 1) }
+          "total {0:N1} MB" -f ((Get-ChildItem -Recurse -File $d | Measure-Object Length -Sum).Sum / 1MB)
+          if ($missing) { throw "missing in the deployed folder: $missing" }
+      - name: Test the deployed folder (clean PATH, no Qt environment)
+        env: { QT_QPA_PLATFORM: offscreen }
         run: |
-          for %%P in (Win32 x64) do (
-            msbuild libwdi.sln /m /p:Configuration=Release,Platform=%%P,BuildMacros="WDK_DIR=\"../wdk/Windows Kits/8.0\"" || exit /b 1
-          )
-      - run: |
-          New-Item -ItemType Directory -Force out | Out-Null
-          Copy-Item libwdi\x64\Release\examples\wdi-simple.exe, libwdi\COPYING, libwdi\COPYING-LGPL out\
+          $env:PATH = "$env:SystemRoot\System32;$env:SystemRoot;$env:SystemRoot\System32\WindowsPowerShell\v1.0"
+          Remove-Item env:QT_PLUGIN_PATH, env:QML2_IMPORT_PATH -ErrorAction SilentlyContinue
+          dist-cpp\LibreRamen\LibreRamenCLI.exe standards
+          if ($LASTEXITCODE -ne 0) { throw "LibreRamenCLI standards failed ($LASTEXITCODE)" }
+          $p = Start-Process -FilePath dist-cpp\LibreRamen\LibreRamen.exe -ArgumentList selftest -Wait -PassThru `
+                 -NoNewWindow -RedirectStandardOutput selftest.txt
+          Get-Content selftest.txt
+          if ($p.ExitCode -ne 0) { throw "selftest failed ($($p.ExitCode))" }
+      - uses: actions/download-artifact@v4
+        with: { name: wdi-simple, path: dist/drivers }
+      - name: Build the installer (Inno Setup)
+        run: |
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) {
+            $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+            if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
+            $env:PATH += ";${env:ProgramFiles(x86)}\Inno Setup 6"
+          }
+          iscc /Qp "/DAppVersion=$env:LR_VERSION" /DCpp installer\windows\libreramen.iss
+          if ($LASTEXITCODE -ne 0) { throw "iscc failed" }
+          Get-ChildItem dist\LibreRamen-*-Windows-x64-Setup.exe
+      - name: Install silently (without drivers) and test the installed program
+        env: { QT_QPA_PLATFORM: offscreen }
+        run: |
+          $app = "C:\LibreRamen-test"
+          $p = Start-Process "dist\LibreRamen-$env:LR_VERSION-Windows-x64-Setup.exe" -Wait -PassThru -ArgumentList `
+                 "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/MERGETASKS=!drivers", "/DIR=$app", "/LOG=setup.log"
+          if ($p.ExitCode -ne 0) { Get-Content setup.log; throw "setup failed ($($p.ExitCode))" }
+          foreach ($f in "LibreRamen.exe", "LibreRamenCLI.exe", "sqldrivers\qsqlite.dll", "drivers\wdi-simple.exe",
+                         "drivers\install-drivers.ps1", "drivers\LIBWDI-LICENSE.txt") {
+            if (-not (Test-Path "$app\$f")) { throw "not installed: $f" }
+          }
+          $env:PATH = "$env:SystemRoot\System32;$env:SystemRoot;$env:SystemRoot\System32\WindowsPowerShell\v1.0"
+          Remove-Item env:QT_PLUGIN_PATH, env:QML2_IMPORT_PATH -ErrorAction SilentlyContinue
+          & "$app\LibreRamenCLI.exe" standards
+          if ($LASTEXITCODE -ne 0) { throw "installed LibreRamenCLI standards failed ($LASTEXITCODE)" }
+          $p = Start-Process -FilePath "$app\LibreRamen.exe" -ArgumentList selftest -Wait -PassThru -NoNewWindow `
+                 -RedirectStandardOutput selftest-installed.txt
+          Get-Content selftest-installed.txt
+          if ($p.ExitCode -ne 0) { throw "installed selftest failed ($($p.ExitCode))" }
       - uses: actions/upload-artifact@v4
-        with: { name: wdi-simple, path: out }
+        with: { name: cpp-windows-setup, path: dist/LibreRamen-*-Windows-x64-Setup.exe, if-no-files-found: error }
 
+  # ------------------------------------------------------------------ C++: macOS (universal, macOS 12+)
+  cpp-macos:
+    name: C++ macOS dmg (universal)
+    runs-on: macos-15
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "12.0"
+      ARCHS: "arm64 x86_64"
+      DEPS: ${{ github.workspace }}/deps
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          modules: qtserialport
+          cache: true
+          cache-key-prefix: qt-packaging
+      - run: brew install eigen ninja pkgconf
+      - name: Version
+        run: echo "LR_VERSION=$(cpp/packaging/version.sh)" >> "$GITHUB_ENV"
+      # Homebrew's bottles target the runner's macOS and one architecture: build both libraries for
+      # macOS 12, arm64 + x86_64.
+      - name: libusb (per architecture, merged with lipo)
+        run: |
+          curl -sSL https://github.com/libusb/libusb/releases/download/v1.0.29/libusb-1.0.29.tar.bz2 | tar xj
+          for a in $ARCHS; do
+            host=$([ "$a" = arm64 ] && echo aarch64-apple-darwin || echo x86_64-apple-darwin)
+            mkdir "libusb-$a"
+            (cd "libusb-$a" && ../libusb-1.0.29/configure --prefix="$DEPS" --host="$host" --disable-static CC=clang \
+                 CFLAGS="-O2 -arch $a -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET" LDFLAGS="-arch $a" \
+               && make -j"$(sysctl -n hw.ncpu)" && make install DESTDIR="$PWD/root")
+          done
+          # headers, pkg-config file and symlinks from the first, the dylib from both
+          set -- $ARCHS
+          ditto "libusb-$1/root$DEPS" "$DEPS"
+          lib=$(cd "$DEPS/lib" && ls libusb-1.0.*.dylib | grep -v '^libusb-1.0.dylib$' | head -1)
+          lipo -create "libusb-$1/root$DEPS/lib/$lib" "libusb-$2/root$DEPS/lib/$lib" -output "$DEPS/lib/$lib"
+          lipo -info "$DEPS/lib/$lib"; otool -D "$DEPS/lib/$lib"
+      - name: hidapi
+        run: |
+          curl -sSL https://github.com/libusb/hidapi/archive/refs/tags/hidapi-0.15.0.tar.gz | tar xz
+          cmake -S hidapi-hidapi-0.15.0 -B hidapi-build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$DEPS" -DCMAKE_INSTALL_NAME_DIR="$DEPS/lib" \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET="$MACOSX_DEPLOYMENT_TARGET"
+          cmake --build hidapi-build
+          cmake --install hidapi-build
+          lipo -info "$DEPS"/lib/libhidapi*.dylib
+      - name: Keep only Qt's SQLite driver (the others need client libraries we don't ship)
+        run: find "$QT_ROOT_DIR/plugins/sqldrivers" -type f ! -name 'libqsqlite*' -print -delete
+      - name: Configure (universal, macOS 12)
+        run: |
+          PKG_CONFIG_PATH="$DEPS/lib/pkgconfig" cmake -S cpp -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DLIBRERAMEN_TESTS=OFF -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET="$MACOSX_DEPLOYMENT_TARGET" -DCMAKE_PREFIX_PATH="$DEPS;$QT_ROOT_DIR" \
+            -DLIBUSB_ROOT="$DEPS" -DHIDAPI_ROOT="$DEPS"
+      - run: cmake --build build
+      - run: cmake --install build --prefix dist-mac
+      - name: Deploy Qt and libraries (macdeployqt), sign ad hoc, check
+        run: |
+          APP=dist-mac/LibreRamen.app
+          macdeployqt "$APP" -executable="$APP/Contents/MacOS/LibreRamenCLI" -libpath="$QT_ROOT_DIR/lib" \
+            -libpath="$DEPS/lib" -verbose=1
+          # offscreen platform plugin (selftest, headless use); finds the bundle's frameworks via @rpath
+          cp "$QT_ROOT_DIR/plugins/platforms/libqoffscreen.dylib" "$APP/Contents/PlugIns/platforms/"
+          install_name_tool -add_rpath @loader_path/../../Frameworks "$APP/Contents/PlugIns/platforms/libqoffscreen.dylib"
+          test -f "$APP/Contents/PlugIns/sqldrivers/libqsqlite.dylib"
+          test -f "$APP/Contents/Resources/LibreRamen.icns"
+          plutil -p "$APP/Contents/Info.plist"
+          codesign --force --deep --sign - "$APP"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          cpp/packaging/macos/check-bundle.sh "$APP" "$MACOSX_DEPLOYMENT_TARGET" "$ARCHS"
+          du -sh "$APP"
+      - name: Test the bundle (arm64; x86_64 under Rosetta if available)
+        run: |
+          APP=dist-mac/LibreRamen.app
+          run() { env -u QT_PLUGIN_PATH -u QML2_IMPORT_PATH -u DYLD_LIBRARY_PATH -u DYLD_FRAMEWORK_PATH "$@"; }
+          run "$APP/Contents/MacOS/LibreRamenCLI" standards > standards.txt; head -3 standards.txt
+          run QT_QPA_PLATFORM=offscreen "$APP/Contents/MacOS/LibreRamen" selftest
+          run QT_QPA_PLATFORM=cocoa "$APP/Contents/MacOS/LibreRamen" selftest
+          if arch -x86_64 /usr/bin/true 2>/dev/null; then
+            run QT_QPA_PLATFORM=offscreen arch -x86_64 "$APP/Contents/MacOS/LibreRamen" selftest
+          else
+            echo "Rosetta not available: x86_64 is tested by cpp-macos-intel"
+          fi
+      - name: dmg
+        run: |
+          mkdir -p dmg dist
+          ditto dist-mac/LibreRamen.app dmg/LibreRamen.app
+          ln -s /Applications dmg/Applications
+          out="dist/LibreRamen-$LR_VERSION-macOS-universal.dmg"
+          for i in 1 2 3; do   # (hdiutil is occasionally "busy" on CI)
+            hdiutil create -volname LibreRamen -srcfolder dmg -ov -format UDZO "$out" && break
+            sleep 10
+          done
+          test -f "$out" && ls -l "$out"
+      - uses: actions/upload-artifact@v4
+        with: { name: cpp-macos-dmg, path: dist/LibreRamen-*-macOS-universal.dmg, if-no-files-found: error }
+
+  cpp-macos-intel:
+    name: C++ macOS dmg test (Intel)
+    needs: cpp-macos
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: cpp-macos-dmg, path: dmg }
+      - run: |
+          hdiutil attach dmg/*.dmg -nobrowse -mountpoint /Volumes/LibreRamen
+          ditto /Volumes/LibreRamen/LibreRamen.app "$RUNNER_TEMP/LibreRamen.app"
+          hdiutil detach /Volumes/LibreRamen
+          APP="$RUNNER_TEMP/LibreRamen.app"
+          codesign --verify --deep --strict "$APP"
+          lipo -archs "$APP/Contents/MacOS/LibreRamen"
+          "$APP/Contents/MacOS/LibreRamenCLI" standards > standards.txt; head -3 standards.txt
+          QT_QPA_PLATFORM=offscreen "$APP/Contents/MacOS/LibreRamen" selftest
+          QT_QPA_PLATFORM=cocoa "$APP/Contents/MacOS/LibreRamen" selftest
+
+  # ------------------------------------------------------------------ C++: Linux
+  cpp-linux-deb:
+    name: C++ Linux .deb
+    # Ubuntu 24.04's Qt 6.4 and t64 package names: installs on Ubuntu 24.04+ and Debian 13+.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq cmake ninja-build dpkg-dev qt6-base-dev libqt6serialport6-dev libqt6svg6-dev \
+            libqt6sql6-sqlite libusb-1.0-0-dev libhidapi-dev libeigen3-dev libgl1-mesa-dev
+      - name: Version
+        run: echo "LR_VERSION=$(cpp/packaging/version.sh)" >> "$GITHUB_ENV"
+      - run: cmake -S cpp -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIBRERAMEN_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr
+      - run: cmake --build build
+      - name: Package (CPack, dpkg-shlibdeps for Depends)
+        run: |
+          (cd build && cpack)
+          mkdir -p dist && mv build/libreramen_*.deb dist/
+          dpkg-deb -I dist/*.deb
+          dpkg-deb -c dist/*.deb
+      - uses: actions/upload-artifact@v4
+        with: { name: cpp-linux-deb, path: dist/*.deb, if-no-files-found: error }
+
+  cpp-linux-deb-test:
+    name: C++ .deb test
+    needs: cpp-linux-deb
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ["ubuntu:24.04", "debian:trixie"]
+    runs-on: ubuntu-24.04
+    container: ${{ matrix.image }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: cpp-linux-deb, path: deb }
+      - name: Install with apt (clean system) and test
+        run: |
+          apt-get update -qq
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ./deb/*.deb xvfb xauth
+          dpkg -s libreramen | grep -E '^(Version|Depends|Recommends):'
+          for f in /usr/bin/LibreRamen /usr/bin/LibreRamenCLI /usr/lib/udev/rules.d/70-libreramen.rules \
+                   /usr/share/applications/io.github.ohlincha.libreramen.desktop \
+                   /usr/share/icons/hicolor/256x256/apps/io.github.ohlincha.libreramen.png \
+                   /usr/share/doc/libreramen/copyright; do
+            test -e "$f" || { echo "missing: $f"; exit 1; }
+          done
+          LibreRamenCLI standards > standards.txt; head -3 standards.txt
+          QT_QPA_PLATFORM=offscreen LibreRamen selftest
+          xvfb-run -a env QT_QPA_PLATFORM=xcb LibreRamen selftest
+          apt-get remove -y -qq libreramen
+
+  cpp-appimage:
+    name: C++ Linux AppImage
+    # Built on Ubuntu 22.04 (glibc 2.35) with Qt from qt.io: runs on Debian 12, Ubuntu 22.04, Fedora, ...
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          modules: qtserialport
+          cache: true
+          cache-key-prefix: qt-packaging
+      - run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ninja-build libusb-1.0-0-dev libhidapi-dev libeigen3-dev libgl1-mesa-dev \
+            libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 \
+            libxcb-shape0 libxcb-xkb1 file xvfb
+      - name: Version
+        run: echo "LR_VERSION=$(cpp/packaging/version.sh)" >> "$GITHUB_ENV"
+      - name: Keep only Qt's SQLite driver (linuxdeploy fails on drivers whose client libraries are missing)
+        run: find "$QT_ROOT_DIR/plugins/sqldrivers" -type f ! -name 'libqsqlite*' -print -delete
+      - run: cmake -S cpp -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIBRERAMEN_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr
+      - run: cmake --build build
+      - run: DESTDIR="$PWD/AppDir" cmake --install build
+      - name: AppImage (linuxdeploy + Qt plugin)
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+          EXTRA_PLATFORM_PLUGINS: "libqoffscreen.so;libqwayland-generic.so"
+          ARCH: x86_64
+        run: |
+          for t in linuxdeploy/linuxdeploy/linuxdeploy-x86_64.AppImage \
+                   linuxdeploy/linuxdeploy-plugin-qt/linuxdeploy-plugin-qt-x86_64.AppImage; do
+            curl -sSLO "https://github.com/${t%/*}/releases/download/continuous/${t##*/}"
+          done
+          chmod +x linuxdeploy*.AppImage
+          mkdir -p dist
+          export QMAKE="$QT_ROOT_DIR/bin/qmake" LD_LIBRARY_PATH="$QT_ROOT_DIR/lib:${LD_LIBRARY_PATH:-}"
+          export LDAI_OUTPUT="dist/LibreRamen-$LR_VERSION-Linux-x86_64.AppImage"
+          ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage \
+            --desktop-file AppDir/usr/share/applications/io.github.ohlincha.libreramen.desktop
+          ls -l dist
+          test -f AppDir/usr/plugins/sqldrivers/libqsqlite.so
+      - uses: actions/upload-artifact@v4
+        with: { name: cpp-linux-appimage, path: dist/*.AppImage, if-no-files-found: error }
+
+  cpp-appimage-test:
+    name: C++ AppImage test (Debian 12)
+    needs: cpp-appimage
+    runs-on: ubuntu-24.04
+    container: debian:12
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: cpp-linux-appimage, path: appimage }
+      - name: Test on a minimal desktop system (libraries the AppImage expects from the host)
+        env: { APPIMAGE_EXTRACT_AND_RUN: "1" }
+        run: |
+          apt-get update -qq
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq libgl1 libegl1 libfontconfig1 libfreetype6 \
+            libx11-6 libx11-xcb1 libxcb1 libxkbcommon0 libglib2.0-0 libdbus-1-3 xvfb xauth
+          app=$(ls appimage/*.AppImage)
+          chmod +x "$app"
+          "$app" selftest
+          xvfb-run -a env QT_QPA_PLATFORM=xcb "$app" selftest
+          (cd appimage && "../$app" --appimage-extract >/dev/null)
+          appimage/squashfs-root/usr/bin/LibreRamenCLI standards > standards.txt; head -3 standards.txt
+
+  # ------------------------------------------------------------------ Python (PyInstaller)
   windows:
+    name: Python Windows installer
     needs: wdi
     runs-on: windows-latest
     steps:
@@ -66,17 +372,9 @@ jobs:
       - run: dist\LibreRamenCLI\LibreRamenCLI.exe standards
       - run: Compress-Archive -Path dist\LibreRamenCLI -DestinationPath dist\LibreRamenCLI-Windows.zip
       - uses: actions/download-artifact@v4
-        with: { name: wdi-simple, path: wdi }
-      - name: Collect driver files, licence and icon
-        run: |
-          New-Item -ItemType Directory -Force dist\drivers | Out-Null
-          Copy-Item wdi\wdi-simple.exe dist\drivers\
-          $notice = "wdi-simple.exe is built from libwdi v1.5.1 (https://github.com/pbatard/libwdi, " +
-                    "source: https://github.com/pbatard/libwdi/tree/v1.5.1), (c) Pete Batard and contributors, " +
-                    "licensed under the GNU LGPL v3 or later (text below, followed by the GPL v3 it refers to).`r`n`r`n"
-          $notice + (Get-Content -Raw wdi\COPYING-LGPL) + "`r`n`r`n" + (Get-Content -Raw wdi\COPYING) |
-            Set-Content -Encoding utf8 dist\drivers\LIBWDI-LICENSE.txt
-          python -c "from PIL import Image; Image.open('libreramen/data/icon.png').save('dist/libreramen.ico', sizes=[(16,16),(32,32),(48,48),(64,64),(128,128),(256,256)])"
+        with: { name: wdi-simple, path: dist/drivers }
+      - name: Icon
+        run: python -c "from PIL import Image; Image.open('libreramen/data/icon.png').save('dist/libreramen.ico', sizes=[(16,16),(32,32),(48,48),(64,64),(128,128),(256,256)])"
       - name: Build the installer (Inno Setup)
         run: |
           if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) {
@@ -96,6 +394,7 @@ jobs:
         with: { name: windows-zip, path: dist/LibreRamen-Windows.zip }
 
   macos-intel:
+    name: Python macOS dmg (Intel)
     # Intel build with macOS 12 (Monterey) as minimum; Qt 6.9 is the last Qt supporting macOS 12.
     runs-on: macos-15-intel
     env:
@@ -133,3 +432,34 @@ jobs:
         run: QT_QPA_PLATFORM=offscreen dist/LibreRamen.app/Contents/MacOS/LibreRamen selftest
       - uses: actions/upload-artifact@v4
         with: { name: macos-intel-dmg, path: dist/LibreRamen-macOS-Intel.dmg }
+
+  # ------------------------------------------------------------------ release
+  release:
+    # Publish whatever built, even if a platform job failed (e.g. runner capacity); re-running the failed
+    # job later re-runs this one and adds its file. Test jobs are waited for but don't block the upload.
+    if: ${{ !cancelled() && startsWith(github.ref, 'refs/tags/v') }}
+    needs: [cpp-windows, cpp-macos, cpp-macos-intel, cpp-linux-deb, cpp-linux-deb-test, cpp-appimage,
+            cpp-appimage-test, windows, macos-intel]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: out }
+      - run: find out -type f | sort
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            out/cpp-*/*
+            out/windows-*/*
+            out/macos-*/*
+          fail_on_unmatched_files: false
+          generate_release_notes: true
+          body: |
+            **Installers of the C++ version** (recommended):
+            - Windows 10/11: `LibreRamen-<version>-Windows-x64-Setup.exe` (also installs the USB drivers)
+            - macOS 12+ (Apple Silicon and Intel): `LibreRamen-<version>-macOS-universal.dmg`
+            - Ubuntu 24.04+, Debian 13+: `libreramen_<version>_amd64.deb`; other Linux: `LibreRamen-<version>-Linux-x86_64.AppImage`
+
+            Python version (previous implementation): `LibreRamen-Setup-<version>.exe`, `LibreRamen-Windows.zip`,
+            `LibreRamenCLI-Windows.zip`, `LibreRamen-macOS-Intel.dmg`.

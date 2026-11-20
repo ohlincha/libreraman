@@ -35,6 +35,27 @@ The Analysis page renders itself to `analysis-*.png` when `LIBRERAMEN_PREVIEW_DI
 Development machine without root: `source ~/opt/libreramen-env.sh` and add `$LR_CMAKE_ARGS` to the
 cmake configure line (Qt from aqtinstall, -dev packages extracted with `dpkg -x`).
 
+## Packaging
+
+`cmake --install` produces an installable layout on every platform (rules in `cmake/Install.cmake`, files in
+`packaging/`); CI (`.github/workflows/build.yml`, jobs `cpp-*`) turns it into installers. The C++ version is
+taken from `project(... VERSION)` in `CMakeLists.txt` (`packaging/version.sh`; a tag `v*` that differs gives a
+warning). Icons are made at build time from `resources/icon.png` by `tools/mkicon.cpp` (`.ico`, `.icns`, hicolor
+PNGs), so no generated icons are kept in the repository.
+
+| | install layout | CI job → artifact |
+|---|---|---|
+| Linux | `bin/LibreRamen`, `bin/LibreRamenCLI`, desktop entry `io.github.ohlincha.libreramen`, hicolor icons, AppStream metainfo, udev rule in `lib/udev/rules.d` | `cpp-linux-deb`: `cpack` → `libreramen_<v>_amd64.deb` (Ubuntu 24.04 build, Depends via dpkg-shlibdeps + Qt plugin packages, postinst reloads udev), tested by `apt install` in clean Ubuntu 24.04 and Debian 13 containers; `cpp-appimage`: linuxdeploy + Qt plugin on Ubuntu 22.04 → `LibreRamen-<v>-Linux-x86_64.AppImage`, tested in Debian 12 |
+| macOS | `LibreRamen.app` with `Info.plist` (`packaging/macos`), `LibreRamen.icns`, CLI in `Contents/MacOS` | `cpp-macos`: universal (arm64 + x86_64), deployment target 12.0, libusb/hidapi built from source for it, `macdeployqt`, ad-hoc signature, `packaging/macos/check-bundle.sh` (architectures, minimum macOS, no outside libraries), dmg with Applications link → `LibreRamen-<v>-macOS-universal.dmg`; `cpp-macos-intel` runs it on Intel |
+| Windows | `LibreRamen.exe`, `LibreRamenCLI.exe` (icon + version resource), `libusb-1.0.dll`, `hidapi.dll`, MSVC runtime DLLs (app-local) | `cpp-windows`: MSVC Release, `windeployqt` for both programs, Inno Setup (`installer/windows/libreramen.iss /DCpp`, with the WinUSB driver set-up from `wdi.yml`) → `LibreRamen-<v>-Windows-x64-Setup.exe`; installed silently and tested |
+
+Each package is tested with `LibreRamenCLI standards` and `LibreRamen selftest` (GUI + simulator; offscreen,
+and xcb/cocoa where available) without the build machine's Qt in the environment. Only Qt's SQLite driver is
+shipped (the other SQL drivers are removed from the CI Qt before deploying). `LibreRamen` and `LibreRamenCLI`
+both handle `--watchdog` (the program starts itself as its laser watchdog), so both must stay real executables
+of the package (no wrapper scripts). Local `.deb` with a Qt not from the distribution:
+`-DLIBRERAMEN_DEB_SHLIBDEPS=OFF` (fixed Depends list), then `cpack` in the build directory.
+
 ## Layout and module map
 
 | C++ | Python reference | Contents |

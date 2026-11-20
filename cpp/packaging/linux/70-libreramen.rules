@@ -1,0 +1,7 @@
+# LibreRamen (Cora 5000 Raman): access for the logged-in user (uaccess) and the 'plugdev' group to the
+# MCP2200 HID interface (ARM button, compartment) and the BaySpec spectrometers.
+# Installed by the .deb to /usr/lib/udev/rules.d; for other installs copy it to /etc/udev/rules.d and run
+#   sudo udevadm control --reload && sudo udevadm trigger
+# (The I/O board's serial port is accessible to the 'dialout' group.) Same rules as ../../../70-cora.rules.
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="00df", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTR{idVendor}=="ba8c", ATTR{idProduct}=="1688", MODE="0660", GROUP="plugdev", TAG+="uaccess"

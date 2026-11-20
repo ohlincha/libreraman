@@ -1,0 +1,12 @@
+LibreRamen is MIT-licensed (see LICENSE). The installers and packages also contain or use:
+
+- Qt 6 (https://www.qt.io), (c) The Qt Company Ltd and other contributors, used under the GNU LGPL v3.
+  Source: https://download.qt.io/official_releases/qt/ . The Qt libraries are shipped as separate,
+  replaceable shared libraries/frameworks (Windows, macOS, AppImage) or come from the distribution (.deb).
+- libusb 1.0 (https://libusb.info), GNU LGPL v2.1 or later; shipped as a separate shared library.
+  Source: https://github.com/libusb/libusb
+- hidapi (https://github.com/libusb/hidapi), used under its BSD-style licence.
+- Eigen (https://eigen.tuxfamily.org), MPL 2.0 (header-only; source: https://gitlab.com/libeigen/eigen).
+- SQLite (https://sqlite.org), public domain (inside Qt's SQLite driver).
+- Windows only: the Microsoft Visual C++ runtime DLLs (redistributable under the Visual Studio licence
+  terms) and wdi-simple from libwdi (GNU LGPL v3; see drivers\LIBWDI-LICENSE.txt).

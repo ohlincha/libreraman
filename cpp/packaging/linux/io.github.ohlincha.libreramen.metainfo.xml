@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.ohlincha.libreramen</id>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <name>LibreRamen</name>
+  <summary>Open software for Raman spectrometers</summary>
+  <description>
+    <p>
+      LibreRamen talks directly over USB to Raman spectrometers whose vendor software needs an old,
+      unsupported operating system. The first supported instrument is the Anton Paar Cora 5000
+      (BaySpec hardware, 532 nm and 1064 nm lasers).
+    </p>
+    <p>
+      It measures single spectra and time series, calibrates the Raman shift axis against common
+      reference standards and compares, processes and exports spectra. A simulator with spectra
+      recorded on a real instrument is included.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.github.ohlincha.libreramen.desktop</launchable>
+  <url type="homepage">https://github.com/ohlincha/libreramen</url>
+  <developer id="io.github.ohlincha">
+    <name>LibreRamen contributors</name>
+  </developer>
+  <categories>
+    <category>Science</category>
+    <category>Chemistry</category>
+  </categories>
+  <provides>
+    <binary>LibreRamen</binary>
+    <binary>LibreRamenCLI</binary>
+    <modalias>usb:vBA8Cp1688d*</modalias>
+  </provides>
+  <content_rating type="oars-1.1"/>
+</component>
