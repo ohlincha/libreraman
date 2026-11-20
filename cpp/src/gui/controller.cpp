@@ -268,11 +268,23 @@ void Controller::stopWatchdog() {
 }
 
 // ------------------------------------------------------------------------------------------------ measuring
-bool Controller::measureOnce(const MeasureSettings& s) {
+namespace {
+QString num(double d) { return QString::number(d, 'g', 6); }
+}  // namespace
+
+bool Controller::measureOnce(const MeasureSettings& s, const QString& origin) {
     if (!m_inst || m_conn != Connection::Connected) {
         emit error(QStringLiteral("No instrument connected."));
         return false;
     }
+    if (m_busy) {
+        emit error(QStringLiteral("Busy: stop the current measurement first."));
+        return false;
+    }
+    emit log(QStringLiteral("%1: measure \"%2\": %3 s × %4, background %5%6")
+                 .arg(origin, s.sample, num(s.exposure_s))
+                 .arg(s.averages)
+                 .arg(s.background, s.prebleach_s > 0 ? QStringLiteral(", pre-bleach %1 s").arg(num(s.prebleach_s)) : QString()));
     return run([this, s] {
         selectChannel(s.channel);
         lr::AcquireOptions o;
@@ -312,11 +324,22 @@ bool Controller::acquire(const MeasureSettings& s, const QString& tag) {
     });
 }
 
-bool Controller::startSeries(const lr::SeriesSettings& s, int channel) {
+bool Controller::startSeries(const lr::SeriesSettings& s, int channel, const QString& origin) {
     if (!m_inst || m_conn != Connection::Connected) {
         emit error(QStringLiteral("No instrument connected."));
         return false;
     }
+    if (m_busy) {
+        emit error(QStringLiteral("Busy: stop the current measurement first."));
+        return false;
+    }
+    emit log(QStringLiteral("%1: series \"%2\": %3 s × %4 every %5 s, %6%7")
+                 .arg(origin, s.sample, num(s.exposure_s))
+                 .arg(s.averages)
+                 .arg(num(s.interval_s),
+                      s.stopByCount ? QStringLiteral("%1 spectra").arg(s.count)
+                                    : QStringLiteral("for %1 h").arg(num(s.duration_s / 3600)),
+                      s.laserStaysOn ? QStringLiteral(", laser stays on") : QString()));
     return run(
         [this, s, channel] {
             selectChannel(channel);

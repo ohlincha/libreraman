@@ -12,6 +12,9 @@
 //   LibreRamenCLI standards                    (list the reference standards)
 // Options: --ini BS_Device_Settings.ini (calibration; default: built-in values of the development unit);
 //          --sim: use the simulator (its ARM button is pressed for you), --speed: simulator time factor.
+//          --json: machine-readable result on stdout (status, dark, acquire, series, standards; messages go to
+//          stderr), exit code 0 ok, 1 error, 2 usage, 130 stopped.
+//   LibreRamenCLI --remote COMMAND ...         talks to the running application (remote.h; --remote -h)
 // selftest needs the GUI port and is not available yet.
 #include <QCoreApplication>
 #include <QDateTime>
@@ -47,11 +50,17 @@
 #include "core/standards.h"
 #include "core/watchdog.h"
 #include "core/windrivers.h"
+#include "remote.h"
+
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 namespace {
 
 namespace py = lr::py;
 std::atomic<bool> g_stop{false};
+bool g_json = false;                          // --json: results as JSON on stdout, messages on stderr
 
 #if defined(Q_OS_WIN)
 BOOL WINAPI onConsoleCtrl(DWORD) {
@@ -63,8 +72,22 @@ extern "C" void onSignal(int) { g_stop = true; }
 #endif
 
 void out(const QString& s) {
-    std::fputs((s + "\n").toUtf8().constData(), stdout);
+    std::FILE* f = g_json ? stderr : stdout;
+    std::fputs((s + "\n").toUtf8().constData(), f);
+    std::fflush(f);
+}
+
+void jsonOut(const QJsonObject& o) {
+    std::fputs(QJsonDocument(o).toJson(QJsonDocument::Indented).constData(), stdout);
     std::fflush(stdout);
+}
+
+// "error: ..." line, or {"error": ...} with --json
+void errorOut(const QString& msg) {
+    if (g_json)
+        jsonOut(QJsonObject{{"error", msg}});
+    else
+        out("error: " + msg);
 }
 
 const QStringList COMMANDS = {"gui",    "selftest",  "watchdog",  "status",   "init",   "dark",   "acquire",
@@ -74,8 +97,9 @@ const char* USAGE =
     "usage: libreramen [-h] [-e EXPOSURE] [-n AVERAGES] [--channel {532,1064}] [--power POWER]\n"
     "                  [--interval INTERVAL] [--count COUNT] [--background {each,once}] [--ini INI]\n"
     "                  [-o OUTPUT] [--standard STANDARD] [--from FROM_FILES] [--degree DEGREE] [--sim]\n"
-    "                  [--speed SPEED] [--screenshot SCREENSHOT] [--port PORT] [--parent PARENT]\n"
-    "                  {gui,selftest,watchdog,status,init,dark,acquire,series,calibrate,standards,shutdown,drivers}\n";
+    "                  [--speed SPEED] [--screenshot SCREENSHOT] [--port PORT] [--parent PARENT] [--json]\n"
+    "                  {gui,selftest,watchdog,status,init,dark,acquire,series,calibrate,standards,shutdown,drivers}\n"
+    "       libreramen --remote COMMAND ...   (the running application; --remote -h for help)\n";
 
 [[noreturn]] void usageError(const QString& msg) {
     std::fputs(USAGE, stderr);
@@ -139,6 +163,10 @@ Args parse(const QStringList& argv) {
         if (alias.count(o)) o = alias.at(o);
         if (o == "--sim") {
             a.sim = true;
+            continue;
+        }
+        if (o == "--json") {
+            g_json = true;
             continue;
         }
         if (!withValue.contains(o)) usageError("unrecognized arguments: " + argv[i]);
@@ -212,6 +240,16 @@ int listStandards() {
     std::vector<const lr::standards::Standard*> all;
     for (const auto& s : lr::standards::all()) all.push_back(&s);
     std::sort(all.begin(), all.end(), [](auto* a, auto* b) { return a->name < b->name; });
+    if (g_json) {
+        QJsonArray list;
+        for (const auto* s : all) {
+            QJsonArray bands;
+            for (const auto& b : s->bands) bands.append(b.position);
+            list.append(QJsonObject{{"name", s->name}, {"kind", s->kind}, {"source", s->source}, {"bands", bands}});
+        }
+        jsonOut(QJsonObject{{"standards", list}});
+        return 0;
+    }
     for (const auto* s : all) {
         QStringList bands;
         for (const auto& b : s->bands) bands << py::g(b.position);
@@ -350,6 +388,12 @@ int runInstrument(const Args& a) {
         if (a.sim)
             if (auto* s = dynamic_cast<lr::SimControls*>(c.get())) s->pressArm();   // nobody at the simulator
         const lr::Status st = c->status();
+        if (g_json && a.cmd == "status") {
+            QJsonArray specs;
+            for (int sp : st.spectrometers) specs.append(sp);
+            jsonOut(QJsonObject{{"armed", st.armed}, {"compartment_open", st.compartment_open},
+                                {"laser_on", st.laser_on}, {"spectrometers", specs}, {"simulated", a.sim}});
+        }
         out("armed: " + lr::py::str(st.armed) + ", compartment open: " + lr::py::str(st.compartment_open) +
             ", spectrometers: " + lr::py::str(st.spectrometers));
         if (a.cmd == "shutdown") {
@@ -367,6 +411,9 @@ int runInstrument(const Args& a) {
                 const auto [mn, mx] = std::minmax_element(d.begin(), d.end());
                 out("dark: " + QString::number(d.size()) + " px, mean " + lr::py::fixed(mean(d), 0) + ", min " +
                     lr::py::fixed(*mn, 0) + ", max " + lr::py::fixed(*mx, 0));
+                if (g_json)
+                    jsonOut(QJsonObject{{"pixels", int(d.size())}, {"mean", mean(d)}, {"min", *mn}, {"max", *mx},
+                                        {"exposure_s", a.exposure}, {"averages", a.averages}});
             } else if (a.cmd == "acquire") {
                 lr::AcquireOptions o;
                 o.exposure_s = a.exposure;
@@ -380,6 +427,10 @@ int runInstrument(const Args& a) {
                 const auto i = size_t(std::max_element(sp.intensity.begin(), sp.intensity.end()) - sp.intensity.begin());
                 out("saved " + path + ": " + QString::number(sp.shift.size()) + " points, max " +
                     lr::py::fixed(sp.intensity[i], 0) + " at " + lr::py::fixed(sp.shift[i], 0) + " cm-1");
+                if (g_json)
+                    jsonOut(QJsonObject{{"file", path}, {"points", int(sp.shift.size())}, {"max", sp.intensity[i]},
+                                        {"max_at", sp.shift[i]}, {"channel", sp.channel},
+                                        {"exposure_s", sp.exposure_s}, {"averages", sp.averages}});
             } else if (a.cmd == "series") {
                 const QString path = a.output.isEmpty()
                                          ? "cora_series_" + QString::number(a.channel) + "_" + stamp + ".csv"
@@ -391,6 +442,7 @@ int runInstrument(const Args& a) {
                                       lr::py::fixed(mean(sp.intensity), 0));
                               });
                 out("saved " + path);
+                if (g_json) jsonOut(QJsonObject{{"file", path}, {"count", a.count}});
             } else if (a.cmd == "calibrate") {
                 liveCalibration(*c, a);
             }
@@ -398,10 +450,11 @@ int runInstrument(const Args& a) {
             if (a.channel == 1064) c->selectChannel(532);
         }
     } catch (const lr::Stopped&) {
-        out("stopped");
+        if (g_json) jsonOut(QJsonObject{{"error", "stopped"}});
+        else out("stopped");
         rc = 130;
     } catch (const lr::Error& e) {
-        out(QString("error: ") + QString::fromUtf8(e.what()));
+        errorOut(QString::fromUtf8(e.what()));
         rc = 1;
     }
     try {
@@ -422,6 +475,11 @@ int main(int argc, char** argv) {
         const int code = lr::watchdog::runFromArgs(args.mid(1));
         std::fflush(nullptr);
         std::_Exit(code);                     // (the stdin reader thread may still be blocked)
+    }
+    if (args.contains("--remote")) {                    // the running application, through its local API
+        QStringList rest = args;
+        rest.removeAll("--remote");
+        return lr::cli::runRemote(rest);
     }
     const Args a = parse(args);
     if (a.cmd == "watchdog") {
@@ -474,7 +532,7 @@ int main(int argc, char** argv) {
     try {
         return runInstrument(a);
     } catch (const lr::Error& e) {            // e.g. --ini unreadable, simulator data missing
-        out(QString("error: ") + QString::fromUtf8(e.what()));
+        errorOut(QString::fromUtf8(e.what()));
         return 1;
     }
 }

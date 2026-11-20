@@ -1,6 +1,7 @@
 // LibreRamen graphical program (Python: gui/app.py main, selftest.py, the gui/selftest/watchdog parts of
 // __main__.py).
 //   LibreRamen [--sim] [--dark | --light] [--screenshot FILE [--demo single|series]]
+//              [--api-port N] [--no-api]   local API (default: settings, port 8765; see apiserver.h)
 //   LibreRamen --selftest        GUI + simulator self-test (offscreen unless QT_QPA_PLATFORM is set); exit 0 = OK
 //   LibreRamen --watchdog --port P --parent PID     laser watchdog process (started by the program itself)
 // --screenshot saves the window after 15 s and quits (with --sim a spectrum of CCl4 is measured first and
@@ -21,6 +22,7 @@
 #include <QDoubleSpinBox>
 #include <QFileInfo>
 #include <QLineEdit>
+#include <QSettings>
 #include <QSpinBox>
 #include <QTimer>
 
@@ -182,6 +184,14 @@ int main(int argc, char** argv) {
             win.close();
             QApplication::quit();
         });
+    }
+    // local API for the command line, scripts and AI agents (not for screenshots)
+    const QSettings settings;
+    if (shot.isEmpty() && !args.contains(QStringLiteral("--no-api")) &&
+        settings.value(QStringLiteral("api/enabled"), true).toBool()) {
+        bool ok = false;
+        const int port = argValue(args, QStringLiteral("--api-port")).toInt(&ok);
+        win.startApi(ok ? port : -1);
     }
     splash.message(QStringLiteral("Searching for instrument…"));
     QTimer::singleShot(200, &ctl, [&] { win.connectInstrument(simulate); });

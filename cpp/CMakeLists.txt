@@ -7,6 +7,7 @@ project(LibreRamen VERSION 0.2.0 LANGUAGES CXX)
 # C++ implementation of LibreRamen (the Python package in ../libreramen is the reference).
 # Layout:  src/core  engine library (Qt Core + SerialPort, libusb, hidapi, Eigen; no widgets)
 #          src/cli   command line          src/gui  Qt Widgets application
+#          src/mcp   MCP server for AI agents (client of the application's local API)
 #          tests     QtTest unit tests, incl. golden data produced by the Python reference
 
 set(CMAKE_CXX_STANDARD 17)
@@ -48,6 +49,11 @@ file(GLOB CLI_SOURCES CONFIGURE_DEPENDS src/cli/*.cpp src/cli/*.h)
 add_executable(libreramen-cli ${CLI_SOURCES})
 target_link_libraries(libreramen-cli PRIVATE libreramen_core)
 set_target_properties(libreramen-cli PROPERTIES OUTPUT_NAME LibreRamenCLI)
+
+# ---- MCP server (stdio) for AI agents
+add_executable(libreramen-mcp src/mcp/main.cpp)
+target_link_libraries(libreramen-mcp PRIVATE libreramen_core)
+set_target_properties(libreramen-mcp PROPERTIES OUTPUT_NAME LibreRamenMCP)
 
 # ---- GUI
 # src/gui (without main.cpp) is an OBJECT library so that the application and the widget tests
@@ -105,6 +111,10 @@ if(LIBRERAMEN_TESTS)
       add_test(NAME ${name} COMMAND ${name})
       set_tests_properties(${name} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
     endforeach()
+    # gui_test_api also runs the command line (--remote) and the MCP server against the API
+    target_compile_definitions(gui_test_api PRIVATE CLI_PATH="$<TARGET_FILE:libreramen-cli>"
+                               MCP_PATH="$<TARGET_FILE:libreramen-mcp>")
+    add_dependencies(gui_test_api libreramen-cli libreramen-mcp)
   endif()
 endif()
 

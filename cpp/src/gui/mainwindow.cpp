@@ -1,10 +1,13 @@
 #include "mainwindow.h"
 
+#include "apiserver.h"
+
 #include "measurepage.h"
 #include "page.h"
 #include "statusstrip.h"
 #include "theme.h"
 
+#include "core/apiclient.h"
 #include "core/errors.h"
 #include "core/simulator.h"
 #include "core/windrivers.h"
@@ -35,6 +38,9 @@ namespace lr::gui {
 
 namespace {
 const char* const kOnCloseKey = "instrument/onClose";
+const char* const kApiEnabledKey = "api/enabled";
+const char* const kApiPortKey = "api/port";
+const char* const kRemoteControlKey = "api/allowRemoteControl";
 const QString kTitle = QStringLiteral("LibreRamen " LIBRERAMEN_VERSION);
 }  // namespace
 
@@ -47,7 +53,10 @@ MainWindow::MainWindow(Controller* ctl, QWidget* parent) : QMainWindow(parent), 
     outer->setContentsMargins(0, 0, 0, 0);
     outer->setSpacing(0);
     m_strip = new StatusStrip;
-    connect(m_strip, &StatusStrip::stopClicked, m_ctl, &Controller::stop);
+    connect(m_strip, &StatusStrip::stopClicked, this, [this] {
+        addLog(QStringLiteral("GUI: STOP"));
+        m_ctl->stop();
+    });
     outer->addWidget(m_strip);
     m_simBar = buildSimulatorBar();
     m_simBar->hide();
@@ -93,8 +102,18 @@ MainWindow::MainWindow(Controller* ctl, QWidget* parent) : QMainWindow(parent), 
     m_log->setFont(mono);
     outer->addWidget(m_log);
     setCentralWidget(central);
+
+    m_api = new ApiServer(ctl, this);
+    m_api->setDataFolder([m = m_measure] { return m->folder(); });
+    m_api->setProcessing([m = m_measure] { return m->processingSettings(); });
+    m_api->setRemoteControl(QSettings().value(QLatin1String(kRemoteControlKey), false).toBool());
+    connect(m_api, &ApiServer::logMessage, this, &MainWindow::addLog);
+    connect(m_api, &ApiServer::runningChanged, this, &MainWindow::updateRemoteTile);
+    connect(m_api, &ApiServer::remoteControlChanged, this, &MainWindow::updateRemoteTile);
+
     showArea(0);
     buildMenus();
+    updateRemoteTile();
 
     connect(ctl, &Controller::status, this, &MainWindow::onStatus);
     connect(ctl, &Controller::log, this, &MainWindow::addLog);
@@ -165,6 +184,27 @@ void MainWindow::buildMenus() {
     connect(onClose, &QMenu::aboutToShow, this, [grp] {      // reflect "Remember my choice"
         grp->actions().at(int(onClosePolicy()))->setChecked(true);
     });
+    m->addSeparator();
+    m_apiAction = m->addAction(QStringLiteral("Local API (command line, scripts, AI agents)"));
+    m_apiAction->setCheckable(true);
+    m_apiAction->setChecked(m_api->isRunning());
+    m_apiAction->setToolTip(QStringLiteral("HTTP/JSON API on 127.0.0.1 for LibreRamenCLI --remote, Python and LibreRamenMCP"));
+    connect(m_apiAction, &QAction::triggered, this, [this](bool on) {
+        QSettings().setValue(QLatin1String(kApiEnabledKey), on);
+        if (on)
+            startApi();
+        else
+            stopApi();
+    });
+    m_remoteAction = m->addAction(QStringLiteral("Allow remote measurements"));
+    m_remoteAction->setCheckable(true);
+    m_remoteAction->setChecked(m_api->remoteControl());
+    m_remoteAction->setToolTip(QStringLiteral("Let API clients (command line, scripts, AI agents) switch the laser on. "
+                                              "ARM on the instrument is still required. Stop is always allowed."));
+    connect(m_remoteAction, &QAction::toggled, this, [this](bool on) {
+        QSettings().setValue(QLatin1String(kRemoteControlKey), on);
+        m_api->setRemoteControl(on);
+    });
 #if defined(Q_OS_WIN)
     m->addSeparator();
     m->addAction(QStringLiteral("Repair USB drivers…"), this, &MainWindow::repairDrivers);
@@ -201,6 +241,38 @@ void MainWindow::showArea(int k) {
 
 void MainWindow::addLog(const QString& msg) {
     m_log->appendPlainText(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss  ")) + msg);
+    if (m_api)
+        m_api->recordLog(msg);
+}
+
+bool MainWindow::startApi(int port, const QString& apiFile) {
+    const int p = port >= 0 ? port : QSettings().value(QLatin1String(kApiPortKey), int(lr::api::kDefaultPort)).toInt();
+    QString err;
+    const bool ok = m_api->start(quint16(p), apiFile.isEmpty() ? lr::api::defaultApiFile() : apiFile, &err);
+    if (!ok)
+        addLog(QStringLiteral("Local API not started (port %1): %2").arg(p).arg(err));
+    if (m_apiAction)
+        m_apiAction->setChecked(ok);
+    return ok;
+}
+
+void MainWindow::stopApi() {
+    if (m_api->isRunning()) {
+        m_api->stop();
+        addLog(QStringLiteral("Local API stopped"));
+    }
+    if (m_apiAction)
+        m_apiAction->setChecked(false);
+}
+
+void MainWindow::updateRemoteTile() {
+    if (!m_api->isRunning())
+        m_strip->setRemote(StatusStrip::Remote::Off, QStringLiteral("local API off"));
+    else
+        m_strip->setRemote(m_api->remoteControl() ? StatusStrip::Remote::Control : StatusStrip::Remote::ReadOnly,
+                           QStringLiteral("127.0.0.1:%1").arg(m_api->port()));
+    if (m_remoteAction && m_remoteAction->isChecked() != m_api->remoteControl())
+        m_remoteAction->setChecked(m_api->remoteControl());
 }
 
 void MainWindow::onError(const QString& msg) {
@@ -362,6 +434,7 @@ void MainWindow::closeEvent(QCloseEvent* e) {
     }
     if (m_ctl->isBusy())
         addLog(QStringLiteral("Stopping the measurement…"));
+    m_api->stop();
     m_ctl->shutdown(powerDown);
     m_shutDown = true;
     e->accept();

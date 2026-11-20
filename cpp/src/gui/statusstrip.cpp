@@ -74,6 +74,10 @@ StatusStrip::StatusStrip(QWidget* parent) : QWidget(parent) {
     lay->addWidget(m_laser, 3);
     lay->addWidget(m_comp, 2);
     lay->addWidget(m_chan, 1);
+    m_remote = new Tile(QStringLiteral("REMOTE"), this);
+    m_remote->setToolTip(QStringLiteral("Local API for the command line, scripts and AI agents (Instrument menu)"));
+    lay->addWidget(m_remote, 2);
+    setRemote(Remote::Off);
     m_stop = new QPushButton(QStringLiteral("■  STOP"), this);
     m_stop->setMinimumSize(120, 48);
     m_stop->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
@@ -122,6 +126,14 @@ void StatusStrip::update(const StatusView& st) {
     else
         m_comp->set(Tone::Green, QStringLiteral("■ CLOSED"));
     m_chan->set(Tone::Green, QStringLiteral("%1 nm").arg(ch));
+}
+
+void StatusStrip::setRemote(Remote state, const QString& sub) {
+    switch (state) {
+    case Remote::Off: m_remote->set(Tone::Grey, QStringLiteral("○ OFF"), sub); break;
+    case Remote::ReadOnly: m_remote->set(Tone::Green, QStringLiteral("READ-ONLY"), sub); break;
+    case Remote::Control: m_remote->set(Tone::Orange, QStringLiteral("▲ CONTROL"), sub); break;
+    }
 }
 
 // ============================================================================================ ElidedLabel

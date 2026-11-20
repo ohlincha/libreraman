@@ -7,12 +7,18 @@
 // down or leave it on, with "Remember my choice" (QSettings "instrument/onClose": ask | shutdown | leave;
 // also selectable in Instrument > When closing). With dialogsEnabled() == false (tests, self-test) nothing
 // is asked: a running measurement is stopped and the remembered choice is used ("ask" = leave on).
+//
+// Local API (apiserver.h): the window owns the ApiServer; main() starts it (startApi()) unless switched off
+// (Instrument > Local API; QSettings "api/enabled", default on, "api/port", default 8765). Remote clients are
+// read-only unless Instrument > Allow remote measurements is checked (QSettings "api/allowRemoteControl",
+// default off). The REMOTE tile of the status strip shows off / read-only / control.
 #include <QMainWindow>
 #include <QString>
 #include <vector>
 
 #include "controller.h"
 
+class QAction;
 class QComboBox;
 class QPlainTextEdit;
 class QStackedWidget;
@@ -20,6 +26,7 @@ class QToolButton;
 
 namespace lr::gui {
 
+class ApiServer;
 class MeasurePage;
 class Page;
 class StatusStrip;
@@ -40,6 +47,13 @@ public:
     QPlainTextEdit* logView() const { return m_log; }
     int currentArea() const;
     InstrumentInfo instrumentInfo() const { return m_info; }
+
+    ApiServer* apiServer() const { return m_api; }
+    QAction* apiAction() const { return m_apiAction; }
+    QAction* remoteControlAction() const { return m_remoteAction; }
+    // Starts the local API on 127.0.0.1 (port < 0: QSettings "api/port"; apiFile empty: the default API file).
+    bool startApi(int port = -1, const QString& apiFile = {});
+    void stopApi();
 
     static OnClose onClosePolicy();
     static void setOnClosePolicy(OnClose p);
@@ -65,6 +79,7 @@ private:
     void buildMenus();
     QWidget* buildSimulatorBar();
     void updateTitle(bool laserOn);
+    void updateRemoteTile();
 
     Controller* m_ctl;
     InstrumentInfo m_info;
@@ -78,6 +93,9 @@ private:
     QPlainTextEdit* m_log;
     bool m_laserTitle = false;
     bool m_shutDown = false;
+    ApiServer* m_api = nullptr;
+    QAction* m_apiAction = nullptr;
+    QAction* m_remoteAction = nullptr;
 };
 
 }  // namespace lr::gui

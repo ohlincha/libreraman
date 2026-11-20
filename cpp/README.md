@@ -78,7 +78,10 @@ of the package (no wrapper scripts). Local `.deb` with a Qt not from the distrib
 | `src/core/match.*` | – (C++ only) | library matching: HQI full-spectrum search, peak matching, NNLS (Lawson–Hanson) mixtures |
 | `src/core/chemometrics.*` | – (C++ only) | Analysis: data matrix, preprocessing, PCA, EFA, OPA, SIMPLISMA, MCR-ALS (constraints, rotational-ambiguity bands), NNLS |
 | `src/core/computed*.*` | – (new in C++) | computed Raman spectra: readers for Gaussian, ORCA (.out/.hess), NWChem, CP2K, Quantum ESPRESSO, vasp_raman.py, Phonopy-Spectroscopy, CASTEP; activities → cross-sections, scaling fit, broadening, assignment, comparison |
-| `src/cli/` | `__main__.py` | command line |
+| `src/cli/` | `__main__.py` | command line (`remote.*`: `--remote` client of the local API) |
+| `src/core/httpserver.*`, `apiclient.*` | – | small HTTP/1.1 server; API file, blocking API client |
+| `src/gui/apiserver.*` | – | local HTTP/JSON API of the running application (see below) |
+| `src/mcp/` | – | `LibreRamenMCP`, MCP server for AI agents (client of the local API) |
 | `src/gui/controller.*` | `gui/controller.py` | instrument jobs in a worker thread, status poll, watchdog, saving |
 | `src/gui/mainwindow.*`, `measurepage.*` | `gui/app.py` | main window, Measure area |
 | `src/gui/page.h`, `pages.cpp` | – | `Page` interface and registry of the side-bar areas (Data, Library, …) |
@@ -88,6 +91,86 @@ of the package (no wrapper scripts). Local `.deb` with a Qt not from the distrib
 | `src/gui/` (other) | `gui/` | plot widget, theme, status strip, splash, icon |
 | `src/gui/computedpanel.*` | – (new in C++) | computed spectra panel (for the Analysis page) |
 | `tests/` | – | QtTest; `tests/golden/` holds outputs of the Python reference |
+
+## Automation: local API, `--remote`, Python, MCP
+
+The running application owns the instrument; scripts and AI agents talk to it through a **local HTTP/JSON API**
+(`src/gui/apiserver.h`), so all clients share one state and one set of safety rules
+(docs/SPECIFICATION.md sections 2, 4, 8).
+
+- **Where**: `http://127.0.0.1:8765` (loopback only; port: QSettings `api/port` or `LibreRamen --api-port N`;
+  off: Instrument > *Local API*, or `--no-api`). Every request needs `Authorization: Bearer <token>`; the token
+  is new at every start and is written with the port to the **API file** (user-only permissions):
+  `~/.config/LibreRamen/api.json` (Linux), `~/Library/Preferences/LibreRamen/api.json` (macOS),
+  `%LOCALAPPDATA%\LibreRamen\api.json` (Windows), or `$LIBRERAMEN_API_FILE`. Clients read it.
+- **Permissions**: remote clients are **read-only** until someone at the instrument checks Instrument >
+  *Allow remote measurements* (remembered; the REMOTE tile of the status strip shows OFF / READ-ONLY / CONTROL).
+  Without it `POST /measure` and `/series` answer 403. Even with it the laser needs ARM on the instrument
+  and a closed compartment. `POST /stop` (stop + laser off) is **always** allowed. Settings are range-checked
+  (same limits as the GUI fields, see `GET /info`); unknown fields are rejected. Every action is logged with
+  its origin: `GUI: measure …`, `API (cli): measure …`, `API (mcp): STOP (laser off)`.
+- **Why no QtHttpServer**: not packaged for the distribution Qt of Ubuntu 24.04 (6.4) used in CI, and an
+  extra module elsewhere; `src/core/httpserver.*` is ~250 lines on QTcpServer (one request per connection,
+  Content-Length bodies, JSON only).
+
+| Endpoint | Body / query | Answer |
+|---|---|---|
+| `GET /status` | | `{"connection":"connected","simulated":false,"armed":true,"compartment_open":false,"laser_on":false,"channel":532,"busy":false,"series_running":false,"paused":false,"remote_control":true,"job":null,…}` |
+| `GET /info` | | version, `api_version`, instrument (model, serial, calibration), `data_folder`, `limits`, `endpoints` |
+| `GET /spectra?limit=N` | | `{"spectra":[{"id":7,"sample":"CCl4","time":"…","file":"…/CCl4_20261120_183901.csv","channel":532,"exposure_s":1,"averages":3,"points":2048}]}` (last 100 kept) |
+| `GET /spectra/{id}` | | the above plus `meta`, `shift`, `intensity`, `signal`, `background` |
+| `POST /measure` | `{"exposure_s":1,"averages":3,"background":"each","prebleach_s":0,"sample":"CCl4","channel":532,"wait":true}` | 202 `{"id":4,"kind":"measure","state":"running",…}`; with `"wait":true` 200 when finished: `{"state":"done","spectra":[7],…}` (`failed` + `error`, or `stopped`). 403 not allowed, 409 busy, 503 no instrument, 400 invalid |
+| `POST /series` | `{"sample":"x","exposure_s":1,"averages":1,"background":"each\|once\|none","interval_s":10,"count":12}` (or `duration_s`; `start_delay_s`, `laser_stays_on`) | 202 job |
+| `GET /series/progress` | | `{"running":true,"paused":false,"n":3,"total":12,"elapsed_s":31.2,"next_in_s":8.8,"end":"…","done":false}` |
+| `GET /jobs/{id}` | | job (`running`, `done`, `failed`, `stopped`) |
+| `POST /stop` | | `{"stopped":true,"was_busy":true,"laser_on":false}` |
+| `POST /process` | `{"id":7}` or `{"x":[…],"y":[…]}`, optional `"settings":{"baseline":"snip","strength":5,"despike":true,…}` (default: the Measure page's) | `{"x","y","baseline","settings"}` |
+| `POST /peaks` | as `/process`, plus `snr`, `min_fwhm`, `shoulders`, `xmin`, `xmax` | `{"peaks":[{"position":459.1,"height":…,"fwhm":…,"area":…,"snr":…,"shoulder":false}],"noise":…}` |
+| `GET /standards` | | reference standards with bands |
+| `POST /match` | | 501 until the library registers a handler (`ApiServer::addRoute`) |
+| `GET /log?since=N` | | `{"lines":[{"seq":12,"time":"…","text":"API (cli): measure …"}],"next":12}` |
+
+Errors are `{"error":"…","status":N}` (401 token, 403 not allowed, 404, 405, 409 busy, 400 invalid).
+
+```
+curl -H "Authorization: Bearer $(jq -r .token ~/.config/LibreRamen/api.json)" http://127.0.0.1:8765/status
+```
+
+**Command line** (`LibreRamenCLI --remote -h`): `status`, `info`, `measure [-e S] [-n N] [--sample X]
+[--background each|none] [--prebleach S] [--channel 532|1064] [--no-wait]`, `series --interval S (--count N |
+--duration S) [--fast]`, `progress`, `job ID`, `stop`, `spectra`, `spectrum ID [-o file.csv]`, `peaks ID`,
+`standards`, `log [--since N]`; `--json` prints the API's JSON. Exit codes: 0 ok, 1 failed, 2 usage,
+3 LibreRamen not running, 4 not allowed (token / remote measurements off), 5 busy, 130 stopped. The local
+commands (`status`, `dark`, `acquire`, `series`, `standards`) also take `--json` (result on stdout, messages
+on stderr).
+
+**Python** (standard library only): `libreramen/client.py`
+
+```python
+from libreramen.client import Client
+c = Client()                                   # reads the API file
+job = c.measure(exposure_s=1, averages=3, sample="CCl4")
+print(c.peaks(job["spectra"][-1]))
+c.stop()
+```
+
+**MCP server for AI agents**: `LibreRamenMCP` (stdio, JSON-RPC 2.0; protocol versions 2024-11-05 to
+2025-06-18) is a client of the same API (origin `API (mcp)`), so the permissions above apply. Tools: `status`,
+`acquire`, `run_series`, `series_progress`, `get_job`, `stop`, `list_spectra`, `get_spectrum` (`max_points`),
+`find_peaks`, `process`, `list_standards`, `get_log`. Register it with Claude Code:
+
+```
+claude mcp add libreramen -- /path/to/LibreRamenMCP
+```
+
+or in any MCP client's JSON configuration (Claude Desktop `claude_desktop_config.json`, etc.):
+
+```json
+{ "mcpServers": { "libreramen": { "command": "/path/to/LibreRamenMCP" } } }
+```
+
+(`--api-file FILE` if the application uses a non-default API file.) LibreRamen must be running; without
+*Allow remote measurements* the agent can read status and spectra but not switch the laser on.
 
 ## Conventions
 
