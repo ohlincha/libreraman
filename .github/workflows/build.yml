@@ -15,7 +15,7 @@ jobs:
       - run: pip install pyinstaller pillow PySide6 pyqtgraph numpy scipy pyserial pyusb libusb-package
       - run: >
           pyinstaller --noconfirm --windowed --name LibreRamen --icon libreramen/data/icon.png
-          --collect-data libreramen --collect-all libusb_package --collect-submodules serial
+          --add-data libreramen/data:libreramen/data --collect-all libusb_package --collect-submodules serial
           --hidden-import usb.backend.libusb1 libreramen_app.py
       - run: dist\LibreRamen\LibreRamen.exe standards
       - name: Self-test of the packaged app (GUI + simulator)
@@ -56,7 +56,7 @@ jobs:
       - run: |
           pyinstaller --noconfirm --windowed --name LibreRamen \
             --osx-bundle-identifier io.github.ohlincha.libreramen --icon libreramen/data/icon.png \
-            --collect-data libreramen --collect-all libusb_package --collect-submodules serial \
+            --add-data libreramen/data:libreramen/data --collect-all libusb_package --collect-submodules serial \
             --hidden-import usb.backend.libusb1 libreramen_app.py
           mkdir -p dmg && cp -R dist/LibreRamen.app dmg/ && ln -s /Applications dmg/Applications
           hdiutil create -volname LibreRamen -srcfolder dmg -ov -format UDZO dist/LibreRamen-macOS-Intel.dmg
