@@ -1,0 +1,2 @@
+# Golden test data must be byte-identical on every platform (no CRLF conversion on Windows checkouts).
+cpp/tests/golden/** -text

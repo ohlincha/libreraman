@@ -39,10 +39,17 @@ jobs:
         run: |
           $env:PATH = "C:\vcpkg\installed\x64-windows\bin;$env:PATH"
           ctest --test-dir build --output-on-failure
+          if ($LASTEXITCODE -ne 0) {
+            foreach ($t in (ctest --test-dir build -N | Select-String "Test +#\d+: (\S+)" | % { $_.Matches[0].Groups[1].Value })) {
+              & "build\$t.exe" -o -,txt 2>&1 | Out-Host
+              if ($LASTEXITCODE -ne 0) { Write-Host "== $t exit code: $LASTEXITCODE" }
+            }
+            exit 1
+          }
         env: { QT_QPA_PLATFORM: offscreen }
 
   macos:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - uses: jurplel/install-qt-action@v4
