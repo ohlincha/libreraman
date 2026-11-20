@@ -1,4 +1,4 @@
-"""Open software for the Anton Paar Cora 5000 Raman spectrometer (BaySpec hardware inside)."""
+"""LibreRamen: open-source software for Raman spectrometers (first supported: Anton Paar Cora 5000)."""
 
 __version__ = "0.1.0"
 

@@ -1,4 +1,4 @@
-# Cora 5000 – USB protocol notes (from captures 2026-11-20)
+# LibreRamen – Cora 5000 USB protocol notes (from captures 2026-11-20)
 
 Captures are in `captures/`. They contain keyboard traffic, including the vendor-software logon at 09:40
 (vendor default password). Keep them out of the public repo anyway.

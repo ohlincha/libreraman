@@ -1,15 +1,15 @@
 """
 Command line:
-  python3 -m cora status
-  python3 -m cora init
-  python3 -m cora dark    [-e 1]                         (laser off)
-  python3 -m cora acquire [-e 1] [-n 1] [--channel 532|1064] [--power 50] [-o file.csv]
-  python3 -m cora series  [-e 1] [-n 1] --interval 10 --count 12 [-o file.csv]
-  python3 -m cora calibrate --standard chloroform [--standard ethanol ...] [-e 1 -n 5]
+  python3 -m libreramen status
+  python3 -m libreramen init
+  python3 -m libreramen dark    [-e 1]                         (laser off)
+  python3 -m libreramen acquire [-e 1] [-n 1] [--channel 532|1064] [--power 50] [-o file.csv]
+  python3 -m libreramen series  [-e 1] [-n 1] --interval 10 --count 12 [-o file.csv]
+  python3 -m libreramen calibrate --standard chloroform [--standard ethanol ...] [-e 1 -n 5]
         (measures each standard in turn, asking you to swap samples and press ARM)
-  python3 -m cora calibrate --standard chloroform --from chcl3.csv ...   (offline, from saved spectra)
-  python3 -m cora standards                              (list the reference standards)
-  python3 -m cora shutdown                               (vendor Shutdown: USB, OFF)
+  python3 -m libreramen calibrate --standard chloroform --from chcl3.csv ...   (offline, from saved spectra)
+  python3 -m libreramen standards                              (list the reference standards)
+  python3 -m libreramen shutdown                               (vendor Shutdown: USB, OFF)
 Options: --ini BS_Device_Settings.ini (calibration; default: built-in values of the development unit)
 """
 
@@ -24,7 +24,7 @@ from .series import run_series
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog="cora")
+    ap = argparse.ArgumentParser(prog="libreramen")
     ap.add_argument("cmd", choices=["status", "init", "dark", "acquire", "series", "calibrate", "standards", "shutdown"])
     ap.add_argument("-e", "--exposure", type=float, default=1.0)
     ap.add_argument("-n", "--averages", type=int, default=1)
