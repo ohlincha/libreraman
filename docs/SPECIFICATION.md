@@ -134,6 +134,9 @@ Decoded and tested on the real instrument (see `PROTOCOL.md`):
 - **PCA** (scores, loadings, explained variance), **EFA** (forward/backward), **OPA**, **SIMPLISMA**,
   **MCR-ALS** (non-negativity, closure, unimodality, fixed spectra; show rotational ambiguity),
   **NNLS** fitting with library spectra; later **PLS**.
+- **Peak trends** (kinetics) of a series: per band height, area, centroid, FWHM or fitted area/height/
+  position/FWHM (local linear baseline, profile fit with errors), ratio to a reference band or relative to
+  the first spectrum, single-exponential and linear fits (τ, rate, R²); live during a series.
 - **Computed spectra**: read Gaussian, ORCA, NWChem, CP2K, Quantum ESPRESSO, phonopy/VASP, CASTEP;
   convert Raman activities to intensities for the laser wavelength and temperature; frequency
   scaling (manual or fitted); broadening; overlay; band assignment table; compare several

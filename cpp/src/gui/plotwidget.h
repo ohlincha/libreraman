@@ -1,7 +1,7 @@
 #pragma once
 // QPainter-based 2D plot widget (replaces pyqtgraph of the Python version; no Qt Charts/QCustomPlot/Qwt).
 //
-// A PlotWidget owns PlotItems (curves, text, peak labels, lines, regions, heat maps), draws axes with
+// A PlotWidget owns PlotItems (curves, error bars, text, peak labels, lines, regions, heat maps), draws axes with
 // nice ticks, and implements the spectroscopy navigation of the Python SpectrumViewBox:
 //   WheelMode::Spectrum (default, as Python): wheel = change the top of the y axis (the bottom/baseline
 //     stays put); Ctrl+wheel or wheel over the x axis = zoom x around the cursor; wheel over the y axis
@@ -21,6 +21,7 @@
 #include <QRectF>
 #include <QWidget>
 
+#include <algorithm>
 #include <functional>
 #include <limits>
 #include <utility>
@@ -212,6 +213,32 @@ private:
     double m_fillLevel = 0;
     bool m_decimate = true;
     friend class PlotWidget;
+};
+
+// Vertical error bars y ± err at points x (with caps); NaN or non-positive errors are skipped. Usually
+// added next to a Curve with the same data; takes part in the automatic y range (y ± err).
+class ErrorBars : public PlotItem {
+    Q_OBJECT
+public:
+    void setData(Vec x, Vec y, Vec err);    // sizes must match (the shortest length is used)
+    std::size_t size() const { return std::min({m_x.size(), m_y.size(), m_err.size()}); }
+    void setPen(const QPen& pen);           // default: palette.main
+    void setCapWidth(double px);            // full cap width in pixels (default 6; 0: no caps)
+
+    Bounds xBounds() const override;
+    Bounds yBounds(double x0, double x1) const override;
+
+public:
+    explicit ErrorBars(PlotWidget* plot) : PlotItem(plot) {}
+
+protected:
+    void paint(QPainter& p, const PlotTransform& t) override;
+
+private:
+    Vec m_x, m_y, m_err;
+    QPen m_pen;
+    bool m_hasPen = false;
+    double m_cap = 6;
 };
 
 // Text anchored to a data point. anchor is the point of the text box placed at (x, y), as a fraction of
@@ -417,6 +444,7 @@ public:
     Curve* addCurve(const QPen& pen = QPen(), const QString& name = {});
     Curve* addCurve(Vec x, Vec y, const QPen& pen = QPen(), const QString& name = {});
     Curve* addScatter(Vec x, Vec y, const QColor& color, double size = 6, Marker m = Marker::Circle);
+    ErrorBars* addErrorBars(Vec x, Vec y, Vec err, const QPen& pen = QPen());
     TextItem* addText(const QString& text, double x, double y, const QPointF& anchor = {0.5, 1.0});
     PeakLabels* addPeakLabels();
     InfiniteLine* addVLine(double x, const QPen& pen = QPen(), bool movable = false);
