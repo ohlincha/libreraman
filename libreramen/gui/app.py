@@ -12,7 +12,7 @@ import numpy as np
 import pyqtgraph as pg
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QFont
-from PySide6.QtWidgets import (QApplication, QButtonGroup, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog,
+from PySide6.QtWidgets import (QApplication, QButtonGroup, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QMenu,
                                QFormLayout, QFrame, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
                                QMainWindow, QMessageBox, QPlainTextEdit, QProgressBar, QPushButton, QRadioButton,
                                QSlider, QSpinBox, QStackedWidget, QToolButton, QVBoxLayout, QWidget)
@@ -147,7 +147,15 @@ class SpectrumViewBox(pg.ViewBox):
         self.home_x = None          # x range restored by double-click (None: full data range)
         self.auto_y = True          # our own automatic intensity scaling (with headroom for labels)
         self.on_auto = None         # callback to rescale after double-click
+        self.on_right_click = None  # callback(x in data units, global screen pos) replaces pyqtgraph's menu
         self.sigXRangeChanged.connect(lambda *_: self.rescale_y())
+
+    def mouseClickEvent(self, ev):
+        if ev.button() == Qt.RightButton and self.on_right_click:
+            ev.accept()
+            self.on_right_click(self.mapSceneToView(ev.scenePos()).x(), ev.screenPos().toPoint())
+            return
+        super().mouseClickEvent(ev)
 
     def rescale_y(self, headroom=0.18):
         """Fit the intensity axis to the data visible in the current x range (only in automatic mode)."""
@@ -238,6 +246,9 @@ class MeasurePage(QWidget):
         self.plot.setXRange(150, 3500)
         self.plot.getViewBox().home_x = (150, 3500)
         self.plot.getViewBox().on_auto = self.redraw
+        self.plot.getViewBox().on_right_click = self.spectrum_menu
+        self.plot.setMenuEnabled(False)
+        self.last_peaks = []
         self.curve = self.plot.plot(pen=pg.mkPen(PLOT["main"], width=1.6))
         self.base_curve = self.plot.plot(pen=pg.mkPen(PLOT["baseline"], width=1.2, style=Qt.DashLine))
         self.old_curves = [self.plot.plot(pen=pg.mkPen((*PLOT["old"], 35 + 20 * i), width=1)) for i in range(4)]
@@ -267,8 +278,18 @@ class MeasurePage(QWidget):
         self.band.setRange(100, 4000)
         self.band.setValue(1000)
         self.band.setSuffix(" cm⁻¹")
+        self.band.setToolTip("<p>Band followed in the trend. Set automatically to the tallest peak of the first "
+                             "spectrum; change it here, pick a peak, or right-click in the spectrum.</p>")
+        self.band_auto = True
         self.band.valueChanged.connect(self.recompute_trend)
+        self.band.editingFinished.connect(lambda: setattr(self, "band_auto", False))
         row.addWidget(self.band)
+        self.peak_btn = QToolButton(text="peaks ▾")
+        self.peak_btn.setPopupMode(QToolButton.InstantPopup)
+        self.peak_menu = QMenu(self.peak_btn)
+        self.peak_btn.setMenu(self.peak_menu)
+        self.peak_menu.aboutToShow.connect(self._fill_peak_menu)
+        row.addWidget(self.peak_btn)
         self.trend_mode = QComboBox()
         self.trend_mode.addItems(["trend", "waterfall"])
         self.trend_mode.currentTextChanged.connect(self.redraw_trend)
@@ -530,6 +551,7 @@ class MeasurePage(QWidget):
         self.ctl.measure_once(s)
 
     def start_series(self):
+        self.band_auto = True                                  # new series: pick the tallest band again
         s = self.settings()
         mi = self.min_interval()
         if not self.fastest.isChecked() and s["interval"] < mi:
@@ -547,10 +569,15 @@ class MeasurePage(QWidget):
 
     # --- results
     def add_spectrum(self, sp):
+        first = not self.history
         self.history.append(sp)
         self.history = self.history[-50:]
         x = np.array(sp.shift)
         y, _ = processing.process(x, np.array(sp.intensity), self.proc_settings())
+        self.last_peaks = [p.position for p in peakmod.pick(x, y, snr=8, xmin=150)][:12]
+        if first and self.band_auto and self.last_peaks:      # follow the tallest band by default
+            tall = max(self.last_peaks, key=lambda p: y[int(np.argmin(np.abs(x - p)))])
+            self.set_band(tall, auto=True)
         t = sp.meta.get("series_elapsed_s", (sp.t - (self.series_t0 or sp.t)))
         self.trend.append((t, self._band_value(x, y)))
         raw_max = max(sp.signal) if sp.signal else max(sp.intensity)
@@ -564,6 +591,30 @@ class MeasurePage(QWidget):
         self.lbl_set.setText(f"{sp.averages} × {sp.exposure_s:g} s · {sp.channel} nm")
         self.redraw()
         self.redraw_trend()
+
+    def set_band(self, value, auto=False):
+        self.band_auto = auto
+        self.band.blockSignals(True)
+        self.band.setValue(int(round(value)))
+        self.band.blockSignals(False)
+        self.recompute_trend()
+
+    def _fill_peak_menu(self):
+        self.peak_menu.clear()
+        if not self.last_peaks:
+            self.peak_menu.addAction("(no peaks yet)").setEnabled(False)
+        for p in self.last_peaks:
+            self.peak_menu.addAction(f"{p:.0f} cm⁻¹", lambda v=p: self.set_band(v))
+
+    def spectrum_menu(self, x, screen_pos):
+        m = QMenu(self)
+        near = min(self.last_peaks, key=lambda p: abs(p - x)) if self.last_peaks else None
+        if near is not None and abs(near - x) < 25:
+            m.addAction(f"Use peak {near:.0f} cm⁻¹ for the trend", lambda: self.set_band(near))
+        m.addAction(f"Use {x:.0f} cm⁻¹ for the trend", lambda: self.set_band(x))
+        m.addSeparator()
+        m.addAction("Full view", lambda: self.plot.getViewBox().mouseDoubleClickEvent(_Accept()))
+        m.exec(screen_pos)
 
     def _band_value(self, x, y):
         i = int(np.argmin(np.abs(x - self.band.value())))
@@ -689,6 +740,11 @@ class MeasurePage(QWidget):
 
 
 # ----------------------------------------------------------------------------- main window
+class _Accept:
+    def accept(self):
+        pass
+
+
 class Placeholder(QWidget):
     def __init__(self, title, text):
         super().__init__()
