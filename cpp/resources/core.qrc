@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="/core">
+    <file>simulator.bin</file>
+  </qresource>
+</RCC>
