@@ -26,7 +26,7 @@ STANDARDS = {
     "polystyrene": dict(kind="solid", source="ASTM", bands=[
         (620.9, M), (795.8, M), (1001.4, S), (1031.8, M), (1155.3, M), (1450.5, M), (1583.1, M),
         (1602.3, S), (2852.4, W), (2904.5, M), (3054.3, S)]),
-    "paracetamol": dict(kind="solid", source="ASTM", aka=["4-acetamidophenol", "acetaminophen"], bands=[
+    "paracetamol": dict(kind="solid", source="ASTM", note="a plain tablet: cheap multi-point calibration", aka=["4-acetamidophenol", "acetaminophen"], bands=[
         (213.3, M), (329.2, M), (390.9, M), (465.1, M), (504.0, M), (651.6, M), (710.8, M),
         (797.2, M), (834.5, M), (857.9, S), (968.7, W), (1105.5, M), (1168.5, S), (1236.8, S),
         (1278.5, M), (1323.9, S), (1371.5, M), (1515.1, W), (1561.5, M), (1648.4, S), (2931.1, M),
@@ -63,7 +63,8 @@ STANDARDS = {
         (482, M), (523, M), (864, S), (1036, M), (1089, M), (1463, M), (2880, S), (2942, S)]),
     "cyclohexane (lit)": dict(kind="liquid", source="lit", bands=[(801, S), (1028, S), (1444, S), (2853, S), (2938, S)]),
     # --- solids (lit) ------------------------------------------------------------------------
-    "silicon": dict(kind="solid", source="lit", aka=["si wafer"], bands=[(520.7, S)]),
+    "silicon": dict(kind="solid", source="lit", aka=["si", "si wafer"], bands=[(520.5, S)],
+                    note="single sharp band: one-point (offset) check; 520.5-520.7 depending on temperature"),
     "diamond": dict(kind="solid", source="lit", bands=[(1332.5, S)]),
     "calcite": dict(kind="solid", source="lit", aka=["caco3"], bands=[(155, M), (281, M), (711, M), (1085.5, S)]),
     "anatase": dict(kind="solid", source="lit", aka=["tio2 anatase"], bands=[

@@ -103,6 +103,10 @@ class DataPage(QWidget):
         self.offset.valueChanged.connect(self.redraw)
         bar.addWidget(self.offset)
         bar.addStretch()
+        calc = QPushButton("Calculator…")
+        calc.setToolTip("<p>New spectrum = a·A + b·B + c (scaling, offset, weighted difference)</p>")
+        calc.clicked.connect(self.calculator)
+        bar.addWidget(calc)
         exp = QToolButton(text="Export ▾")
         exp.setPopupMode(QToolButton.InstantPopup)
         m = QMenu(exp)
@@ -305,6 +309,51 @@ class DataPage(QWidget):
             self.plot.removeItem(it)
         self.fit_items = []
         self.fit_label.setText("")
+
+    # ------------------------------------------------------------------ calculator
+    def calculator(self):
+        from PySide6.QtWidgets import QDialog, QDialogButtonBox, QDoubleSpinBox, QFormLayout
+        if not self.spectra:
+            return
+        d = QDialog(self)
+        d.setWindowTitle("Spectrum calculator")
+        f = QFormLayout(d)
+        names = [s.name for s in self.spectra]
+        a_sel, b_sel = QComboBox(), QComboBox()
+        a_sel.addItems(names)
+        b_sel.addItems(["(none)"] + names)
+        cur = max(0, self.list.currentRow())
+        a_sel.setCurrentIndex(cur)
+
+        def spin(v):
+            w = QDoubleSpinBox(decimals=4, minimum=-1e9, maximum=1e9, value=v)
+            return w
+        ka, kb, kc = spin(1.0), spin(-1.0), spin(0.0)
+        f.addRow("A", a_sel)
+        f.addRow("a (multiplier for A)", ka)
+        f.addRow("B", b_sel)
+        f.addRow("b (multiplier for B)", kb)
+        f.addRow("c (offset)", kc)
+        f.addRow(QLabel("Result = a·A + b·B + c, using the spectra as shown (processing applied)."))
+        bb = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        bb.accepted.connect(d.accept)
+        bb.rejected.connect(d.reject)
+        f.addRow(bb)
+        if d.exec() != QDialog.Accepted:
+            return
+        A = self.spectra[a_sel.currentIndex()]
+        xa, ya = self.processed(A)
+        y = ka.value() * ya + kc.value()
+        name = f"{ka.value():g}·[{A.name}]"
+        if b_sel.currentIndex() > 0:
+            B = self.spectra[b_sel.currentIndex() - 1]
+            xb, yb = self.processed(B)
+            y = y + kb.value() * np.interp(xa, xb, yb)
+            name += f" {'+' if kb.value() >= 0 else '−'} {abs(kb.value()):g}·[{B.name}]"
+        if kc.value():
+            name += f" {'+' if kc.value() >= 0 else '−'} {abs(kc.value()):g}"
+        res = fileio.DataSpectrum(name, xa.copy(), y, {"calculated": name, "processing": self._describe()})
+        self.add(res)
 
     # ------------------------------------------------------------------ export
     def export(self, kind):

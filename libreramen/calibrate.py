@@ -105,10 +105,20 @@ def match(peaks, shift_of, standard, window=12.0):
     return out
 
 
-def fit(matches, deg=None):
-    """matches from one or more standards -> shift polynomial + per-band residuals."""
+def fit(matches, deg=None, base=None):
+    """matches from one or more standards -> shift polynomial + per-band residuals.
+    With a single band (e.g. silicon) the current calibration `base` is shifted by a constant offset
+    (one-point calibration: only valid for a fixed grating, as here)."""
+    if len(matches) == 1:
+        if base is None:
+            raise ValueError("one-point calibration needs the current calibration")
+        px, ref = matches[0][0], matches[0][1]
+        offset = ref - base(px)
+        grid = list(range(0, 2048, 16))
+        p = polyfit(grid, [base(g) + offset for g in grid], 4)
+        return p, [(ref, polyval(p, px) - ref, px)], 0.0
     if len(matches) < 2:
-        raise ValueError("need at least 2 matched bands")
+        raise ValueError("no reference band matched")
     px = [m[0] for m in matches]
     deg = deg if deg is not None else min(3, len(matches) - 2 if len(matches) > 3 else 1)
     p = polyfit(px, [m[1] for m in matches], deg, [float(m[2]) for m in matches])
@@ -124,7 +134,7 @@ def calibrate(samples, shift_of, deg=None, window=12.0):
         m = match(find_peaks(y), shift_of, name, window)
         per.append((name, m))
         all_m += m
-    p, res, rms = fit(all_m, deg)
+    p, res, rms = fit(all_m, deg, base=shift_of)
     return {"poly": p, "residuals": res, "rms": rms, "matches": per,
             "standards": [n for _, n in samples], "date": time.strftime("%Y-%m-%d %H:%M"),
             "degree": len(p["coeff"]) - 1}
