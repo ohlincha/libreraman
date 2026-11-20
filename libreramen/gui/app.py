@@ -104,6 +104,27 @@ class StatusStrip(QWidget):
         self.chan.set("green", f"{st.get('channel') or '—'} nm", "")
 
 
+class ElidedLabel(QLabel):
+    """Shows a long text (e.g. a path) shortened at the front to fit the current width."""
+
+    def __init__(self, text=""):
+        super().__init__()
+        self.full = text
+        self.setMinimumWidth(40)
+
+    def setFullText(self, text):
+        self.full = text
+        self.setToolTip(text)
+        self._update()
+
+    def resizeEvent(self, ev):
+        super().resizeEvent(ev)
+        self._update()
+
+    def _update(self):
+        super().setText(self.fontMetrics().elidedText(self.full, Qt.ElideLeft, max(20, self.width() - 2)))
+
+
 # ----------------------------------------------------------------------------- spectrum plot
 class SpectrumViewBox(pg.ViewBox):
     """Spectroscopy-style navigation:
@@ -114,6 +135,8 @@ class SpectrumViewBox(pg.ViewBox):
         super().__init__()
         self.setMouseEnabled(x=True, y=False)
         self.home_x = None          # x range restored by double-click (None: full data range)
+        self.auto_y = True          # our own automatic intensity scaling (with headroom for labels)
+        self.on_auto = None         # callback to rescale after double-click
 
     def wheelEvent(self, ev, axis=None):
         mods = ev.modifiers() if hasattr(ev, "modifiers") else Qt.NoModifier
@@ -123,16 +146,21 @@ class SpectrumViewBox(pg.ViewBox):
         delta = ev.delta() if hasattr(ev, "delta") else ev.angleDelta().y()
         factor = 0.85 ** (delta / 120.0)
         (y0, y1) = self.viewRange()[1]
+        self.auto_y = False
         self.enableAutoRange(y=False)
         self.setYRange(y0, y0 + (y1 - y0) * factor, padding=0)
         ev.accept()
 
     def mouseDoubleClickEvent(self, ev):
+        self.auto_y = True
         if self.home_x:
             self.setXRange(*self.home_x, padding=0)
-            self.enableAutoRange(y=True)
         else:
-            self.enableAutoRange(x=True, y=True)
+            self.enableAutoRange(x=True)
+        if self.on_auto:
+            self.on_auto()
+        else:
+            self.enableAutoRange(y=True)
         ev.accept()
 
 
@@ -177,6 +205,7 @@ class MeasurePage(QWidget):
         self.plot.showGrid(x=True, y=True, alpha=0.2)
         self.plot.setXRange(150, 3500)
         self.plot.getViewBox().home_x = (150, 3500)
+        self.plot.getViewBox().on_auto = self.redraw
         self.curve = self.plot.plot(pen=pg.mkPen("#1f5fbf", width=1.6))
         self.base_curve = self.plot.plot(pen=pg.mkPen("#e07b00", width=1.2, style=Qt.DashLine))
         self.old_curves = [self.plot.plot(pen=pg.mkPen((31, 95, 191, 40 + 20 * i), width=1)) for i in range(4)]
@@ -299,9 +328,8 @@ class MeasurePage(QWidget):
         self.folder = QLineEdit(os.path.join(os.path.expanduser("~"), "Documents", "LibreRamen",
                                              time.strftime("%Y-%m-%d")))
         self.folder.setVisible(False)                  # holds the full path
-        self.folder_label = QLabel()
+        self.folder_label = ElidedLabel()
         self.folder_label.setStyleSheet("color: #555;")
-        self.folder_label.setMinimumWidth(40)
         self.folder.textChanged.connect(self._show_folder)
         b = QToolButton(text="Change…")
         b.clicked.connect(self.browse)
@@ -435,9 +463,7 @@ class MeasurePage(QWidget):
         path = path or self.folder.text()
         home = os.path.expanduser("~")
         shown = "~" + path[len(home):] if path.startswith(home) else path
-        fm = self.folder_label.fontMetrics()
-        w = max(60, self.folder_label.width() - 4)
-        self.folder_label.setText(fm.elidedText(shown, Qt.ElideLeft, w))
+        self.folder_label.setFullText(shown)
         self.folder_label.setToolTip(path)
 
     def resizeEvent(self, ev):
@@ -535,16 +561,16 @@ class MeasurePage(QWidget):
         y, base = processing.process(x, raw, ps)
         mode = "raw" if self.show_raw.isChecked() else ("cor" if self.show_cor.isChecked() else "both")
         if mode == "raw":
-            self.curve.setData(x, raw)
+            shown = raw
             self.base_curve.setData([], [])
         elif mode == "cor":
-            self.curve.setData(x, y)
+            shown = y
             self.base_curve.setData([], [])
         else:
-            pre = processing.smooth(processing.despike(raw)) if ps["smooth"] else (
+            shown = processing.smooth(processing.despike(raw)) if ps["smooth"] else (
                 processing.despike(raw) if ps["despike"] else raw)
-            self.curve.setData(x, pre)
             self.base_curve.setData(x, base)
+        self.curve.setData(x, shown)
         olds = self.history[-5:-1]
         for c in self.old_curves:
             c.setData([], [])
@@ -554,10 +580,23 @@ class MeasurePage(QWidget):
             c.setData(np.array(o.shift), yo)
         peaks = [p.position for p in peakmod.pick(x, y, snr=8, xmin=150)][:12]
         self.lbl_peaks.setText("  ".join(f"{p:.0f}" for p in peaks) or "—")
-        ref = raw if mode != "cor" else y
+        ref = shown
+        vb = self.plot.getViewBox()
+        if vb.auto_y:                                # automatic y: leave room above the tallest peak for labels
+            xr0 = vb.viewRange()[0]
+            vis = (x >= xr0[0]) & (x <= xr0[1])
+            if vis.any():
+                lo_, hi_ = float(np.min(ref[vis])), float(np.max(ref[vis]))
+                vb.enableAutoRange(y=False)
+                vb.setYRange(lo_, hi_ + 0.18 * (hi_ - lo_ or 1), padding=0.02)
+        xr = self.plot.getViewBox().viewRange()[0]
+        min_gap = (xr[1] - xr[0]) * 0.035          # labels closer than this (in cm-1) are staggered
+        last, level = None, 0
         for p in peaks:
             i = int(np.argmin(np.abs(x - p)))
-            lab = pg.TextItem(f"{p:.0f}", color="#333", anchor=(0.5, 1.2))
+            level = level + 1 if last is not None and p - last < min_gap else 0
+            last = p
+            lab = pg.TextItem(f"{p:.0f}", color="#333", anchor=(0.5, 1.2 + 1.1 * (level % 3)))
             lab.setPos(p, ref[i])
             self.plot.addItem(lab)
             self.peak_labels.append(lab)
