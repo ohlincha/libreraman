@@ -124,6 +124,28 @@ private slots:
         QVERIFY(page.loadSeriesFile(path));
         QCOMPARE(page.data().rows(), 3);
         QCOMPARE(page.data().times[2], 10.0);
+        // series.jdx (JCAMP-DX LINK file) and series.spc (multi-file SPC): times from the metadata
+        {
+            std::vector<fileio::DataSpectrum> sp3;
+            for (int k = 0; k < 3; ++k) {
+                fileio::DataSpectrum d;
+                d.name = QString("t%1").arg(k);
+                for (int i = 0; i < 50; ++i) {
+                    d.x.push_back(100 + i * 1.5);
+                    d.y.push_back(i * (k + 1));
+                }
+                d.meta = {{"series_elapsed_s", QString::number(k * 7.5)}};
+                sp3.push_back(d);
+            }
+            fileio::writeJcampMulti(dir.filePath("series.jdx"), sp3, "series");
+            fileio::writeSpcMulti(dir.filePath("series.spc"), sp3, "series");
+        }
+        for (const char* fn : {"series.jdx", "series.spc"}) {
+            QVERIFY(page.loadSeriesFile(dir.filePath(fn)));
+            QCOMPARE(page.data().rows(), 3);
+            QVERIFY(page.data().hasTimes);
+            QCOMPARE(page.data().times[2], 15.0);
+        }
         QVERIFY(!page.loadSeriesFile(dir.filePath("missing.csv")));
         QVERIFY(!page.lastError().isEmpty());
     }

@@ -5,8 +5,10 @@
 // CSV and every plot as PNG or SVG.
 //
 // Self-contained page: the main window feeds it with setSpectra()/addSpectrum()/loadSeriesFile(). MCR-ALS
-// and the ambiguity bands run in a worker thread (Stop button); everything else is fast enough to run in
-// the GUI thread and follows changes of the data and the preprocessing automatically.
+// and the ambiguity bands run in a worker thread (Stop button); the other methods follow changes of the data
+// and the preprocessing automatically (debounced): in the GUI thread, except PCA and EFA of data sets with
+// kAsyncRows or more spectra (a long series), which run in a background thread (one at a time; a result for
+// old data is dropped and the method runs again). Direct calls (runPca(), ...) are always synchronous.
 #include <QString>
 #include <QStringList>
 #include <QWidget>
@@ -51,6 +53,7 @@ public:
     void setSpectra(const std::vector<fileio::DataSpectrum>& spectra);
     void setSpectra(const std::vector<Spectrum>& spectra);
     void addSpectrum(const Spectrum& sp);
+    void addSpectra(const std::vector<Spectrum>& spectra);                    // one update for all
     void addSpectra(const std::vector<fileio::DataSpectrum>& spectra);
     // Reads a time-series table (series.csv) or any file fileio::read() understands and makes it the data
     // set. Returns false (and lastError()) if the file cannot be read.
@@ -90,6 +93,8 @@ public:
     const std::vector<chemo::AmbiguityBand>& ambiguity() const { return m_bands; }
     const chemo::NnlsFit* nnlsResult() const { return m_nnls.get(); }
     QString lastError() const { return m_error; }
+    qint64 lastRunMs() const { return m_lastRunMs; }     // GUI-thread time of the last automatic method run
+    qint64 lastAsyncMs() const { return m_lastAsyncMs; } // background time of the last PCA/EFA run (0: none)
 
     // ---- export
     // CSV files with a "#" comment header. kind: "scores", "loadings", "variance" (PCA), "efa",
@@ -125,10 +130,14 @@ private:
     PlotWidget* newPlot(const QString& xLabel, const QString& yLabel);
 
     void refreshList();
+    void appendListItems(size_t from);          // list items for m_spectra[from..]
     void dataSetChanged();                      // rebuild raw matrix, then preprocess
     void preprocessChanged();
     void schedule();                            // debounced re-run of the visible method
     void runVisible();
+    void runAsync(Method m);
+    void asyncDone(Method m, unsigned gen, int k, int scaling, std::shared_ptr<chemo::PcaResult> p,
+                   std::shared_ptr<chemo::EfaResult> e, const QString& err, qint64 ms);
     void updatePreview();
     void invalidateResults();
     void setInfo(QLabel* label, const QString& text, bool warning = false);
@@ -154,6 +163,7 @@ private:
     std::vector<fileio::DataSpectrum> m_known, m_references;
     unsigned m_generation = 0;                  // incremented whenever m_data changes
     QString m_error;
+    qint64 m_lastRunMs = 0, m_lastAsyncMs = 0;
 
     // results
     std::unique_ptr<chemo::PcaResult> m_pca;
@@ -170,6 +180,11 @@ private:
     chemo::Matrix m_nnlsComponents;
     Vec m_liveLof;
     bool m_dirty[5] = {true, true, true, true, true};
+
+    // automatic PCA/EFA of large data sets (runVisible) in the background
+    static constexpr int kAsyncRows = 40;
+    std::thread m_autoThread;
+    bool m_autoBusy = false, m_autoAgain = false;
 
     // worker (MCR-ALS, bands)
     std::thread m_worker;

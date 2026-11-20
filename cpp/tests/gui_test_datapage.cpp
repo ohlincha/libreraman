@@ -484,6 +484,23 @@ void GuiTestDataPage::exportFiles() {
     }
     QImage img(tmp.path() + "/plot.png");
     QCOMPARE(img.width(), 2000);
+    // all ticked spectra in one file (JCAMP-DX LINK file, multi-file SPC); opened again: one entry each
+    for (const QString& fn : {QStringLiteral("one.jdx"), QStringLiteral("one.spc")}) {
+        const QString path = tmp.path() + "/" + fn;
+        QVERIFY(p.exportOneFile(path));
+        const auto back = lr::fileio::read(path);
+        QCOMPARE(back.size(), ticked.size());
+        for (size_t k = 0; k < ticked.size(); ++k) {
+            const auto [x, y] = p.processed(p.spectrum(ticked[k]));
+            QCOMPARE(back[k].x.size(), x.size());
+            QVERIFY(std::abs(back[k].y[x.size() / 2] - y[x.size() / 2]) < 1e-3 * (1 + std::abs(y[x.size() / 2])));
+        }
+        QCOMPARE(back[0].name, fn.endsWith(".jdx") ? p.spectrum(ticked[0]).name : QStringLiteral("one #1"));
+        const int before = p.count();
+        QVERIFY(p.openFiles({path}).isEmpty());
+        QCOMPARE(p.count(), before + int(ticked.size()));
+        p.removeRows({p.count() - 3, p.count() - 2, p.count() - 1});
+    }
     p.setView(DataPage::View::HeatMap);
     QVERIFY(p.exportPlot(tmp.path() + "/heat.png"));
     QVERIFY(QFile(tmp.path() + "/plot.svg").open(QIODevice::ReadOnly));

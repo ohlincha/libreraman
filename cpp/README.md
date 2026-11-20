@@ -21,7 +21,15 @@ macOS: `brew install qt libusb hidapi eigen`. Windows: Qt from the online instal
 
 `LibreRamen --selftest` starts the GUI against the simulator (offscreen), takes and saves one spectrum and
 exits 0/1 (for checking packaged apps). Widget tests are `tests/gui_test_*.cpp` (linked with the `libreramen_gui` object library = `src/gui`
-without `main.cpp`; run offscreen). `-DLIBRERAMEN_GUI_PREVIEW=ON` builds `gui_preview`, which renders
+without `main.cpp`; run offscreen). `gui_test_seriesperf` runs a fast 150-spectrum series against the simulator
+with the Measure, Data and Analysis areas visible and fails if the event loop is blocked for 1 s or more (it
+prints the ping latencies; a Debug build on a desktop: ~100-300 ms, before the throttling ~130 s). Fast series
+stay responsive because the controller delivers series results in time-boxed passes (30 ms, newest progress
+only), the Measure page redraws at most every 150 ms (cached processing, 4 faded spectra, trend curve updated
+in place), the Data/Analysis areas get measured spectra in batches (`SpectrumBatcher`: at most every 1 s / 2 s
+while visible and at most 1/5 of the GUI thread's time, on activation when hidden), the Data area caches
+processed spectra and draws at most 24 curves in the overlay, and the Analysis area runs PCA/EFA of large data
+sets in a background thread. `-DLIBRERAMEN_GUI_PREVIEW=ON` builds `gui_preview`, which renders
 plots, status strip, splash and icon to PNG files for visual checks:
 `QT_QPA_PLATFORM=offscreen ./gui_preview <dir>`; `datapage_preview <dir>` renders the Data area
 (overlay, stacked, difference, fit, heat map), `calibration_preview <dir> [--dark]` the Calibration area
@@ -66,14 +74,14 @@ of the package (no wrapper scripts). Local `.deb` with a Qt not from the distrib
 | `src/core/cora.*` | `instrument.py` (`Cora`) | the real instrument |
 | `src/core/hw/*` | `hardware.py` | I/O board, PL2303 over libusb, MCP2200 (hidapi), laser driver, BaySpec spectrometers, discovery |
 | `src/core/simulator.*` | `simulator.py` | simulated instrument (`resources/simulator.bin`) |
-| `src/core/series.*` | `series.py`, GUI controller | time series |
+| `src/core/series.*` | `series.py`, GUI controller | time series; series.csv/.jdx/.spc rewritten by a writer thread (see `series.h`) |
 | `src/core/watchdog.*` | `watchdog.py` | laser watchdog process |
 | `src/core/windrivers.*` | `windrivers.py` | Windows driver repair (elevated script) |
 | `src/core/processing.*` | `processing.py` | baselines (ALS, arPLS, polynomial, rolling ball, SNIP), despike, smoothing, normalisation |
 | `src/core/peaks.*` | `peaks.py` | peak picking, profile fitting |
 | `src/core/calibrate.*` | `calibrate.py` | calibration against standards, JSON storage |
 | `src/core/standards.*` | `standards.py` | reference standards |
-| `src/core/fileio.*` | `fileio.py` | readers/writers (own CSV, vendor CSV/TXT/SPC, JCAMP-DX, columns) |
+| `src/core/fileio.*` | `fileio.py` | readers/writers (own CSV, vendor CSV/TXT/SPC, JCAMP-DX, columns); C++ only: multi-block JCAMP-DX and multi-file SPC (layouts in `fileio.h`) |
 | `src/core/library.*` | – (C++ only) | spectral library: SQLite file (Qt Sql), schema versioning, import (own spectra, files, RRUFF, band lists), export, demo library |
 | `src/core/match.*` | – (C++ only) | library matching: HQI full-spectrum search, peak matching, NNLS (Lawson–Hanson) mixtures |
 | `src/core/chemometrics.*` | – (C++ only) | Analysis: data matrix, preprocessing, PCA, EFA, OPA, SIMPLISMA, MCR-ALS (constraints, rotational-ambiguity bands), NNLS |

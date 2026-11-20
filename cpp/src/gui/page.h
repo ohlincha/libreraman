@@ -9,10 +9,13 @@
 //
 // The MainWindow passes every spectrum the controller delivers (single measurements and series) to
 // addSpectrum() of every page (Python MainWindow.add_to_data for the Data page; the Measure page draws it).
+#include <QElapsedTimer>
 #include <QString>
 #include <QStringList>
+#include <QTimer>
 #include <QWidget>
 #include <functional>
+#include <vector>
 
 #include "core/processing.h"
 #include "core/spectrum.h"
@@ -44,6 +47,39 @@ signals:
 
 private:
     Controller* m_controller = nullptr;
+};
+
+// Hands measured spectra to a page that is expensive to update in batches (fast series: the Data and Analysis
+// areas would otherwise redo their work for every spectrum). While the page is visible a batch is delivered at
+// most every `visibleMs` (the first spectrum after a quiet period on the next event-loop pass), and never more
+// often than kDuty times the cost of the last update (delivery plus setExtraCost(), e.g. a recomputation the
+// delivery triggers later), so a growing data set cannot occupy more than ~1/kDuty of the GUI thread; while
+// the page is hidden the spectra wait and are delivered when it is shown.
+class SpectrumBatcher : public QObject {
+public:
+    using Deliver = std::function<void(std::vector<lr::Spectrum>&&)>;
+    SpectrumBatcher(QWidget* page, int visibleMs, Deliver deliver);
+    void add(const lr::Spectrum& sp);
+    void flush();                              // deliver what is pending now
+    int pending() const { return int(m_pending.size()); }
+    int deliveries() const { return m_deliveries; }
+    void setExtraCost(std::function<qint64()> ms) { m_extraCost = std::move(ms); }
+    static constexpr int kDuty = 5;
+
+protected:
+    bool eventFilter(QObject* watched, QEvent* e) override;
+
+private:
+    void schedule();
+    QWidget* m_page;
+    int m_visibleMs;
+    Deliver m_deliver;
+    std::vector<lr::Spectrum> m_pending;
+    QTimer m_timer;
+    QElapsedTimer m_since;                     // since the last delivery
+    int m_deliveries = 0;
+    qint64 m_lastCostMs = 0;
+    std::function<qint64()> m_extraCost;
 };
 
 // Placeholder for an area that is not implemented yet.

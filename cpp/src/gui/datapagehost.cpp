@@ -12,6 +12,7 @@ DataPageHost::DataPageHost(const PageContext& ctx, QWidget* parent) : Page(paren
     v->setContentsMargins(0, 0, 0, 0);
     v->addWidget(m_page);
     if (ctx.processing) m_page->setProcessingSettings(ctx.processing);
+    m_batcher = new SpectrumBatcher(this, kVisibleMs, [this](std::vector<lr::Spectrum>&& b) { m_page->addSpectra(b); });
     // The page reports problems through message(); route them like the rest of the GUI (dialogs off in tests).
     m_page->setMessagesEnabled(false);
     QWidget* window = ctx.window;
@@ -21,6 +22,6 @@ DataPageHost::DataPageHost(const PageContext& ctx, QWidget* parent) : Page(paren
     });
 }
 
-void DataPageHost::addSpectrum(const lr::Spectrum& sp) { m_page->addSpectrum(sp); }
+void DataPageHost::addSpectrum(const lr::Spectrum& sp) { m_batcher->add(sp); }
 
 }  // namespace lr::gui

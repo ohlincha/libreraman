@@ -19,11 +19,13 @@ AnalysisPageHost::AnalysisPageHost(const PageContext&, QWidget* parent)
     tabs->addTab(m_computed, tr("Computed spectra"));
     v->addWidget(tabs);
     connect(m_page, &AnalysisPage::statusMessage, this, &Page::logMessage);
+    m_batcher = new SpectrumBatcher(this, kVisibleMs, [this](std::vector<lr::Spectrum>&& b) {
+        m_page->addSpectra(b);
+        m_computed->setExperimental(fileio::fromSpectrum(b.back(), spectrumDisplayName(b.back())));
+    });
+    m_batcher->setExtraCost([this] { return m_page->lastRunMs(); });   // the method re-run after each batch
 }
 
-void AnalysisPageHost::addSpectrum(const lr::Spectrum& sp) {
-    m_page->addSpectrum(sp);
-    m_computed->setExperimental(fileio::fromSpectrum(sp, spectrumDisplayName(sp)));
-}
+void AnalysisPageHost::addSpectrum(const lr::Spectrum& sp) { m_batcher->add(sp); }
 
 }  // namespace lr::gui

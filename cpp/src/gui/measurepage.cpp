@@ -30,6 +30,7 @@
 #include <QSlider>
 #include <QSpinBox>
 #include <QTimeEdit>
+#include <QTimer>
 #include <QToolButton>
 #include <QVBoxLayout>
 
@@ -133,9 +134,9 @@ MeasurePage::MeasurePage(Controller* ctl, QWidget* parent) : Page(parent), m_ctl
     m_plot->setXRange(150, 3500);
     m_plot->setHeadroom(0.18);
     const PlotPalette& pal = m_plot->plotPalette();
-    for (int i = 0; i < 4; ++i) {                     // faded previous spectra, oldest most transparent
+    for (int i = 0; i < kFaded; ++i) {                // faded previous spectra, oldest most transparent
         QColor c = pal.previous;
-        c.setAlpha(35 + 20 * i);
+        c.setAlpha(35 + 60 * i / std::max(1, kFaded - 1));
         Curve* old = m_plot->addCurve(QPen(c, 1));
         old->setAutoScale(false);
         old->setZValue(-1);
@@ -242,6 +243,10 @@ MeasurePage::MeasurePage(Controller* ctl, QWidget* parent) : Page(parent), m_ctl
     }
     setFolder(defaultFolder());
     m_folderAuto = true;
+    m_redrawTimer = new QTimer(this);
+    m_redrawTimer->setSingleShot(true);
+    connect(m_redrawTimer, &QTimer::timeout, this, &MeasurePage::flushRedraw);
+    m_sinceRedraw.start();
     updateMinInterval();
     redrawTrend();
 }
@@ -459,12 +464,12 @@ QWidget* MeasurePage::buildSettingsPanel() {
                 redraw();
         });
     }
-    connect(m_baseline, &QComboBox::currentIndexChanged, this, &MeasurePage::redraw);
-    connect(m_strength, &QSlider::valueChanged, this, &MeasurePage::redraw);
-    connect(m_despike, &QCheckBox::toggled, this, &MeasurePage::redraw);
-    connect(m_smoothing, &QCheckBox::toggled, this, &MeasurePage::redraw);
-    connect(m_normalise, &QComboBox::currentIndexChanged, this, &MeasurePage::redraw);
-    connect(m_derivative, &QComboBox::currentIndexChanged, this, &MeasurePage::redraw);
+    connect(m_baseline, &QComboBox::currentIndexChanged, this, &MeasurePage::processingChanged);
+    connect(m_strength, &QSlider::valueChanged, this, &MeasurePage::processingChanged);
+    connect(m_despike, &QCheckBox::toggled, this, &MeasurePage::processingChanged);
+    connect(m_smoothing, &QCheckBox::toggled, this, &MeasurePage::processingChanged);
+    connect(m_normalise, &QComboBox::currentIndexChanged, this, &MeasurePage::processingChanged);
+    connect(m_derivative, &QComboBox::currentIndexChanged, this, &MeasurePage::processingChanged);
     fl->addRow(QStringLiteral("Baseline"), m_baseline);
     fl->addRow(QStringLiteral("Strength"), m_strength);
     fl->addRow(m_despike);
@@ -666,6 +671,7 @@ void MeasurePage::startSeries() {
         s = seriesSettings();
     }
     m_history.clear();
+    m_processed.clear();
     m_trend.clear();
     if (m_ctl->startSeries(s, channel()))
         onSeriesProgress({});
@@ -685,10 +691,16 @@ double MeasurePage::trendTime(const lr::Spectrum& sp) const {
 void MeasurePage::addSpectrum(const lr::Spectrum& sp) {
     const bool first = m_history.empty();
     m_history.push_back(sp);
-    while (m_history.size() > 50)
-        m_history.pop_front();
     const Vec& x = sp.shift;
-    const Vec y = processSafe(x, sp.intensity, processingSettings()).first;
+    {
+        auto [y, base] = processSafe(x, sp.intensity, processingSettings());
+        m_processed.push_back({std::move(y), std::move(base), m_procStamp});
+    }
+    while (m_history.size() > 50) {
+        m_history.pop_front();
+        m_processed.pop_front();
+    }
+    const Vec& y = m_processed.back().y;
     m_lastPeaks = pickPositions(x, y);
     if (first && m_bandAuto && !m_lastPeaks.empty()) {   // follow the tallest band by default
         double tall = m_lastPeaks.front(), best = -std::numeric_limits<double>::infinity();
@@ -721,8 +733,47 @@ void MeasurePage::addSpectrum(const lr::Spectrum& sp) {
         m_lblSat->setText(rawMax > 55000 ? QStringLiteral("close to maximum") : QStringLiteral("none"));
     m_lblTime->setText(sp.t.toString(QStringLiteral("HH:mm:ss")));
     m_lblSet->setText(QStringLiteral("%1 × %2 s · %3 nm").arg(sp.averages).arg(lr::py::g(sp.exposure_s)).arg(sp.channel));
+    scheduleRedraw();
+}
+
+// Coalesces redraws: the first spectrum after a quiet period is drawn at once (next event-loop pass), later
+// ones at most every kMinRedrawMs; nothing is drawn while the page is hidden (showEvent draws).
+void MeasurePage::scheduleRedraw() {
+    m_redrawPending = true;
+    if (!isVisible() || m_redrawTimer->isActive())
+        return;
+    m_redrawTimer->start(int(std::max<qint64>(0, kMinRedrawMs - m_sinceRedraw.elapsed())));
+}
+
+void MeasurePage::flushRedraw() {
+    m_redrawTimer->stop();
+    if (!m_redrawPending)
+        return;
     redraw();
     redrawTrend();
+}
+
+void MeasurePage::showEvent(QShowEvent* e) {
+    Page::showEvent(e);
+    if (m_redrawPending)
+        scheduleRedraw();
+}
+
+void MeasurePage::processingChanged() {
+    ++m_procStamp;
+    redraw();
+    if (m_trendMode->currentIndex() == 1)
+        redrawTrend();
+}
+
+const MeasurePage::Processed& MeasurePage::processedAt(std::size_t i) {
+    Processed& p = m_processed[i];
+    if (p.stamp != m_procStamp) {
+        const lr::Spectrum& sp = m_history[i];
+        std::tie(p.y, p.base) = processSafe(sp.shift, sp.intensity, processingSettings());
+        p.stamp = m_procStamp;
+    }
+    return p;
 }
 
 double MeasurePage::bandValue(const Vec& x, const Vec& y) const {
@@ -745,12 +796,9 @@ void MeasurePage::setBand(double value, bool automatic) {
 void MeasurePage::recomputeTrend() {
     if (m_history.empty())
         return;
-    const lr::processing::Settings ps = processingSettings();
     m_trend.clear();
-    for (const lr::Spectrum& sp : m_history) {
-        const Vec y = processSafe(sp.shift, sp.intensity, ps).first;
-        m_trend.emplace_back(trendTime(sp), bandValue(sp.shift, y));
-    }
+    for (std::size_t i = 0; i < m_history.size(); ++i)
+        m_trend.emplace_back(trendTime(m_history[i]), bandValue(m_history[i].shift, processedAt(i).y));
     redrawTrend();
 }
 
@@ -780,6 +828,9 @@ void MeasurePage::spectrumMenu(const QPointF& data, const QPoint& globalPos) {
 }
 
 void MeasurePage::redraw() {
+    m_redrawPending = false;
+    m_sinceRedraw.restart();
+    ++m_redraws;
     if (m_history.empty()) {
         m_peakLabels->setLabels({});
         return;
@@ -788,7 +839,9 @@ void MeasurePage::redraw() {
     const lr::Spectrum& sp = m_history.back();
     const Vec& x = sp.shift;
     const Vec& raw = sp.intensity;
-    const auto [y, base] = processSafe(x, raw, ps);
+    const bool fresh = m_processed.back().stamp == m_procStamp;   // peaks of the newest are known
+    const Processed& pr = processedAt(m_history.size() - 1);
+    const Vec& y = pr.y;
     enum { Raw, Cor, Both } mode = m_showRaw->isChecked() ? Raw : (m_showCor->isChecked() ? Cor : Both);
     Vec shown;
     if (mode == Raw) {
@@ -804,7 +857,7 @@ void MeasurePage::redraw() {
             shown = lr::processing::despike(raw);
         else
             shown = raw;
-        m_baseCurve->setData(x, base);
+        m_baseCurve->setData(x, pr.base);
     }
     m_curve->setData(x, shown);
     const QString sample = sp.metaValue(QStringLiteral("sample"));
@@ -824,15 +877,18 @@ void MeasurePage::redraw() {
         if (o.metaValue(QStringLiteral("sample")) != sample || o.channel != sp.channel) break;
         ++same;
     }
-    const std::size_t nOld = std::min<std::size_t>(4, same);
+    const std::size_t nOld = std::min<std::size_t>(std::size_t(kFaded), same);
     for (std::size_t k = 0; k < nOld; ++k) {            // the newest previous spectrum is the least faded
-        const lr::Spectrum& o = m_history[m_history.size() - 1 - nOld + k];
-        Curve* c = m_oldCurves[4 - nOld + k];
-        c->setData(o.shift, mode == Cor ? processSafe(o.shift, o.intensity, ps).first : o.intensity);
+        const std::size_t i = m_history.size() - 1 - nOld + k;
+        const lr::Spectrum& o = m_history[i];
+        m_oldCurves[std::size_t(kFaded) - nOld + k]->setData(o.shift, mode == Cor ? processedAt(i).y : o.intensity);
     }
     if (nOld > 0)
-        m_oldCurves[3]->setName(tr("earlier %1 (%2)").arg(sample.isEmpty() ? tr("spectra") : sample).arg(same));
-    const Vec peaks = pickPositions(x, y);
+        m_oldCurves[std::size_t(kFaded) - 1]->setName(
+            tr("earlier %1 (%2)").arg(sample.isEmpty() ? tr("spectra") : sample).arg(same));
+    if (!fresh)
+        m_lastPeaks = pickPositions(x, y);
+    const Vec& peaks = m_lastPeaks;
     QStringList txt;
     for (double p : peaks)
         txt << QString::number(p, 'f', 0);
@@ -842,7 +898,6 @@ void MeasurePage::redraw() {
 }
 
 void MeasurePage::redrawTrend() {
-    m_tplot->clear();
     const PlotPalette& pal = m_tplot->plotPalette();
     if (m_trendMode->currentIndex() == 0) {
         const double span = m_trend.empty() ? 0.0 : m_trend.back().first;
@@ -854,52 +909,63 @@ void MeasurePage::redrawTrend() {
             unit = QStringLiteral("min"), div = 60;
         m_tplot->setLabel(Axis::Bottom, QStringLiteral("time (%1)").arg(unit));
         m_tplot->setLabel(Axis::Left, QString());   // too short for a title; the band is shown above
-        if (!m_trend.empty()) {
-            Vec t, v;
-            for (const auto& [a, b] : m_trend) {
-                t.push_back(a / div);
-                v.push_back(b);
-            }
-            Curve* c = m_tplot->addCurve(std::move(t), std::move(v), QPen(pal.main, 1.5));
-            c->setMarker(Marker::Circle, 5, QBrush(pal.main));
-        }
-    } else {
-        m_tplot->setLabel(Axis::Bottom, QStringLiteral("Raman shift (cm⁻¹)"));
-        m_tplot->setLabel(Axis::Left, QString());
-        const lr::processing::Settings ps = processingSettings();
-        const std::size_t n = std::min<std::size_t>(15, m_history.size());
-        if (n == 0)
+        if (m_trend.empty()) {
+            m_tplot->clear();
+            m_trendCurve = nullptr;
             return;
-        std::vector<Vec> ys;
-        double off = 0;
-        for (std::size_t k = 0; k < n; ++k) {
-            const lr::Spectrum& s = m_history[m_history.size() - n + k];
-            ys.push_back(processSafe(s.shift, s.intensity, ps).first);
-            Vec sel;                                   // 99.5th percentile above 150 cm-1
-            for (std::size_t i = 0; i < s.shift.size() && i < ys.back().size(); ++i)
-                if (s.shift[i] > 150)
-                    sel.push_back(ys.back()[i]);
-            if (!sel.empty()) {
-                std::sort(sel.begin(), sel.end());
-                const double pos = 0.995 * double(sel.size() - 1);
-                const std::size_t lo = std::size_t(pos);
-                const double frac = pos - double(lo);
-                const double q = sel[lo] + (lo + 1 < sel.size() ? frac * (sel[lo + 1] - sel[lo]) : 0.0);
-                off = std::max(off, q);
-            }
         }
-        off *= 0.6;
-        if (off == 0)
-            off = 1;
-        for (std::size_t k = 0; k < n; ++k) {
-            const lr::Spectrum& s = m_history[m_history.size() - n + k];
-            Vec y = ys[k];
-            for (double& v : y)
-                v += double(k) * off;
-            const QColor col = QColor::fromHsv(int(360.0 * double(k) / double(std::max<std::size_t>(n, 2))) % 360,
-                                               255, 200);
-            m_tplot->addCurve(s.shift, std::move(y), QPen(col, 1));
+        Vec t, v;
+        t.reserve(m_trend.size());
+        v.reserve(m_trend.size());
+        for (const auto& [a, b] : m_trend) {
+            t.push_back(a / div);
+            v.push_back(b);
         }
+        if (!m_trendCurve) {                           // first point (or after the waterfall): a new curve
+            m_tplot->clear();
+            m_trendCurve = m_tplot->addCurve(QPen(pal.main, 1.5));
+            m_trendCurve->setMarker(Marker::Circle, 5, QBrush(pal.main));
+        }
+        m_trendCurve->setData(std::move(t), std::move(v));   // in place: no new plot items per spectrum
+        return;
+    }
+    m_tplot->clear();
+    m_trendCurve = nullptr;
+    m_tplot->setLabel(Axis::Bottom, QStringLiteral("Raman shift (cm⁻¹)"));
+    m_tplot->setLabel(Axis::Left, QString());
+    const std::size_t n = std::min<std::size_t>(15, m_history.size());
+    if (n == 0)
+        return;
+    std::vector<Vec> ys;
+    double off = 0;
+    for (std::size_t k = 0; k < n; ++k) {
+        const std::size_t i = m_history.size() - n + k;
+        const lr::Spectrum& s = m_history[i];
+        ys.push_back(processedAt(i).y);
+        Vec sel;                                       // 99.5th percentile above 150 cm-1
+        for (std::size_t j = 0; j < s.shift.size() && j < ys.back().size(); ++j)
+            if (s.shift[j] > 150)
+                sel.push_back(ys.back()[j]);
+        if (!sel.empty()) {
+            std::sort(sel.begin(), sel.end());
+            const double pos = 0.995 * double(sel.size() - 1);
+            const std::size_t lo = std::size_t(pos);
+            const double frac = pos - double(lo);
+            const double q = sel[lo] + (lo + 1 < sel.size() ? frac * (sel[lo + 1] - sel[lo]) : 0.0);
+            off = std::max(off, q);
+        }
+    }
+    off *= 0.6;
+    if (off == 0)
+        off = 1;
+    for (std::size_t k = 0; k < n; ++k) {
+        const lr::Spectrum& s = m_history[m_history.size() - n + k];
+        Vec y = std::move(ys[k]);
+        for (double& v : y)
+            v += double(k) * off;
+        const QColor col = QColor::fromHsv(int(360.0 * double(k) / double(std::max<std::size_t>(n, 2))) % 360,
+                                           255, 200);
+        m_tplot->addCurve(s.shift, std::move(y), QPen(col, 1));
     }
 }
 

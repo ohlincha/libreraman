@@ -162,11 +162,18 @@ top and can be changed later for a whole series.
 ## 7. Data and files
 
 - Every spectrum is written immediately; long series are crash-safe.
+- A time series is a folder: one CSV per spectrum (full data and metadata; the crash-safe ground truth) and
+  the whole series as single files: `series.csv` (table), `series.jdx` (JCAMP-DX 5.01 compound file: a LINK
+  block with one block per spectrum, AFFN XYPOINTS, elapsed time and settings as `##$` labels) and
+  `series.spc` (Galactic SPC multi-file, common x array, z = elapsed seconds). The single files are rewritten
+  atomically in the background as the series grows (coalesced, never delaying the acquisition) and are
+  complete when the series ends. HDF5 is deliberately not used (no extra library; the formats above are read
+  by common tools).
 - Provenance in every file: instrument, serial, channel, settings, calibration (source and date),
   processing, software version, operator, sample, timestamps, checksum of raw data.
-- **Write**: CSV/TXT, JCAMP-DX, SPC, HDF5 (series and projects), Excel, project files, PNG/SVG/PDF.
+- **Write**: CSV/TXT, JCAMP-DX (single and multi-block), SPC (multi-file), Excel, project files, PNG/SVG/PDF.
 - **Read**: own formats, the vendor's SPC/CSV/TXT (including old data and `.mtd` methods),
-  JCAMP-DX, RRUFF, plain columns, other instruments' formats where feasible (e.g. Renishaw WDF).
+  JCAMP-DX (also compound LINK files), multi-file SPC (z values as times), RRUFF, plain columns, other instruments' formats where feasible (e.g. Renishaw WDF).
 - Export to electronic lab notebooks (simple formats first).
 
 ## 8. Integration and automation

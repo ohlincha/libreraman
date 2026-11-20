@@ -1,6 +1,7 @@
 #include "controller.h"
 
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFileInfo>
 #include <QStringList>
 
@@ -94,6 +95,10 @@ bool Controller::run(Job job, bool series) {
 }
 
 void Controller::jobFinished() {
+    if (deliveryPending()) {                           // results still on their way: finish after them
+        QMetaObject::invokeMethod(this, [this] { jobFinished(); }, Qt::QueuedConnection);
+        return;
+    }
     if (m_worker.joinable())
         m_worker.join();
     if (!m_busy)
@@ -344,12 +349,69 @@ bool Controller::startSeries(const lr::SeriesSettings& s, int channel, const QSt
         [this, s, channel] {
             selectChannel(channel);
             lr::SeriesCallbacks cb;
-            cb.spectrum = [this](const lr::Spectrum& sp) { emit spectrum(sp); };
-            cb.progress = [this](const lr::SeriesProgress& p) { emit seriesProgress(p); };
+            cb.spectrum = [this](const lr::Spectrum& sp) { postSpectrum(sp); };
+            cb.progress = [this](const lr::SeriesProgress& p) { postProgress(p); };
             cb.log = [this](const QString& m) { emit log(m); };
             lr::runTimeSeries(*m_inst, s, m_stop, cb, &m_pause);
         },
         true);
+}
+
+void Controller::postSpectrum(const lr::Spectrum& sp) {
+    const std::lock_guard<std::mutex> lock(m_pendingMutex);
+    m_pendingSpectra.push_back(sp);
+    postDelivery();
+}
+
+void Controller::postProgress(const lr::SeriesProgress& p) {
+    const std::lock_guard<std::mutex> lock(m_pendingMutex);
+    m_pendingProgress = p;                             // only the newest counts
+    postDelivery();
+}
+
+void Controller::postDelivery() {
+    if (m_deliveryPosted)
+        return;
+    m_deliveryPosted = true;
+    QMetaObject::invokeMethod(this, [this] { deliver(); }, Qt::QueuedConnection);
+}
+
+void Controller::deliver() {
+    // Emits pending spectra for at most kDeliverBudgetMs (the pages' work per spectrum adds up when a fast
+    // series outpaces the GUI), then yields to the event loop and continues in a new pass. The progress is
+    // emitted once its spectra are out.
+    QElapsedTimer t;
+    t.start();
+    for (;;) {
+        lr::Spectrum sp;
+        std::optional<lr::SeriesProgress> progress;
+        bool last = false;
+        {
+            const std::lock_guard<std::mutex> lock(m_pendingMutex);
+            if (m_pendingSpectra.empty()) {
+                progress.swap(m_pendingProgress);
+                m_deliveryPosted = false;
+                last = true;
+            } else if (t.elapsed() >= kDeliverBudgetMs) {
+                QMetaObject::invokeMethod(this, [this] { deliver(); }, Qt::QueuedConnection);   // still posted
+                return;
+            } else {
+                sp = std::move(m_pendingSpectra.front());
+                m_pendingSpectra.pop_front();
+            }
+        }
+        if (last) {
+            if (progress)
+                emit seriesProgress(*progress);
+            return;
+        }
+        emit spectrum(sp);
+    }
+}
+
+bool Controller::deliveryPending() {
+    const std::lock_guard<std::mutex> lock(m_pendingMutex);
+    return m_deliveryPosted;
 }
 
 void Controller::stop() {
