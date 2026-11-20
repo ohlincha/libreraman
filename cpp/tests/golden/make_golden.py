@@ -397,9 +397,41 @@ def gold_fileio():
     dump("fileio.json", files)
 
 
+# ----------------------------------------------------------------------------- command line
+def gold_cli():
+    """stdout of `libreramen standards` and of offline calibrations (`calibrate --from`). The input files are
+    written by the test from calibrate.json["spectra"] in the same format: comment, header, "pixel,intensity"."""
+    import contextlib
+    import io
+    import tempfile
+    from libreramen.__main__ import main
+    files = {"ccl4.csv": "carbon tetrachloride", "chcl3.csv": "chloroform", "etoh.csv": "ethanol"}
+    runs = [["standards"],
+            ["calibrate", "--standard", "ccl4", "--from", "ccl4.csv", "--standard", "chloroform", "--from", "chcl3.csv",
+             "--standard", "ethanol", "--from", "etoh.csv"],
+            ["calibrate", "--standard", "carbon tetrachloride", "--from", "ccl4.csv", "--degree", "2"],
+            ["calibrate", "--standard", "ethanol", "--from", "etoh.csv", "--channel", "532", "-o", "OUT.json"],
+            ["calibrate", "--standard", "ccl4", "--standard", "ethanol", "--from", "ccl4.csv"]]
+    out = {"files": files, "runs": []}
+    with tempfile.TemporaryDirectory() as d:
+        for name, sample in files.items():
+            with open(os.path.join(d, name), "w") as f:
+                f.write("# test spectrum (calibration pixel order)\npixel,intensity\n")
+                for i, v in enumerate(spectra[sample]):
+                    f.write(f"{i},{float(v)!r}\n")
+        for args in runs:
+            real = [os.path.join(d, a) if a in files or a == "OUT.json" else a for a in args]
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc = main(real)
+            out["runs"].append({"args": args, "rc": rc, "stdout": buf.getvalue().replace(d + os.sep, "DIR/")})
+    dump("cli.json", out)
+
+
 if __name__ == "__main__":
     gold_processing()
     gold_peaks()
     gold_calibrate()
     gold_standards()
     gold_fileio()
+    gold_cli()
