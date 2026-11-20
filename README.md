@@ -64,6 +64,23 @@ the laser when the sample compartment is open. Always use your laboratory's lase
 
 ## Calibration
 
+The program ships with a library of **reference standards**: the ASTM E1840 set (cyclohexane,
+naphthalene, polystyrene, sulfur, paracetamol, benzonitrile, toluene/acetonitrile, indene), common
+solvents (CCl₄, CHCl₃, CH₂Cl₂, toluene, benzene, acetonitrile, acetone, ethanol, methanol, isopropanol,
+DMSO, ethylene glycol) and solids (silicon, diamond, calcite, anatase, rutile, PTFE, BaSO₄).
+`python3 -m cora standards` lists them. Measure one or more of whatever your lab has and fit:
+
+```
+python3 -m cora calibrate --standard chloroform --standard ethanol     # guided, live
+```
+
+The program finds the peaks, matches them to the reference bands, fits a new pixel → Raman shift
+polynomial, prints the residual of every band and, if you accept, stores it for that instrument.
+With CCl₄, CHCl₃ and ethanol on the development unit: 19 of 19 bands matched, RMS 1.0 cm⁻¹
+(factory calibration: about +2 cm⁻¹ off).
+
+### Factory calibration
+
 The wavelength calibration is instrument-specific. It is read from the vendor software's
 `BS_System/BS_Device_Settings.ini` (copy it from the instrument PC); the values for the
 development instrument are listed in PROTOCOL.md.

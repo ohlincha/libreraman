@@ -12,6 +12,7 @@ import contextlib
 import threading
 import time
 
+from . import calibrate as calib
 from . import calibration as calmod
 from .hardware import (CP210X, MCP2200, PROLIFIC, ArmStatus, HardwareError, IOBoard, LaserDriver,
                        Spectrometer, find_hidraw, find_tty)
@@ -45,6 +46,21 @@ class Cora:
         self.channel = None
         self.laser_on = False
         self.power_mw = {532: None, 1064: 50.0}
+        self.user_cal = {}             # channel -> fitted shift polynomial (from calibrate.py)
+
+    def load_user_calibration(self):
+        for ch in (532, 1064):
+            c = calib.load(ch, self.cal.serial)
+            if c:
+                self.user_cal[ch] = c
+                self.log(f"Using calibration for {ch} nm from {c['date']} "
+                         f"({', '.join(c['standards'])}, RMS {c['rms']:.2f} cm-1)")
+
+    def shift_of(self, ch):
+        if ch in self.user_cal:
+            p = self.user_cal[ch]["poly"]
+            return lambda px: calib.polyval(p, px)
+        return self.cal.channels[ch].shift
 
     # ------------------------------------------------------------------ connection
     def connect(self):
@@ -61,6 +77,7 @@ class Cora:
             s = Spectrometer.find(ch)
             if s:
                 self.spec[ch] = s
+        self.load_user_calibration()
         self.log(f"Connected: I/O board {port}, ARM status {hid}, spectrometers {sorted(self.spec)}")
         return self
 
@@ -199,15 +216,20 @@ class Cora:
     def _spectrum(self, ch, exposure_s, averages, sig, bg, power_mw):
         cal = self.cal.channels[ch]
         px = self.spec[ch].pixel_numbers()
-        rows = sorted(zip((cal.shift(p) for p in px), sig, bg))
-        meta = {"laser_nm": cal.laser_nm, "calibration": self.cal.source}
+        f = self.shift_of(ch)
+        rows = sorted(zip((f(p) for p in px), sig, bg, px))
+        meta = {"laser_nm": cal.laser_nm,
+                "calibration": (f"user {self.user_cal[ch]['date']} ({', '.join(self.user_cal[ch]['standards'])})"
+                                if ch in self.user_cal else f"factory ({self.cal.source})")}
         if ch == 1064:
             meta["power_mw"] = power_mw or self.power_mw[1064]
             meta["note"] = "1064 nm pixel orientation not yet verified"
         else:
             meta["power"] = "set on the instrument (not computer-controlled)"
-        return Spectrum(ch, exposure_s, averages, [r[0] for r in rows], [r[1] - r[2] for r in rows],
-                        [r[1] for r in rows], [r[2] for r in rows], meta=meta)
+        sp = Spectrum(ch, exposure_s, averages, [r[0] for r in rows], [r[1] - r[2] for r in rows],
+                      [r[1] for r in rows], [r[2] for r in rows], meta=meta)
+        sp.pixels = [r[3] for r in rows]
+        return sp
 
     # ------------------------------------------------------------------ shutdown
     def close(self, power_down=False):
@@ -218,7 +240,13 @@ class Cora:
                     self._laser_off()
             finally:
                 if power_down and self.io:
+                    # Exact vendor timing (80 ms per character, ~0.4 s between USB and OFF). With faster
+                    # sending the instrument's onboard computer shut down slowly ("killing" a program).
+                    self.io.pacing = 0.08
+                    self.io.vol()
+                    time.sleep(1.0)
                     self.io.command("USB")
+                    time.sleep(0.4)
                     self.io.command("OFF")
                 for x in (self.driver, self.arm, self.io):
                     if x:

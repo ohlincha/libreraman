@@ -172,6 +172,13 @@ The vendor software's 1064 nm export of water is also flat noise, and the user r
 vendor software either. Suspect the laser, fibre/beam path or driver. Decisive test: vendor software, CCl₄,
 1064 nm, maximum power, 10 s. Our switching sequence matches the vendor's exactly.
 
+## Shutdown behaviour
+
+Sending `USB`, `OFF` from Linux (engine, 30 ms pacing, no gap) shut the instrument down, but its onboard
+computer first spent a while "killing" a program, which isn't normal (with the vendor software it goes dark
+promptly). The vendor capture shows the same two commands, so the difference is timing or state. The engine
+now uses the vendor timing (80 ms/char, VOL query, 0.4 s gap); to be verified.
+
 ## Still unknown
 
 - Wavelength calibration: not in the EEPROM; look in the vendor software folders ("Anton Paar", "Anton PaariNST").
