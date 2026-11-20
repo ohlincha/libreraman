@@ -144,6 +144,15 @@ def spectrum_plot(**kw):
 
 
 # ----------------------------------------------------------------------------- Measure page
+def form(parent):
+    f = form(parent)
+    f.setLabelAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+    f.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
+    f.setRowWrapPolicy(QFormLayout.DontWrapRows)
+    f.setHorizontalSpacing(8)
+    return f
+
+
 def box(title):
     g = QGroupBox(title)
     g.setStyleSheet("QGroupBox { font-weight: bold; margin-top: 10px; } "
@@ -176,7 +185,7 @@ class MeasurePage(QWidget):
 
         # series box
         sb = box("Series")
-        f = QFormLayout(sb)
+        f = form(sb)
         self.lbl_n = QLabel("—")
         self.lbl_next = QLabel("—")
         self.lbl_elapsed = QLabel("—")
@@ -213,7 +222,7 @@ class MeasurePage(QWidget):
 
         # detector + last spectrum
         db = box("Detector")
-        f = QFormLayout(db)
+        f = form(db)
         self.fill = QProgressBar()
         self.fill.setFormat("%p % of maximum")
         self.lbl_dark = QLabel("—")
@@ -223,7 +232,7 @@ class MeasurePage(QWidget):
         f.addRow("Saturation", self.lbl_sat)
         grid.addWidget(db, 2, 0)
         lb = box("Last spectrum")
-        f = QFormLayout(lb)
+        f = form(lb)
         self.lbl_time = QLabel("—")
         self.lbl_set = QLabel("—")
         self.lbl_peaks = QLabel("—")
@@ -245,7 +254,7 @@ class MeasurePage(QWidget):
     # --- settings panel (right)
     def _settings_panel(self):
         outer = QWidget()
-        outer.setFixedWidth(345)
+        outer.setFixedWidth(380)
         ov = QVBoxLayout(outer)
         ov.setContentsMargins(0, 0, 0, 0)
         big = ("QPushButton {{ background: {c}; color: white; font-size: 15pt; font-weight: bold; border-radius: 8px;"
@@ -282,7 +291,7 @@ class MeasurePage(QWidget):
         v.setContentsMargins(0, 0, 8, 0)
 
         s = box("Sample")
-        f = QFormLayout(s)
+        f = form(s)
         self.sample = QLineEdit("sample")
         self.folder = QLineEdit(os.path.join(os.path.expanduser("~"), "Documents", "LibreRamen",
                                              time.strftime("%Y-%m-%d")))
@@ -296,7 +305,7 @@ class MeasurePage(QWidget):
         v.addWidget(s)
 
         s = box("Spectrum")
-        f = QFormLayout(s)
+        f = form(s)
         self.exposure = QDoubleSpinBox(decimals=2, minimum=0.01, maximum=600, value=1.0, suffix=" s")
         self.averages = QSpinBox(minimum=1, maximum=1000, value=3)
         self.background = QComboBox()
@@ -310,7 +319,7 @@ class MeasurePage(QWidget):
         v.addWidget(s)
 
         s = box("Time series")
-        f = QFormLayout(s)
+        f = form(s)
         self.series_on = QCheckBox("measure repeatedly")
         self.interval = QDoubleSpinBox(decimals=1, minimum=0.1, maximum=100000, value=5)
         self.interval_unit = QComboBox()
@@ -344,7 +353,7 @@ class MeasurePage(QWidget):
         v.addWidget(s)
 
         s = box("Processing")
-        f = QFormLayout(s)
+        f = form(s)
         self.baseline = QComboBox()
         for k, d in processing.BASELINES.items():
             self.baseline.addItem(d, k)
@@ -375,6 +384,11 @@ class MeasurePage(QWidget):
         v.addWidget(s)
 
         v.addStretch()
+        for cb in w.findChildren(QComboBox):          # long entries must not force the panel wider
+            cb.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
+            cb.setMinimumContentsLength(8)
+        for le in w.findChildren(QLineEdit):
+            le.setMinimumWidth(60)
         return outer
 
     def min_interval(self):
@@ -683,7 +697,7 @@ class MainWindow(QMainWindow):
             self.resize(1440, 900)
             return
         a = scr.availableGeometry()
-        w, h = min(1440, int(a.width() * 0.97)), min(900, int(a.height() * 0.95))
+        w, h = min(1440, int(a.width() * 0.92)), min(900, int(a.height() * 0.92))
         self.resize(w, h)
         self.move(a.x() + (a.width() - w) // 2, a.y() + (a.height() - h) // 2)
 
