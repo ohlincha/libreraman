@@ -136,8 +136,16 @@ void finish(Calculation& c) {
                           .arg(im == 1 ? "y" : "ies")
                           .arg(f.join(", "));
     }
-    if (!c.modes.empty() && !c.hasActivities())
+    bool allZero = !c.modes.empty();
+    for (const Mode& m : c.modes)
+        if (!std::isfinite(m.activity) || m.activity != 0.0) allZero = false;
+    if (allZero) {                         // printed but not computed (e.g. xtb --ohess, Gaussian freq without raman)
+        for (Mode& m : c.modes) m.activity = kNaN;
+        c.warnings << "all Raman activities in this file are zero (not computed in this run): positions only "
+                      "(unit activities)";
+    } else if (!c.modes.empty() && !c.hasActivities()) {
         c.warnings << "no Raman activities in this file: positions only (unit activities)";
+    }
 }
 
 // Mode with a given 1-based / 0-based number in a map, created on demand.
@@ -921,6 +929,95 @@ QString readFile(const QString& path, qint64 maxBytes = -1) {
     return s;
 }
 
+// ================================================================================================= xtb
+// xtb (Grimme group) frequency printout ("--hess"/"--ohess"):
+//    projected vibrational frequencies (cm⁻¹)
+//   eigval :       -0.00    -0.00     0.00 ...
+//    IR intensities (km·mol⁻¹)
+//      1: 98.19   2:134.84 ...
+//    Raman intensities (Å⁴*amu⁻¹)          (activities; all zero unless polarisability derivatives were computed)
+//      1:  0.00   2:  0.00 ...
+// The last printout in the file is used. Geometry: "Standard orientation" of an embedded g98-style block
+// (ECCE runs) or the "final structure:" xyz block.
+std::vector<Calculation> readXtb(const QStringList& L) {
+    Calculation c;
+    c.program = "xtb";
+    c.format = "xtb";
+    c.method = "GFN2-xTB";
+    static const QRegularExpression verRe("xtb version\\s+(\\S+)");
+    static const QRegularExpression gfnRe("--gfn\\s*([012])");
+    static const QRegularExpression pairRe("(\\d+)\\s*:\\s*(-?[0-9.]+(?:[eE][-+]?\\d+)?)");
+    int start = -1;
+    for (int i = 0; i < L.size(); ++i) {
+        const QString& l = L[i];
+        if (c.version.isEmpty()) {
+            const auto m = verRe.match(l);
+            if (m.hasMatch()) c.version = m.captured(1);
+        }
+        if (l.contains("program call")) {
+            if (l.contains("--gfnff")) c.method = "GFN-FF";
+            else {
+                const auto m = gfnRe.match(l);
+                if (m.hasMatch()) c.method = QString("GFN%1-xTB").arg(m.captured(1));
+            }
+        }
+        if (l.contains("projected vibrational frequencies")) start = i;
+    }
+    if (start < 0) return {};
+    Vec freq;
+    int i = start + 1;
+    for (; i < L.size() && L[i].trimmed().startsWith("eigval"); ++i) {
+        const QString t = L[i].mid(L[i].indexOf(':') + 1);
+        for (const QString& tok : tokens(t)) freq.push_back(num(tok));
+    }
+    std::vector<Mode> modes(freq.size());
+    for (size_t k = 0; k < freq.size(); ++k) modes[k].frequency = freq[k];
+    auto readPairs = [&](int from, auto&& set) {        // "k: value" lists until a line without pairs
+        for (int j = from; j < L.size(); ++j) {
+            auto it = pairRe.globalMatch(L[j]);
+            if (!it.hasNext()) break;
+            while (it.hasNext()) {
+                const auto m = it.next();
+                const int k = m.captured(1).toInt() - 1;
+                if (k >= 0 && k < int(modes.size())) set(modes[size_t(k)], num(m.captured(2)));
+            }
+        }
+    };
+    for (int j = i; j < L.size() && j < i + 400; ++j) {
+        if (L[j].contains("IR intensities")) readPairs(j + 1, [](Mode& m, double v) { m.ir = v; });
+        if (L[j].contains("Raman intensities") || L[j].contains("Raman activities"))
+            readPairs(j + 1, [](Mode& m, double v) { m.activity = v; });
+        if (L[j].contains("Thermodynamic Functions")) break;
+    }
+    c.modes = modes;
+    // geometry
+    for (int j = 0; j < L.size(); ++j) {
+        if (L[j].contains("Standard orientation:")) {
+            c.atoms.clear();
+            for (int k = j + 5; k < L.size() && !isDashes(L[k].trimmed()); ++k) {
+                const QStringList t = tokens(L[k]);
+                if (t.size() < 6) break;
+                c.atoms.push_back({elementOf(t[1].toInt()), {num(t[3]), num(t[4]), num(t[5])}});
+            }
+        }
+    }
+    if (c.atoms.empty()) {
+        for (int j = 0; j + 2 < L.size(); ++j) {
+            if (!L[j].contains("final structure:")) continue;
+            int k = j + 1;
+            while (k < L.size() && L[k].trimmed().isEmpty()) ++k;
+            if (k >= L.size() || !isInt(L[k].trimmed())) break;
+            const int n = L[k].trimmed().toInt();
+            for (int a = 0; a < n && k + 2 + a < L.size(); ++a) {
+                const QStringList t = tokens(L[k + 2 + a]);
+                if (t.size() < 4) break;
+                c.atoms.push_back({normElement(t[0]), {num(t[1]), num(t[2]), num(t[3])}});
+            }
+        }
+    }
+    return {c};
+}
+
 const std::map<QString, QString>& hints() {
     static const std::map<QString, QString> h = {
         {"gaussian", "Gaussian output: run freq=raman"},
@@ -931,7 +1028,8 @@ const std::map<QString, QString>& hints() {
         {"qe", "Quantum ESPRESSO dynmat.x output (ph.x with lraman=.true.)"},
         {"vasp-raman", "vasp_raman.py output"},
         {"phonopy", "Phonopy-Spectroscopy peak table"},
-        {"castep", "CASTEP .castep of a phonon calculation with calculate_raman : true"}};
+        {"castep", "CASTEP .castep of a phonon calculation with calculate_raman : true"},
+        {"xtb", "xtb output of a Hessian calculation (--hess or --ohess)"}};
     return h;
 }
 
@@ -939,7 +1037,7 @@ const std::map<QString, QString>& hints() {
 
 // ============================================================================================= public
 const QStringList& formats() {
-    static const QStringList f = {"gaussian", "orca", "orca-hess", "nwchem", "cp2k", "qe", "vasp-raman", "phonopy", "castep"};
+    static const QStringList f = {"gaussian", "orca", "orca-hess", "nwchem", "cp2k", "qe", "vasp-raman", "phonopy", "castep", "xtb"};
     return f;
 }
 
@@ -954,6 +1052,7 @@ QString detectFormat(const QString& text, const QString& fileName) {
     if (text.contains("$orca_hessian_file") ||
         (fileName.endsWith(".hess", Qt::CaseInsensitive) && text.contains("$vibrational_frequencies")))
         return "orca-hess";
+    if (text.contains("xtb version") && text.contains("projected vibrational frequencies")) return "xtb";
     if (text.contains("Entering Gaussian System") || text.contains("Gaussian, Inc.")) return "gaussian";
     if (text.contains("O   R   C   A") || (text.contains("Program Version") && text.contains("ORCA"))) return "orca";
     if (text.contains("Northwest Computational Chemistry Package")) return "nwchem";
@@ -975,7 +1074,7 @@ std::vector<Calculation> readText(const QString& text, const QString& source, co
     const QString who = source.isEmpty() ? QStringLiteral("text") : QFileInfo(source).fileName();
     if (fmt.isEmpty())
         fail(who + ": not a recognised quantum-chemistry output (Gaussian, ORCA, NWChem, CP2K, Quantum ESPRESSO, "
-                   "vasp_raman.py, Phonopy-Spectroscopy, CASTEP)");
+                   "vasp_raman.py, Phonopy-Spectroscopy, CASTEP, xtb)");
     if (!formats().contains(fmt)) fail("unknown computed-spectrum format: " + fmt);
     const QStringList L = splitLines(text);
     std::vector<Calculation> calcs;
@@ -988,6 +1087,7 @@ std::vector<Calculation> readText(const QString& text, const QString& source, co
     else if (fmt == "vasp-raman") calcs = readVaspRaman(L);
     else if (fmt == "phonopy") calcs = readPhonopy(L);
     else if (fmt == "castep") calcs = readCastep(L);
+    else if (fmt == "xtb") calcs = readXtb(L);
 
     std::vector<Calculation> out;
     for (Calculation& c : calcs) {

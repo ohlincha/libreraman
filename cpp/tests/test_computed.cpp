@@ -64,6 +64,25 @@ std::vector<std::pair<double, double>> scaledBands(const Calculation& c, double 
 class TestComputed : public QObject {
     Q_OBJECT
 private slots:
+    // A real xtb output (excerpt): GFN2-xTB water, --ohess prints Raman "intensities" that are all zero.
+    void xtbReal() {
+        const auto calcs = lr::computed::read(DIR + "water_xtb_excerpt.out");
+        QCOMPARE(int(calcs.size()), 1);
+        const auto& c = calcs[0];
+        QCOMPARE(c.format, QStringLiteral("xtb"));
+        QCOMPARE(c.program, QStringLiteral("xtb"));
+        QCOMPARE(c.version, QStringLiteral("6.7.1"));
+        QCOMPARE(c.method, QStringLiteral("GFN2-xTB"));
+        QCOMPARE(c.formula, QStringLiteral("H2O"));
+        QCOMPARE(int(c.atoms.size()), 3);
+        QCOMPARE(int(c.modes.size()), 3);                      // translations/rotations dropped
+        QCOMPARE(c.modes[0].frequency, 1538.86);
+        QCOMPARE(c.modes[2].frequency, 3651.45);
+        QCOMPARE(c.modes[0].ir, 133.29);                       // mode 7 of the printout
+        QCOMPARE(c.modes[2].ir, 16.69);
+        QVERIFY(!c.hasActivities());                           // all zero -> treated as not computed
+        QVERIFY(c.warnings.join(" ").contains("zero"));
+    }
     void detect() {
         const std::vector<std::pair<QString, QString>> cases = {
             {"gaussian_ccl4.log", "gaussian"},       {"gaussian_chcl3_hpmodes.out", "gaussian"},
@@ -532,7 +551,7 @@ private slots:
 
     void findOutputsInFolder() {
         const QStringList files = findOutputs(DIR);
-        QCOMPARE(files.size(), 14);                         // all fixtures except the plain note
+        QCOMPARE(files.size(), 15);                         // all fixtures except the plain note
         QVERIFY(!files.contains(DIR + "not_an_output.txt"));
         QTemporaryDir tmp;
         QDir(tmp.path()).mkpath("project/calc1");

@@ -40,6 +40,7 @@
 #include <csignal>
 #endif
 
+#include "core/computed.h"
 #include "core/calibrate.h"
 #include "core/calibration.h"
 #include "core/errors.h"
@@ -91,14 +92,14 @@ void errorOut(const QString& msg) {
 }
 
 const QStringList COMMANDS = {"gui",    "selftest",  "watchdog",  "status",   "init",   "dark",   "acquire",
-                              "series", "calibrate", "standards", "shutdown", "drivers"};
+                              "series", "calibrate", "standards", "shutdown", "drivers", "computed"};
 
 const char* USAGE =
     "usage: libreramen [-h] [-e EXPOSURE] [-n AVERAGES] [--channel {532,1064}] [--power POWER]\n"
     "                  [--interval INTERVAL] [--count COUNT] [--background {each,once}] [--ini INI]\n"
     "                  [-o OUTPUT] [--standard STANDARD] [--from FROM_FILES] [--degree DEGREE] [--sim]\n"
     "                  [--speed SPEED] [--screenshot SCREENSHOT] [--port PORT] [--parent PARENT] [--json]\n"
-    "                  {gui,selftest,watchdog,status,init,dark,acquire,series,calibrate,standards,shutdown,drivers}\n"
+    "                  {gui,selftest,watchdog,status,init,dark,acquire,series,calibrate,standards,shutdown,drivers,computed}\n"
     "       libreramen --remote COMMAND ...   (the running application; --remote -h for help)\n";
 
 [[noreturn]] void usageError(const QString& msg) {
@@ -468,6 +469,55 @@ int runInstrument(const Args& a) {
 
 }  // namespace
 
+// `computed --from FILE [--from FILE ...]`: read quantum-chemistry output (computed.h) and list the Raman
+// bands (activities and relative cross-sections for 532 nm, 298 K). --json for machine-readable output.
+int showComputed(const Args& a) {
+    if (a.fromFiles.isEmpty()) {
+        errorOut("give the output file(s) with --from FILE");
+        return 2;
+    }
+    QJsonArray all;
+    int rc = 0;
+    for (const QString& f : a.fromFiles) {
+        std::vector<lr::computed::Calculation> calcs;
+        try {
+            calcs = lr::computed::read(f);
+        } catch (const lr::Error& e) {
+            errorOut(f + ": " + QString::fromUtf8(e.what()));
+            rc = 1;
+            continue;
+        }
+        for (const auto& c : calcs) {
+            lr::computed::Options opt;
+            const auto bands = lr::computed::bands(c, opt);
+            const double vmax = lr::computed::maxValue(bands);
+            if (g_json) {
+                QJsonArray jb;
+                for (const auto& b : bands)
+                    jb.append(QJsonObject{{"position", b.position}, {"activity", b.activity},
+                                          {"relative_intensity", vmax > 0 ? b.value / vmax : 0.0},
+                                          {"symmetry", b.symmetry}});
+                all.append(QJsonObject{{"file", f}, {"program", c.program}, {"version", c.version},
+                                       {"format", c.format}, {"method", c.method}, {"basis", c.basis},
+                                       {"formula", c.formula}, {"warnings", QJsonArray::fromStringList(c.warnings)},
+                                       {"bands", jb}});
+                continue;
+            }
+            out(c.name() + "  [" + c.label() + "]");
+            for (const QString& w : c.warnings) out("  warning: " + w);
+            out("  shift/cm-1   activity   rel.int.  sym");
+            for (const auto& b : bands)
+                out(QString("  %1  %2  %3  %4")
+                        .arg(b.position, 10, 'f', 1)
+                        .arg(b.activity, 9, 'f', 3)
+                        .arg(vmax > 0 ? b.value / vmax : 0.0, 8, 'f', 3)
+                        .arg(b.symmetry));
+        }
+    }
+    if (g_json) jsonOut(QJsonObject{{"calculations", all}});
+    return rc;
+}
+
 int main(int argc, char** argv) {
     QCoreApplication app(argc, argv);
     const QStringList args = app.arguments().mid(1);
@@ -488,6 +538,7 @@ int main(int argc, char** argv) {
         std::_Exit(code);
     }
     if (a.cmd == "standards") return listStandards();
+    if (a.cmd == "computed") return showComputed(a);
     if (a.cmd == "calibrate" && !a.fromFiles.isEmpty()) {
         try {
             return offlineCalibration(a);
