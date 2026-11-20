@@ -171,6 +171,9 @@ def process(x, y, settings):
         y = smooth(y, settings.get("smooth_window", 9))
     base = baseline(x, y, settings.get("baseline", "none"), settings.get("strength", 5.0))
     out = y - base
+    d = int(settings.get("derivative", 0) or 0)
+    if d:
+        out = savgol_filter(out, int(settings.get("deriv_window", 11)) | 1, 3, deriv=d)
     out = normalize(x, out, settings.get("normalize", "none"), settings.get("band"))
     return out, base
 

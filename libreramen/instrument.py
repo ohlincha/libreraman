@@ -255,16 +255,30 @@ class Cora:
         with self.lock:
             return _mean(self.frames(exposure_s, averages))
 
-    def acquire(self, exposure_s, averages=1, background=True, power_mw=None, stop_event=None):
-        """Laser frames (averaged), then background frames with the laser off. Returns a Spectrum."""
+    def acquire(self, exposure_s, averages=1, background=True, power_mw=None, stop_event=None, prebleach_s=0.0):
+        """Laser frames (averaged), then background frames with the laser off. Returns a Spectrum.
+        prebleach_s: keep the laser on this long before measuring (photobleaching reduces fluorescence)."""
         with self.lock:
             ch = self.channel
             if ch is None:
                 raise CoraError("not initialized")
             with self._laser(power_mw):
+                if prebleach_s > 0:
+                    self.log(f"Pre-bleaching for {prebleach_s:g} s")
+                    self._bleach(prebleach_s, stop_event)
                 sig = _mean(self.frames(exposure_s, averages))
             bg = _mean(self.frames(exposure_s, averages)) if background else [0] * len(sig)
-            return self._spectrum(ch, exposure_s, averages, sig, bg, power_mw)
+            sp = self._spectrum(ch, exposure_s, averages, sig, bg, power_mw)
+            if prebleach_s > 0:
+                sp.meta["prebleach_s"] = prebleach_s
+            return sp
+
+    def _bleach(self, seconds, stop_event=None):
+        t_end = time.monotonic() + seconds
+        while time.monotonic() < t_end:
+            if stop_event is not None and stop_event.is_set():
+                raise CoraError("stopped during pre-bleaching")
+            time.sleep(min(0.2, t_end - time.monotonic()))
 
     def _spectrum(self, ch, exposure_s, averages, sig, bg, power_mw):
         cal = self.cal.channels[ch]

@@ -142,7 +142,8 @@ class Controller(QObject):
     # ------------------------------------------------------------------ measuring
     def measure_once(self, s):
         def job():
-            sp = self.inst.acquire(s["exposure"], s["averages"], background=s["background"] != "none")
+            sp = self.inst.acquire(s["exposure"], s["averages"], background=s["background"] != "none",
+                                   stop_event=self.stop_event, prebleach_s=s.get("prebleach", 0))
             sp.meta.update(sample=s["sample"])
             self._save(sp, s, single=True)
             self.spectrum.emit(sp)
@@ -190,7 +191,8 @@ class Controller(QObject):
                     break
             if s["background"] == "once" and bg_once is None:
                 bg_once = self.inst.dark(s["exposure"], s["averages"])
-            sp = self.inst.acquire(s["exposure"], s["averages"], background=s["background"] == "each")
+            sp = self.inst.acquire(s["exposure"], s["averages"], background=s["background"] == "each",
+                                   stop_event=self.stop_event, prebleach_s=s.get("prebleach", 0))
             if bg_once is not None:
                 px_bg = dict(zip(self.inst.spec[self.inst.channel].pixel_numbers(), bg_once))
                 sp.background = [px_bg[p] for p in sp.pixels]

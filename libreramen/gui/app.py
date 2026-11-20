@@ -237,6 +237,8 @@ class MeasurePage(QWidget):
         self.series_t0 = None
         grid = QGridLayout(self)
         grid.setContentsMargins(8, 4, 8, 8)
+        grid.setHorizontalSpacing(14)
+        grid.setVerticalSpacing(8)
 
         # live spectrum
         self.plot = spectrum_plot()
@@ -399,8 +401,30 @@ class MeasurePage(QWidget):
         g.setHorizontalSpacing(6)
         g.setVerticalSpacing(4)
         self.exposure = QDoubleSpinBox(decimals=2, minimum=0.01, maximum=600, value=1.0, suffix=" s")
-        self.averages = QSpinBox(minimum=1, maximum=1000, value=3)
+        self.averages = QSpinBox(minimum=1, maximum=10000, value=3)
         self.averages.setToolTip("Number of scans averaged into one spectrum")
+        self.acq = QDoubleSpinBox(decimals=1, minimum=0.01, maximum=36000, value=3.0, suffix=" s")
+        self.acq.setToolTip("<p>Total acquisition time = exposure × scans. Change it and the number of scans "
+                            "follows.</p>")
+        self.prebleach = QDoubleSpinBox(decimals=0, minimum=0, maximum=3600, value=0, suffix=" s")
+        self.prebleach.setToolTip("<p>Laser on for this long before measuring: photobleaching reduces fluorescence "
+                                  "background. Not counted as acquisition.</p>")
+        self._sync = False
+
+        def from_scans():
+            if not self._sync:
+                self._sync = True
+                self.acq.setValue(self.exposure.value() * self.averages.value())
+                self._sync = False
+
+        def from_acq():
+            if not self._sync:
+                self._sync = True
+                self.averages.setValue(max(1, round(self.acq.value() / self.exposure.value())))
+                self._sync = False
+        self.exposure.valueChanged.connect(from_scans)
+        self.averages.valueChanged.connect(from_scans)
+        self.acq.valueChanged.connect(from_acq)
         self.background = QComboBox()
         self.background.addItems(["each spectrum", "once (series)", "none"])
         self.channel = QComboBox()
@@ -409,10 +433,14 @@ class MeasurePage(QWidget):
         g.addWidget(self.exposure, 0, 1)
         g.addWidget(QLabel("Scans"), 0, 2)
         g.addWidget(self.averages, 0, 3)
-        g.addWidget(QLabel("Background"), 1, 0)
-        g.addWidget(self.background, 1, 1, 1, 3)
-        g.addWidget(QLabel("Laser"), 2, 0)
-        g.addWidget(self.channel, 2, 1, 1, 3)
+        g.addWidget(QLabel("Acquisition"), 1, 0)
+        g.addWidget(self.acq, 1, 1)
+        g.addWidget(QLabel("Pre-bleach"), 1, 2)
+        g.addWidget(self.prebleach, 1, 3)
+        g.addWidget(QLabel("Background"), 2, 0)
+        g.addWidget(self.background, 2, 1, 1, 3)
+        g.addWidget(QLabel("Laser"), 3, 0)
+        g.addWidget(self.channel, 3, 1, 1, 3)
         g.setColumnStretch(1, 1)
         g.setColumnStretch(3, 1)
         v.addWidget(s)
@@ -440,7 +468,7 @@ class MeasurePage(QWidget):
         f.addRow(self.fastest)
         f.addRow("Every", row)
         f.addRow("", self.min_label)
-        for wdg in (self.exposure, self.averages, self.interval):
+        for wdg in (self.exposure, self.averages, self.interval, self.prebleach):
             wdg.valueChanged.connect(self.update_min_interval)
         for wdg in (self.background, self.interval_unit):
             wdg.currentIndexChanged.connect(self.update_min_interval)
@@ -456,7 +484,14 @@ class MeasurePage(QWidget):
         self.baseline = QComboBox()
         for k, d in processing.BASELINES.items():
             self.baseline.addItem(d, k)
-        self.baseline.setCurrentIndex(list(processing.BASELINES).index("arpls"))
+        self.baseline.setCurrentIndex(list(processing.BASELINES).index("snip"))
+        self.baseline.setToolTip("<p>SNIP works well for series; polynomial for single spectra; AsLS/arPLS when "
+                                 "you are willing to adjust the strength.</p>")
+        self.normalise = QComboBox()
+        self.normalise.addItems(["none", "max", "area"])
+        self.derivative = QComboBox()
+        self.derivative.addItems(["none", "1st", "2nd"])
+        self.derivative.setToolTip("Savitzky–Golay derivative (after baseline correction)")
         self.strength = QSlider(Qt.Horizontal, minimum=0, maximum=100, value=50)
         self.despike = QCheckBox("remove cosmic rays")
         self.despike.setChecked(True)
@@ -471,7 +506,7 @@ class MeasurePage(QWidget):
             grp.addButton(r)
             row.addWidget(r)
             r.toggled.connect(self.redraw)
-        for wdg in (self.baseline, self.strength, self.despike, self.smoothing):
+        for wdg in (self.baseline, self.strength, self.despike, self.smoothing, self.normalise, self.derivative):
             sig = getattr(wdg, "currentIndexChanged", None) or getattr(wdg, "valueChanged", None) \
                 or getattr(wdg, "toggled")
             sig.connect(self.redraw)
@@ -479,6 +514,8 @@ class MeasurePage(QWidget):
         f.addRow("Strength", self.strength)
         f.addRow(self.despike)
         f.addRow(self.smoothing)
+        f.addRow("Normalise", self.normalise)
+        f.addRow("Derivative", self.derivative)
         f.addRow("Show", row)
         v.addWidget(s)
 
@@ -495,7 +532,8 @@ class MeasurePage(QWidget):
         bg = self.background.currentIndex() == 0 and not self.fastest.isChecked()
         settle = 3.6 if inst is None else inst.laser_settle_s()
         frames = self.averages.value() * (2 if bg else 1)
-        return (0 if self.fastest.isChecked() else settle) + frames * (self.exposure.value() + 0.02) + 0.5
+        bleach = 0 if self.fastest.isChecked() else self.prebleach.value()
+        return (0 if self.fastest.isChecked() else settle) + bleach + frames * (self.exposure.value() + 0.02) + 0.5
 
     def update_min_interval(self):
         mi = self.min_interval()
@@ -537,12 +575,13 @@ class MeasurePage(QWidget):
                 "interval": self.interval.value() * mult,
                 "stop_by": "count" if self.stop_by.currentIndex() == 0 else "duration",
                 "count": self.count.value(), "duration": self.duration.value() * 3600,
-                "start_delay": delays[self.start.currentText()],
+                "start_delay": delays[self.start.currentText()], "prebleach": self.prebleach.value(),
                 "fastest": self.fastest.isChecked()}
 
     def proc_settings(self):
         return {"baseline": self.baseline.currentData(), "strength": self.strength.value() / 10,
-                "despike": self.despike.isChecked(), "smooth": self.smoothing.isChecked()}
+                "despike": self.despike.isChecked(), "smooth": self.smoothing.isChecked(),
+                "normalize": self.normalise.currentText(), "derivative": self.derivative.currentIndex()}
 
     def measure_once(self):
         s = self.settings()

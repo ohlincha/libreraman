@@ -141,5 +141,9 @@ class SimCora(Cora):
                 time.sleep(dt)
         return out
 
+    def _bleach(self, seconds, stop_event=None):
+        self.laser_time[self.sample] = self.laser_time.get(self.sample, 0.0) + seconds
+        time.sleep(seconds / self.speed)
+
     def close(self, power_down=False):
         self._laser_off()
