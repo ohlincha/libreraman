@@ -6,7 +6,41 @@ on:
   workflow_dispatch:
 
 jobs:
+  wdi:
+    # USB driver installer: wdi-simple from libwdi (the library behind Zadig), built like libwdi's own CI.
+    # windows-2022: libwdi's projects need the VS 2022 (v143) toolsets incl. ARM64.
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+        with: { repository: pbatard/libwdi, ref: v1.5.1, path: libwdi }
+      - name: libwdi support files (WDK 8.0 redistributables with WinUSB, libusb0, libusbK)
+        shell: cmd
+        working-directory: libwdi
+        run: |
+          curl -sSL "https://go.microsoft.com/fwlink/p/?LinkID=253170" -o wdk-redist.msi
+          curl -sSL https://github.com/mcuee/libusb-win32/releases/download/release_1.4.0.0/libusb-win32-bin-1.4.0.0.zip -o libusb0-redist.zip
+          curl -sSL https://github.com/mcuee/libusbk/releases/download/V3.1.0.0/libusbK-3.1.0.0-bin.7z -o libusbk-redist.7z
+          msiexec /a wdk-redist.msi /qn TARGETDIR=%CD%\wdk
+          7z x libusb0-redist.zip > nul
+          7z x libusbk-redist.7z > nul
+          move libusb-win32* libusb0
+          move libusbK* libusbk
+      - uses: microsoft/setup-msbuild@v2
+      - name: Build wdi-simple (Win32 first, as libwdi's CI does, then x64)
+        shell: cmd
+        working-directory: libwdi
+        run: |
+          for %%P in (Win32 x64) do (
+            msbuild libwdi.sln /m /p:Configuration=Release,Platform=%%P,BuildMacros="WDK_DIR=\"../wdk/Windows Kits/8.0\";LIBUSB0_DIR=\"../libusb0\";LIBUSBK_DIR=\"../libusbk/bin\"" || exit /b 1
+          )
+      - run: |
+          New-Item -ItemType Directory -Force out | Out-Null
+          Copy-Item libwdi\x64\Release\examples\wdi-simple.exe, libwdi\COPYING, libwdi\COPYING-LGPL out\
+      - uses: actions/upload-artifact@v4
+        with: { name: wdi-simple, path: out }
+
   windows:
+    needs: wdi
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,37 +65,16 @@ jobs:
           --hidden-import usb.backend.libusb1 --exclude-module PySide6 --exclude-module pyqtgraph libreramen_app.py
       - run: dist\LibreRamenCLI\LibreRamenCLI.exe standards
       - run: Compress-Archive -Path dist\LibreRamenCLI -DestinationPath dist\LibreRamenCLI-Windows.zip
-      # USB driver installer: wdi-simple from libwdi (the library behind Zadig), built like libwdi's own CI.
-      - uses: actions/checkout@v4
-        with: { repository: pbatard/libwdi, ref: v1.5.1, path: libwdi }
-      - name: libwdi support files (WDK 8.0 redistributables with WinUSB, libusb0, libusbK)
-        shell: cmd
-        working-directory: libwdi
-        run: |
-          curl -sSL "https://go.microsoft.com/fwlink/p/?LinkID=253170" -o wdk-redist.msi
-          curl -sSL https://github.com/mcuee/libusb-win32/releases/download/release_1.4.0.0/libusb-win32-bin-1.4.0.0.zip -o libusb0-redist.zip
-          curl -sSL https://github.com/mcuee/libusbk/releases/download/V3.1.0.0/libusbK-3.1.0.0-bin.7z -o libusbk-redist.7z
-          msiexec /a wdk-redist.msi /qn TARGETDIR=%CD%\wdk
-          7z x libusb0-redist.zip > nul
-          7z x libusbk-redist.7z > nul
-          move libusb-win32* libusb0
-          move libusbK* libusbk
-      - uses: microsoft/setup-msbuild@v2
-      - name: Build wdi-simple (Win32 first, as libwdi's CI does, then x64)
-        shell: cmd
-        working-directory: libwdi
-        run: |
-          for %%P in (Win32 x64) do (
-            msbuild libwdi.sln /m /p:Configuration=Release,Platform=%%P,BuildMacros="WDK_DIR=\"../wdk/Windows Kits/8.0\";LIBUSB0_DIR=\"../libusb0\";LIBUSBK_DIR=\"../libusbk/bin\"" || exit /b 1
-          )
+      - uses: actions/download-artifact@v4
+        with: { name: wdi-simple, path: wdi }
       - name: Collect driver files, licence and icon
         run: |
           New-Item -ItemType Directory -Force dist\drivers | Out-Null
-          Copy-Item libwdi\x64\Release\examples\wdi-simple.exe dist\drivers\
+          Copy-Item wdi\wdi-simple.exe dist\drivers\
           $notice = "wdi-simple.exe is built from libwdi v1.5.1 (https://github.com/pbatard/libwdi, " +
                     "source: https://github.com/pbatard/libwdi/tree/v1.5.1), (c) Pete Batard and contributors, " +
                     "licensed under the GNU LGPL v3 or later (text below, followed by the GPL v3 it refers to).`r`n`r`n"
-          $notice + (Get-Content -Raw libwdi\COPYING-LGPL) + "`r`n`r`n" + (Get-Content -Raw libwdi\COPYING) |
+          $notice + (Get-Content -Raw wdi\COPYING-LGPL) + "`r`n`r`n" + (Get-Content -Raw wdi\COPYING) |
             Set-Content -Encoding utf8 dist\drivers\LIBWDI-LICENSE.txt
           python -c "from PIL import Image; Image.open('libreramen/data/icon.png').save('dist/libreramen.ico', sizes=[(16,16),(32,32),(48,48),(64,64),(128,128),(256,256)])"
       - name: Build the installer (Inno Setup)
