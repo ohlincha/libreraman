@@ -7,6 +7,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QDir>
 #include <QProcess>
 #include <QTemporaryDir>
 #include <QTest>
@@ -36,7 +37,10 @@ Run cli(const QStringList& args, const QByteArray& input = {}, int timeoutMs = 6
         p.waitForFinished();
         return {};
     }
-    return {p.exitStatus() == QProcess::NormalExit ? p.exitCode() : -1, QString::fromUtf8(p.readAllStandardOutput())};
+    // Windows consoles write "\r\n" (like Python's print there); the golden output is from Linux.
+    QString out = QString::fromUtf8(p.readAllStandardOutput());
+    out.replace(QStringLiteral("\r\n"), QStringLiteral("\n"));
+    return {p.exitStatus() == QProcess::NormalExit ? p.exitCode() : -1, out};
 }
 
 }  // namespace
@@ -74,7 +78,9 @@ void TestCli::goldenRuns() {
             args << ((files.contains(s) || s == "OUT.json") ? dir + s : s);
         }
         const Run run = cli(args);
-        QCOMPARE(QString(run.out).replace(dir, "DIR/"), r["stdout"].toString());
+        QString out = QString(run.out).replace(dir, "DIR/");
+        out.replace(QDir::toNativeSeparators(dir), "DIR/");   // paths printed with native separators (Windows)
+        QCOMPARE(out, r["stdout"].toString());
         QCOMPARE(run.code, r["rc"].toInt());
     }
 }
