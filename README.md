@@ -9,11 +9,16 @@ vendor software lacks: scheduled scans, time series and calibration against comm
 *LibreRamen is an independent project, not affiliated with or endorsed by Anton Paar or BaySpec.
 Product names are used only to describe compatibility.*
 
-**Status: early.** The USB protocol is decoded and the engine (`libreramen` package plus command line)
-measures spectra and time series from Linux at 532 nm; 1064 nm works but its axis isn't verified yet. See [PROTOCOL.md](PROTOCOL.md) for everything known so far. The scripts here are test
-tools, not the finished program.
+**Status: 0.2.0.** The C++/Qt 6 application (`cpp/`) is the main program: measurement (single spectra and
+time series with a laser watchdog), Data (overlay, waterfall, heat map, peak fitting, export to CSV, JCAMP-DX,
+SPC), Library (SQLite, matching), Analysis (PCA, EFA, MCR-ALS, peak trends with kinetics, computed spectra
+from Gaussian/ORCA/xtb/...), Calibration (standards wizard), a local API and an MCP server. Verified on the
+real instrument at 532 nm (C++: Windows 11; Python reference: Linux and Windows 11); 1064 nm is untested (faulty channel on the development
+unit). The Python package `libreramen` is the reference implementation. See [PROTOCOL.md](PROTOCOL.md).
 
-![LibreRamen measuring a time series (simulator, ZnS)](docs/screenshot-measure.png)
+![LibreRamen measuring a time series (simulator)](docs/screenshot-measure.png)
+
+![Peak trends: fitted band areas vs time with kinetic fits](docs/screenshot-trends.png)
 
 ## Install
 
