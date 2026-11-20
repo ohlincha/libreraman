@@ -104,6 +104,45 @@ class StatusStrip(QWidget):
         self.chan.set("green", f"{st.get('channel') or '—'} nm", "")
 
 
+# ----------------------------------------------------------------------------- spectrum plot
+class SpectrumViewBox(pg.ViewBox):
+    """Spectroscopy-style navigation:
+    wheel = change the top of the y axis (the bottom/baseline stays put); drag = pan along x;
+    wheel over the x axis or Ctrl+wheel = zoom x around the cursor; double-click = full view."""
+
+    def __init__(self):
+        super().__init__()
+        self.setMouseEnabled(x=True, y=False)
+        self.home_x = None          # x range restored by double-click (None: full data range)
+
+    def wheelEvent(self, ev, axis=None):
+        mods = ev.modifiers() if hasattr(ev, "modifiers") else Qt.NoModifier
+        if axis == 0 or mods & Qt.ControlModifier:
+            self.setMouseEnabled(x=True, y=False)
+            return super().wheelEvent(ev, axis=0)
+        delta = ev.delta() if hasattr(ev, "delta") else ev.angleDelta().y()
+        factor = 0.85 ** (delta / 120.0)
+        (y0, y1) = self.viewRange()[1]
+        self.enableAutoRange(y=False)
+        self.setYRange(y0, y0 + (y1 - y0) * factor, padding=0)
+        ev.accept()
+
+    def mouseDoubleClickEvent(self, ev):
+        if self.home_x:
+            self.setXRange(*self.home_x, padding=0)
+            self.enableAutoRange(y=True)
+        else:
+            self.enableAutoRange(x=True, y=True)
+        ev.accept()
+
+
+def spectrum_plot(**kw):
+    w = pg.PlotWidget(background="w", viewBox=SpectrumViewBox(), **kw)
+    w.setToolTip("Wheel: zoom intensity (baseline stays) · drag: pan along the spectrum · "
+                 "wheel on the x axis or Ctrl+wheel: zoom wavenumbers · double-click: full view")
+    return w
+
+
 # ----------------------------------------------------------------------------- Measure page
 def box(title):
     g = QGroupBox(title)
@@ -123,11 +162,12 @@ class MeasurePage(QWidget):
         grid.setContentsMargins(8, 4, 8, 8)
 
         # live spectrum
-        self.plot = pg.PlotWidget(background="w")
+        self.plot = spectrum_plot()
         self.plot.setLabel("bottom", "Raman shift (cm⁻¹)")
         self.plot.setLabel("left", "Intensity (counts)")
         self.plot.showGrid(x=True, y=True, alpha=0.2)
         self.plot.setXRange(150, 3500)
+        self.plot.getViewBox().home_x = (150, 3500)
         self.curve = self.plot.plot(pen=pg.mkPen("#1f5fbf", width=1.6))
         self.base_curve = self.plot.plot(pen=pg.mkPen("#e07b00", width=1.2, style=Qt.DashLine))
         self.old_curves = [self.plot.plot(pen=pg.mkPen((31, 95, 191, 40 + 20 * i), width=1)) for i in range(4)]
@@ -165,7 +205,7 @@ class MeasurePage(QWidget):
         row.addWidget(self.trend_mode)
         row.addStretch()
         tl.addLayout(row)
-        self.tplot = pg.PlotWidget(background="w")
+        self.tplot = spectrum_plot()
         self.tplot.setMinimumHeight(120)
         self.tplot.showGrid(x=True, y=True, alpha=0.2)
         tl.addWidget(self.tplot)
@@ -487,7 +527,6 @@ class MeasurePage(QWidget):
                 for k, (s, y) in enumerate(zip(hist, ys)):
                     col = pg.intColor(k, hues=max(n, 2), values=1, maxValue=200)
                     self.tplot.plot(np.array(s.shift), y + k * off, pen=pg.mkPen(col, width=1))
-                self.tplot.setXRange(150, 3500)
 
     def series_progress(self, p):
         total = p.get("total", 0)
