@@ -6,3 +6,4 @@ captures/
 # measurement output
 *.csv
 __pycache__/
+.venv/

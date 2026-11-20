@@ -120,14 +120,17 @@ class ArmStatus:
     bit 0 = 0: armed (ARM button pressed, cleared when the compartment opens); bit 7 = 0: compartment open."""
 
     def __init__(self, path):
+        import threading
         self.fd = os.open(path, os.O_RDWR)
+        self.lock = threading.Lock()      # status is polled from the GUI while a measurement runs
 
     def _cmd(self, data, reply=True):
-        os.write(self.fd, bytes([0]) + bytes(data).ljust(16, b"\0"))
-        if not reply:
-            return b""
-        r, _, _ = select.select([self.fd], [], [], 2.0)
-        return os.read(self.fd, 64) if r else b""
+        with self.lock:
+            os.write(self.fd, bytes([0]) + bytes(data).ljust(16, b"\0"))
+            if not reply:
+                return b""
+            r, _, _ = select.select([self.fd], [], [], 2.0)
+            return os.read(self.fd, 64) if r else b""
 
     def gpio(self):
         for _ in range(3):

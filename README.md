@@ -13,7 +13,15 @@ Product names are used only to describe compatibility.*
 measures spectra and time series from Linux at 532 nm; 1064 nm works but its axis isn't verified yet. See [PROTOCOL.md](PROTOCOL.md) for everything known so far. The scripts here are test
 tools, not the finished program.
 
-![Water, 532 nm, 1 s, measured from Linux](analysis/first_linux_spectrum.png)
+![LibreRamen measuring a time series (simulator, ZnS)](docs/screenshot-measure.png)
+
+```
+pip install PySide6 pyqtgraph numpy scipy pyserial pyusb
+python3 -m libreramen gui          # with the instrument
+python3 -m libreramen gui --sim    # simulator: spectra recorded on a real Cora 5000
+```
+
+The full feature plan is in [docs/SPECIFICATION.md](docs/SPECIFICATION.md).
 
 ## What's inside the instrument
 

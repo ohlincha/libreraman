@@ -1,5 +1,6 @@
 """
 Command line:
+  python3 -m libreramen gui [--sim]                      (graphical program)
   python3 -m libreramen status
   python3 -m libreramen init
   python3 -m libreramen dark    [-e 1]                         (laser off)
@@ -25,7 +26,7 @@ from .series import run_series
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="libreramen")
-    ap.add_argument("cmd", choices=["status", "init", "dark", "acquire", "series", "calibrate", "standards", "shutdown"])
+    ap.add_argument("cmd", choices=["gui", "status", "init", "dark", "acquire", "series", "calibrate", "standards", "shutdown"])
     ap.add_argument("-e", "--exposure", type=float, default=1.0)
     ap.add_argument("-n", "--averages", type=int, default=1)
     ap.add_argument("--channel", type=int, choices=[532, 1064], default=532)
@@ -39,7 +40,11 @@ def main(argv=None):
     ap.add_argument("--from", dest="from_files", action="append", default=[],
                     help="saved spectrum CSV (one per --standard, same order)")
     ap.add_argument("--degree", type=int)
+    ap.add_argument("--sim", action="store_true", help="use the simulator (gui)")
     a = ap.parse_args(argv)
+    if a.cmd == "gui":
+        from .gui.app import main as gui_main
+        return gui_main(["--sim"] if a.sim else [])
 
     def on_signal(signum, frame):
         raise KeyboardInterrupt

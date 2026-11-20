@@ -192,6 +192,18 @@ class Cora:
             self.arm.pulse()
 
     # ------------------------------------------------------------------ acquisition
+    READOUT_S = 0.02            # per frame (measured: a 1 s frame takes 1.01 s)
+    OVERHEAD_S = 0.5            # arming check, laser commands, saving
+
+    def laser_settle_s(self):
+        return LASER_SETTLE_532 if self.channel != 1064 else LASER_SETTLE_1064
+
+    def cycle_time(self, exposure_s, averages, background=True, laser_stays_on=False):
+        """Minimum time for one spectrum with these settings (s)."""
+        frames = averages * (2 if background else 1)
+        settle = 0.0 if laser_stays_on else self.laser_settle_s()
+        return settle + frames * (exposure_s + self.READOUT_S) + self.OVERHEAD_S
+
     def frames(self, exposure_s, n):
         sp = self.spec[self.channel]
         if sp.exposure_s != exposure_s:
