@@ -45,5 +45,6 @@ Name: "{group}\Repair USB drivers"; Filename: "powershell.exe"; Parameters: "-No
 Name: "{autodesktop}\LibreRamen"; Filename: "{app}\LibreRamen.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{app}\drivers\install-drivers.ps1"""; StatusMsg: "Installing the USB drivers for the instrument..."; Flags: runhidden waituntilterminated; Tasks: drivers
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{app}\drivers\install-drivers.ps1"""; StatusMsg: "Installing the USB drivers for the instrument..."; Flags: runhidden waituntilterminated; Tasks: drivers; Check: not WizardSilent
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{app}\drivers\install-drivers.ps1"" -Quiet"; StatusMsg: "Installing the USB drivers for the instrument..."; Flags: runhidden waituntilterminated; Tasks: drivers; Check: WizardSilent
 Filename: "{app}\LibreRamen.exe"; Description: "{cm:LaunchProgram,LibreRamen}"; Flags: nowait postinstall skipifsilent
