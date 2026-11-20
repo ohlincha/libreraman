@@ -227,6 +227,20 @@ void DataPage::build() {
     m_offset->setToolTip(tr("<p>Vertical offset between stacked spectra</p>"));
     connect(m_offset, &QSlider::valueChanged, this, &DataPage::redraw);
     bar->addWidget(m_offset);
+    bar->addWidget(new QLabel(tr("angle")));
+    m_angle = new QSlider(Qt::Horizontal);
+    m_angle->setRange(-60, 60);
+    m_angle->setValue(0);
+    m_angle->setMaximumWidth(100);
+    m_angle->setToolTip(tr("<p>Stacked view: shifts each spectrum sideways for a 3D (waterfall) look; the "
+                           "shift follows the zoomed range, so narrow regions can be compared. Double-click "
+                           "the slider for 0.</p>"));
+    connect(m_angle, &QSlider::valueChanged, this, &DataPage::redraw);
+    bar->addWidget(m_angle);
+    m_mono = new QCheckBox(tr("one colour"));
+    m_mono->setToolTip(tr("<p>Stacked view: draw all spectra in one colour</p>"));
+    connect(m_mono, &QCheckBox::toggled, this, &DataPage::redraw);
+    bar->addWidget(m_mono);
     bar->addStretch();
     auto* calc = new QPushButton(tr("Calculator…"));
     calc->setToolTip(tr("<p>New spectrum = a·A + b·B + c (scaling, offset, weighted difference)</p>"));
@@ -250,6 +264,17 @@ void DataPage::build() {
 
     m_stack = new QStackedWidget;
     m_plot = new PlotWidget;
+    {   // waterfall: the sideways shift follows the zoomed x range (debounced while the wheel turns)
+        auto* t = new QTimer(this);
+        t->setSingleShot(true);
+        t->setInterval(120);
+        connect(t, &QTimer::timeout, this, [this] {
+            if (view() == View::Stacked && m_angle && m_angle->value() != 0) redraw();
+        });
+        connect(m_plot, &PlotWidget::xRangeChanged, t, [t, this] {
+            if (view() == View::Stacked && m_angle && m_angle->value() != 0) t->start();
+        });
+    }
     m_plot->setLabel(Axis::Bottom, QStringLiteral("Raman shift (cm⁻¹)"));
     m_plot->setLabel(Axis::Left, tr("Intensity"));
     m_plot->setGrid(true, true);
@@ -515,6 +540,8 @@ bool DataPage::baselineCorrection() const { return m_baseline->isChecked(); }
 void DataPage::setDifference(bool on) { m_diff->setChecked(on); }
 bool DataPage::difference() const { return m_diff->isChecked(); }
 void DataPage::setOffset(int percent) { m_offset->setValue(percent); }
+void DataPage::setAngle(int degrees) { m_angle->setValue(degrees); }
+int DataPage::angle() const { return m_angle->value(); }
 int DataPage::offset() const { return m_offset->value(); }
 void DataPage::setFitProfile(const QString& shape) { m_profile->setCurrentText(shape); }
 QString DataPage::fitText() const { return m_fitLabel->text(); }
@@ -571,6 +598,8 @@ void DataPage::redraw() {
     const bool diff = m_diff->isChecked() && rows.size() >= 2;
     m_stack->setCurrentIndex(mode == View::HeatMap && !diff ? 1 : 0);
     m_offset->setEnabled(mode == View::Stacked && !diff);
+    m_angle->setEnabled(mode == View::Stacked && !diff);
+    m_mono->setEnabled(mode == View::Stacked && !diff);
     updateSwatches();
     if (rows.empty()) {
         updatePeaks();
@@ -670,14 +699,48 @@ void DataPage::redraw() {
             if (std::isfinite(s)) span = std::max(span, s);
         }
         if (span == 0) span = 1.0;
-        const double step = mode == View::Stacked ? span * m_offset->value() / 100.0 : 0.0;
+        const bool stacked = mode == View::Stacked;
+        const double step = stacked ? span * m_offset->value() / 100.0 : 0.0;
+        // Waterfall (stacked + angle): spectrum k is shifted sideways by k·dx. dx follows the visible x range
+        // when zoomed (so a narrow region keeps its 3D look), else the data range; the last spectrum moves by
+        // tan(angle)·half the range. Each spectrum is filled with the plot background down to its own base, so
+        // it hides the ones behind it (hidden lines).
+        const double ang = stacked ? m_angle->value() : 0;
+        double dx = 0;
+        if (ang != 0 && data.size() > 1) {
+            double range;
+            if (!m_plot->autoX()) {
+                range = m_plot->xRange().span();
+            } else {
+                const Vec& x0 = data[0].first;
+                range = x0.empty() ? 1.0 : x0.back() - x0.front();
+            }
+            dx = std::tan(ang * M_PI / 180.0) * 0.5 * range / double(data.size() - 1);
+        }
+        double base = std::numeric_limits<double>::infinity();
+        for (const auto& d : data) {
+            const double p = percentile(d.second, 1);
+            if (std::isfinite(p)) base = std::min(base, p);
+        }
+        if (!std::isfinite(base)) base = 0;
+        const bool hide = stacked && (step != 0 || dx != 0);
+        const QColor bg = pal.plotArea;
+        const bool mono = stacked && m_mono->isChecked();
         for (std::size_t k = 0; k < data.size(); ++k) {
+            Vec x = data[k].first;
             Vec y = data[k].second;
             if (step != 0)
                 for (double& v : y) v += double(k) * step;
+            if (dx != 0)
+                for (double& v : x) v += double(k) * dx;
             // many curves: 1 px lines (Qt strokes wider antialiased lines through a much slower path)
-            m_plot->addCurve(data[k].first, std::move(y), QPen(colorOf(rows[k]), data.size() > 6 ? 1.0 : 1.3),
-                             nameOf(int(k)));
+            const QColor col = mono ? pal.main : colorOf(rows[k]);
+            Curve* c = m_plot->addCurve(std::move(x), std::move(y), QPen(col, data.size() > 6 ? 1.0 : 1.3),
+                                        mono && k > 0 ? QString() : nameOf(int(k)));
+            if (hide) {
+                c->setFill(QBrush(bg), base + double(k) * step);
+                c->setZValue(-double(k));                // front (first) spectrum on top
+            }
         }
     }
     updatePeaks();

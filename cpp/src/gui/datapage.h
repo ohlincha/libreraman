@@ -88,7 +88,9 @@ public:
     bool baselineCorrection() const;
     void setDifference(bool on);                 // first ticked − second ticked
     bool difference() const;
-    void setOffset(int percent);                 // stacked offset, 0..100 % of the largest span
+    void setOffset(int percent);
+    void setAngle(int degrees);                 // stacked view: -60..60 (0 = plain stack)
+    int angle() const;                 // stacked offset, 0..100 % of the largest span
     int offset() const;
     processing::Settings settings() const;       // effective settings (Measure page + page controls)
     // x, processed y. If processing fails (error set), y is returned unprocessed.
@@ -171,6 +173,9 @@ private:
     QCheckBox* m_baseline = nullptr;
     QCheckBox* m_diff = nullptr;
     QSlider* m_offset = nullptr;
+    QSlider* m_angle = nullptr;                 // stacked: sideways shift per trace (pseudo-3D waterfall)
+    QCheckBox* m_mono = nullptr;                // stacked: one colour
+    bool m_inAngleRedraw = false;
     QStackedWidget* m_stack = nullptr;
     PlotWidget* m_plot = nullptr;
     PlotWidget* m_heat = nullptr;

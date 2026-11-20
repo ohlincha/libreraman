@@ -8,6 +8,9 @@
 #include "core/fileio.h"
 
 #include <QApplication>
+#include <QCheckBox>
+#include <QEventLoop>
+#include <QTimer>
 #include <QDir>
 #include <QTableWidget>
 #include <QTemporaryDir>
@@ -138,6 +141,24 @@ int main(int argc, char** argv) {
         page.heatPlot()->setXRange(650, 1550);   // narrow bands: zoom in to see them change
         QApplication::processEvents();
         save(page.grab().toImage(), dir, "datapage-heatmap.png");
+
+        // waterfall: stacked + angle, one colour; full range and zoomed into a narrow region
+        page.setView(DataPage::View::Stacked);
+        page.setOffset(25);
+        page.setAngle(35);
+        for (QCheckBox* c : page.findChildren<QCheckBox*>())
+            if (c->text() == QStringLiteral("one colour")) c->setChecked(true);
+        page.plot()->autoRange();
+        QApplication::processEvents();
+        save(page.grab().toImage(), dir, "datapage-waterfall.png");
+        page.plot()->setXRange(780, 1150);
+        {   // the shift follows the zoom after a short delay
+            QEventLoop loop;
+            QTimer::singleShot(300, &loop, &QEventLoop::quit);
+            loop.exec();
+        }
+        QApplication::processEvents();
+        save(page.grab().toImage(), dir, "datapage-waterfall-zoom.png");
     }
     return 0;
 }
