@@ -144,6 +144,7 @@ MeasurePage::MeasurePage(Controller* ctl, QWidget* parent) : Page(parent), m_ctl
     m_baseCurve = m_plot->addCurve(QPen(pal.baseline, 1.2, Qt::DashLine));
     m_baseCurve->setAutoScale(false);
     m_curve = m_plot->addCurve(QPen(pal.main, 1.6));
+    m_plot->setLegendVisible(true);                     // names: sample + time (which trace is which)
     m_peakLabels = m_plot->addPeakLabels();
     connect(m_plot, &PlotWidget::rightClicked, this, &MeasurePage::spectrumMenu);
     connect(m_plot, &PlotWidget::autoRangeRequested, this, &MeasurePage::redraw);
@@ -806,14 +807,31 @@ void MeasurePage::redraw() {
         m_baseCurve->setData(x, base);
     }
     m_curve->setData(x, shown);
-    for (Curve* c : m_oldCurves)
+    const QString sample = sp.metaValue(QStringLiteral("sample"));
+    const QString idx = sp.metaValue(QStringLiteral("series_index"));
+    m_curve->setName((sample.isEmpty() ? tr("spectrum") : sample) + QStringLiteral("  ") +
+                     sp.t.toString(QStringLiteral("HH:mm:ss")) + (idx.isEmpty() ? QString() : QStringLiteral("  #") + idx));
+    m_baseCurve->setName(mode == Both && ps.baseline != QLatin1String("none") ? tr("baseline") : QString());
+    for (Curve* c : m_oldCurves) {
         c->clearData();
-    const std::size_t nOld = std::min<std::size_t>(4, m_history.size() - 1);
+        c->setName({});
+    }
+    // Earlier spectra are drawn faded behind the newest only if they are of the same sample (repeats, a
+    // series); different samples are compared in the Data area, where each spectrum has its name and colour.
+    std::size_t same = 0;
+    for (std::size_t k = m_history.size() - 1; k-- > 0;) {
+        const lr::Spectrum& o = m_history[k];
+        if (o.metaValue(QStringLiteral("sample")) != sample || o.channel != sp.channel) break;
+        ++same;
+    }
+    const std::size_t nOld = std::min<std::size_t>(4, same);
     for (std::size_t k = 0; k < nOld; ++k) {            // the newest previous spectrum is the least faded
         const lr::Spectrum& o = m_history[m_history.size() - 1 - nOld + k];
         Curve* c = m_oldCurves[4 - nOld + k];
         c->setData(o.shift, mode == Cor ? processSafe(o.shift, o.intensity, ps).first : o.intensity);
     }
+    if (nOld > 0)
+        m_oldCurves[3]->setName(tr("earlier %1 (%2)").arg(sample.isEmpty() ? tr("spectra") : sample).arg(same));
     const Vec peaks = pickPositions(x, y);
     QStringList txt;
     for (double p : peaks)
