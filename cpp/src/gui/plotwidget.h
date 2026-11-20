@@ -462,6 +462,8 @@ public:
     void scaleYTop(double factor);                  // y bottom stays; turns autoY off
     void panPixels(const QPointF& delta);           // as dragging by delta pixels
     void setWheelMode(WheelMode m) { m_wheelMode = m; }
+    // x range allowed for zooming/panning: data extent united with the home range (empty: no limit)
+    Range xLimit() const;
     WheelMode wheelMode() const { return m_wheelMode; }
     void setPanY(bool on) { m_panY = on; }          // drag also pans y (default off, as Python)
 
@@ -525,7 +527,7 @@ private:
     bool m_legend = false;
     bool m_readout = true;
     std::function<QString(const QPointF&)> m_readoutFmt;
-    WheelMode m_wheelMode = WheelMode::Spectrum;
+    WheelMode m_wheelMode = WheelMode::ZoomX;          // wheel: x zoom (y follows); Ctrl: y
     bool m_panY = false;
 
     mutable Range m_x{0, 1}, m_y{0, 1};

@@ -7,6 +7,7 @@
 // --screenshot saves the window after 15 s and quits (with --sim a spectrum of CCl4 is measured first and
 // saved in <temp>/libreramen-screenshot; --demo series: a series instead).
 #include "controller.h"
+#include "decimalpoint.h"
 #include "icon.h"
 #include "mainwindow.h"
 #include "measurepage.h"
@@ -109,6 +110,7 @@ int main(int argc, char** argv) {
         qputenv("QT_QPA_PLATFORM", "offscreen");
 
     QApplication app(argc, argv);
+    lr::gui::useDecimalPoint(app);                     // "1.5 s", not "1,5 s" on European systems
     QApplication::setApplicationName(QStringLiteral("LibreRamen"));
     QApplication::setOrganizationName(QStringLiteral("LibreRamen"));
     QApplication::setApplicationVersion(QStringLiteral(LIBRERAMEN_VERSION));

@@ -1350,11 +1350,39 @@ void PlotWidget::autoRange() {
     emit autoRangeRequested();
 }
 
+Range PlotWidget::xLimit() const {
+    Bounds b = dataXBounds();
+    if (m_hasHome) {
+        b.add(m_home.lo);
+        b.add(m_home.hi);
+    }
+    return b.valid() ? Range{b.lo, b.hi} : Range{0, 0};
+}
+
+// Keeps [lo, hi] inside the data/home extent: never zoomed out beyond it, panned back inside, and not
+// narrower than 1/2000 of it (so the spectrum can't be lost by zooming or panning).
+static void clampToLimit(double& lo, double& hi, const Range& lim) {
+    const double L = lim.hi - lim.lo;
+    if (!(L > 0)) return;
+    double w = std::max(hi - lo, L / 2000.0);
+    if (w >= L) {
+        lo = lim.lo;
+        hi = lim.hi;
+        return;
+    }
+    const double c = std::clamp(0.5 * (lo + hi), lim.lo + w / 2, lim.hi - w / 2);
+    lo = c - w / 2;
+    hi = c + w / 2;
+}
+
 void PlotWidget::zoomX(double factor, double centerX) {
     ensureView();
     if (!(factor > 0) || !finite(factor) || !finite(centerX))
         return;
-    setXRange(centerX - (centerX - m_x.lo) * factor, centerX + (m_x.hi - centerX) * factor);
+    double lo = centerX - (centerX - m_x.lo) * factor, hi = centerX + (m_x.hi - centerX) * factor;
+    clampToLimit(lo, hi, xLimit());
+    m_autoY = true;                                    // intensity follows the visible x range
+    setXRange(lo, hi);
 }
 
 void PlotWidget::scaleYTop(double factor) {
@@ -1362,7 +1390,10 @@ void PlotWidget::scaleYTop(double factor) {
     if (!(factor > 0) || !finite(factor))
         return;
     m_autoY = false;
-    applyY(m_y.lo, m_y.lo + m_y.span() * factor);
+    const double lo = m_y.lo;                          // the bottom stays; the top moves (magnifies small bands)
+    double hi = lo + m_y.span() * factor;
+    if (!(hi > lo)) hi = lo + 1e-9;
+    applyY(lo, hi);
 }
 
 void PlotWidget::panPixels(const QPointF& delta) {
@@ -1373,7 +1404,9 @@ void PlotWidget::panPixels(const QPointF& delta) {
         double dx = delta.x() / t.area.width() * t.x.span();
         if (t.invertX)
             dx = -dx;
-        setXRange(m_x.lo - dx, m_x.hi - dx);
+        double lo = m_x.lo - dx, hi = m_x.hi - dx;
+        clampToLimit(lo, hi, xLimit());
+        setXRange(lo, hi);
     }
     if (m_panY && delta.y() != 0) {
         const double dy = delta.y() / t.area.height() * t.y.span();

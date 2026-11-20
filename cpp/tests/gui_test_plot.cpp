@@ -200,7 +200,9 @@ void GuiTestPlot::wheelAndDoubleClick() {
     w.setHomeXRange(150, 3500);
     QCOMPARE(w.xRange().lo, 150.0);
     const QPointF c = w.plotArea().center();
+    QCOMPARE(w.wheelMode(), WheelMode::ZoomX);         // default: wheel zooms x, y follows
     // Spectrum mode (Python): wheel = top of the y axis, baseline stays
+    w.setWheelMode(WheelMode::Spectrum);
     const Range y0 = w.yRange();
     sendWheel(&w, c, 120);
     QVERIFY(!w.autoY());
@@ -221,14 +223,18 @@ void GuiTestPlot::wheelAndDoubleClick() {
     const Range ys = w.yRange();
     sendWheel(&w, c, 240);
     QVERIFY(std::abs(w.xRange().span() - sp / 0.85 * 0.85 * 0.85) < 1e-6);
-    QCOMPARE(w.yRange().span(), ys.span());
+    QVERIFY(w.autoY());                                 // intensity follows the visible x range
+    // zooming out stops at the data/home extent (the spectrum can't be lost)
+    for (int k = 0; k < 20; ++k) sendWheel(&w, c, -120);
+    QCOMPARE(w.xRange().lo, w.xLimit().lo);             // data and home range united
+    QCOMPARE(w.xRange().hi, w.xLimit().hi);
     sendWheel(&w, c, 120, Qt::ControlModifier);
     QVERIFY(w.yRange().span() < ys.span());
     // double-click: home x range, automatic y, autoRangeRequested
     QSignalSpy autoSpy(&w, &PlotWidget::autoRangeRequested);
     QTest::mouseDClick(&w, Qt::LeftButton, Qt::NoModifier, c.toPoint());
     QCOMPARE(autoSpy.count(), 1);
-    QCOMPARE(w.xRange().lo, 150.0);
+    QCOMPARE(w.xRange().lo, 150.0);                     // the home range
     QCOMPARE(w.xRange().hi, 3500.0);
     QVERIFY(w.autoY());
     // without home: data range
@@ -247,15 +253,17 @@ void GuiTestPlot::invertedX() {
     QCOMPARE(t.px(100), t.area.left());
     QCOMPARE(t.px(0), t.area.right());
     QVERIFY(std::abs(t.dataX(t.px(30)) - 30) < 1e-9);
+    w.zoomX(0.5, 50);                                  // room to pan (panning stays inside the data)
+    const double lo0 = w.xRange().lo;
     w.panPixels(QPointF(t.area.width() / 10, 0));     // drag right on an inverted axis: higher values
-    QVERIFY(w.xRange().lo > 0);
+    QVERIFY(w.xRange().lo > lo0);
 }
 
 void GuiTestPlot::clickSignals() {
     PlotWidget w;
     w.resize(800, 500);
     w.addCurve(Vec{0, 1000}, Vec{0, 10});
-    w.setXRange(0, 1000);
+    w.setXRange(200, 800);                             // zoomed in: room to pan
     QSignalSpy clicks(&w, &PlotWidget::clicked);
     QSignalSpy right(&w, &PlotWidget::rightClicked);
     const QPointF p = w.mapFromData(QPointF(400, 5));
@@ -272,7 +280,7 @@ void GuiTestPlot::clickSignals() {
     QTest::mouseMove(&w, (p + QPointF(80, 0)).toPoint());
     QTest::mouseRelease(&w, Qt::LeftButton, Qt::NoModifier, (p + QPointF(80, 0)).toPoint());
     QCOMPARE(clicks.count(), 2);                        // only the right click was added
-    QVERIFY(w.xRange().lo < 0);
+    QVERIFY(w.xRange().lo < 200);
 }
 
 void GuiTestPlot::rubberBand() {
