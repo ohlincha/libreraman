@@ -7,11 +7,12 @@ traffic, same safety rules, same file formats, same numbers within floating-poin
 
 ## Build
 
-Dependencies: Qt ≥ 6.2 (Core, Gui, Widgets, Svg, SerialPort, Network, Test), libusb-1.0, hidapi, Eigen 3.
+Dependencies: Qt ≥ 6.2 (Core, Gui, Widgets, Svg, SerialPort, Network, Sql with the SQLite driver, Test), libusb-1.0,
+hidapi, Eigen 3.
 
 ```
 # Debian/Ubuntu
-sudo apt install cmake ninja-build qt6-base-dev qt6-serialport-dev qt6-svg-dev libusb-1.0-0-dev libhidapi-dev libeigen3-dev
+sudo apt install cmake ninja-build qt6-base-dev libqt6sql6-sqlite qt6-serialport-dev qt6-svg-dev libusb-1.0-0-dev libhidapi-dev libeigen3-dev
 cmake -S cpp -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build && ctest --test-dir build --output-on-failure
 ```
@@ -44,6 +45,8 @@ cmake configure line (Qt from aqtinstall, -dev packages extracted with `dpkg -x`
 | `src/core/calibrate.*` | `calibrate.py` | calibration against standards, JSON storage |
 | `src/core/standards.*` | `standards.py` | reference standards |
 | `src/core/fileio.*` | `fileio.py` | readers/writers (own CSV, vendor CSV/TXT/SPC, JCAMP-DX, columns) |
+| `src/core/library.*` | – (C++ only) | spectral library: SQLite file (Qt Sql), schema versioning, import (own spectra, files, RRUFF, band lists), export, demo library |
+| `src/core/match.*` | – (C++ only) | library matching: HQI full-spectrum search, peak matching, NNLS (Lawson–Hanson) mixtures |
 | `src/cli/` | `__main__.py` | command line |
 | `src/gui/` | `gui/` | Qt Widgets application with its own plot widget |
 | `tests/` | – | QtTest; `tests/golden/` holds outputs of the Python reference |
