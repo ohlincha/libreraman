@@ -15,7 +15,19 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - run: pip install pyinstaller pillow "PySide6==6.9.*" pyqtgraph numpy scipy pyserial pyusb libusb-package
+      - run: pip install pyinstaller pillow "PySide6==6.9.*" pyqtgraph pyserial pyusb libusb-package
+      # numpy/scipy: the runner (macOS 15) would pick wheels linked against the new Accelerate (macOS 13.3+),
+      # which crash at start-up on macOS 12. Pretending to be an older macOS selects the OpenBLAS wheels.
+      - run: SYSTEM_VERSION_COMPAT=1 pip install --force-reinstall --no-deps numpy scipy
+      - run: |
+          python - <<'PY'
+          import glob, numpy, scipy, subprocess
+          print("numpy", numpy.__version__, "scipy", scipy.__version__)
+          for so in glob.glob(numpy.__path__[0] + "/_core/_multiarray_umath*.so"):
+              out = subprocess.run(["otool", "-L", so], capture_output=True, text=True).stdout
+              assert "Accelerate" not in out, "numpy is linked against Accelerate (won't run on macOS 12)"
+              print(out)
+          PY
       - run: |
           pyinstaller --noconfirm --windowed --name LibreRamen \
             --osx-bundle-identifier io.github.ohlincha.libreramen --icon libreramen/data/icon.png \
