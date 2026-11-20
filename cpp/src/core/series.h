@@ -5,7 +5,18 @@
 //  * runTimeSeries(): what the Python GUI controller does (gui/controller.py _series, _series_fastest):
 //                     start delay, count or duration, pause while disarmed (continues after ARM) or while
 //                     the caller's pause flag is set, "laser stays on" fast mode, one CSV per spectrum plus
-//                     series.csv in a new folder.
+//                     series.csv, series.jdx and series.spc (SeriesSettings::files) in a new folder.
+//
+// Files of runTimeSeries: every spectrum is saved at once as its own CSV (full data: signal, background,
+// metadata) in the worker thread; these files are the crash-safe ground truth. The whole-series files
+// (series.csv: table, series.jdx: JCAMP-DX LINK file, series.spc: multi-file SPC; layouts in fileio.h) are
+// rewritten atomically (QSaveFile: write a temporary file, then rename) by a writer thread, so slow disks
+// (fsync of a QSaveFile commit: ~0.1-0.3 s on a hard disk) never delay the acquisition. Each spectrum is
+// formatted once (cached rows/blocks); a rewrite only concatenates. Rewrites are coalesced: spectra arriving
+// during a rewrite go into the next one, and the next rewrite starts no earlier than twice the duration of
+// the previous one after it (the writer is busy at most ~1/3 of the time; long fast series have files that
+// lag by a few spectra). When the series ends (finished, stopped or failed) the files are written once more
+// with every spectrum before runTimeSeries returns.
 //
 // Thread safety: run in a worker thread; the callbacks are called from that thread. stop/pause may be set
 // from any thread.
@@ -45,6 +56,11 @@ struct SeriesSettings {
     double start_delay_s = 0.0;
     bool laserStaysOn = false;                // "as fast as possible": laser on throughout, background once
     double power_mw = 0.0;                    // 1064 nm only; 0 = default
+    struct Files {                            // whole-series files (the per-spectrum CSVs are always written)
+        bool csv = true;                      // series.csv (table: shift + one intensity column per spectrum)
+        bool jdx = true;                      // series.jdx (JCAMP-DX 5.01 LINK file, one block per spectrum)
+        bool spc = true;                      // series.spc (Galactic SPC multi-file, z = elapsed s)
+    } files;
 };
 
 struct SeriesProgress {

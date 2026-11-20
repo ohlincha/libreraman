@@ -7,6 +7,7 @@
 #include <thread>
 
 #include "core/errors.h"
+#include "core/fileio.h"
 #include "core/series.h"
 #include "core/simulator.h"
 
@@ -246,6 +247,85 @@ private slots:
             threw = true;
         }
         QVERIFY(threw);
+    }
+
+    void seriesFilesAllFormats() {
+        // fast mode, 25 spectra: series.csv, series.jdx and series.spc hold every spectrum, equal to the
+        // per-spectrum CSVs (the ground truth) within the precision of each format
+        QTemporaryDir dir;
+        auto s = sim(400.0);
+        SeriesSettings set;
+        set.sample = "CCl4";
+        set.folder = dir.path();
+        set.exposure_s = 0.1;
+        set.count = 25;
+        set.laserStaysOn = true;
+        std::atomic<bool> stop{false};
+        QStringList logs;
+        SeriesCallbacks cb;
+        cb.log = [&](const QString& m) { logs << m; };
+        const QString folder = runTimeSeries(*s, set, stop, cb);
+        QVERIFY2(!logs.join('\n').contains("Series files:"), qPrintable(logs.join('\n')));
+        const QDir d(folder);
+        const QStringList own = d.entryList({"0*.csv"}, QDir::Files, QDir::Name);
+        QCOMPARE(own.size(), 25);
+        const auto table = fileio::read(d.filePath("series.csv"));
+        const auto jdx = fileio::read(d.filePath("series.jdx"));
+        const auto spc = fileio::read(d.filePath("series.spc"));
+        QCOMPARE(table.size(), size_t(25));
+        QCOMPARE(jdx.size(), size_t(25));
+        QCOMPARE(spc.size(), size_t(25));
+        double lastT = -1;
+        for (int k = 0; k < 25; ++k) {
+            const auto one = fileio::read(d.filePath(own[k]));
+            QCOMPARE(one.size(), size_t(1));
+            const fileio::DataSpectrum& g = one[0];
+            const QString el = g.metaValue("series_elapsed_s");
+            QCOMPARE(jdx[size_t(k)].metaValue("series_elapsed_s"), el);
+            QCOMPARE(jdx[size_t(k)].metaValue("series_index"), QString::number(k + 1));
+            QCOMPARE(jdx[size_t(k)].name, "CCl4 t=" + el + " s");
+            QVERIFY(std::abs(spc[size_t(k)].metaValue("series_elapsed_s").toDouble() - el.toDouble()) < 1e-5);
+            QVERIFY(el.toDouble() >= lastT);
+            lastT = el.toDouble();
+            QCOMPARE(jdx[size_t(k)].x.size(), g.x.size());
+            for (size_t i = 0; i < g.x.size(); ++i) {
+                QVERIFY(std::abs(jdx[size_t(k)].x[i] - g.x[i]) <= 0.0051);       // CSV: 2 decimals, JCAMP: 4
+                QVERIFY(std::abs(jdx[size_t(k)].y[i] - g.y[i]) <= 0.051);
+                QVERIFY(std::abs(spc[size_t(k)].y[i] - g.y[i]) <= 0.051 + 1e-6 * std::abs(g.y[i]));
+                QVERIFY(std::abs(table[size_t(k)].y[i] - g.y[i]) <= 1e-9);         // both 1 decimal
+            }
+        }
+        QCOMPARE(jdx[0].metaValue("sample"), QString("CCl4"));
+        QCOMPARE(spc[0].metaValue("mode"), QString("as fast as possible, laser on, background once"));
+
+        // only series.csv
+        set.files.jdx = set.files.spc = false;
+        set.count = 3;
+        const QString f2 = runTimeSeries(*s, set, stop, cb);
+        QVERIFY(QFileInfo::exists(QDir(f2).filePath("series.csv")));
+        QVERIFY(!QFileInfo::exists(QDir(f2).filePath("series.jdx")));
+        QVERIFY(!QFileInfo::exists(QDir(f2).filePath("series.spc")));
+    }
+
+    void seriesFilesWhenStopped() {
+        // stopped after 4 spectra: the files are complete when runTimeSeries returns
+        QTemporaryDir dir;
+        auto s = sim(400.0);
+        SeriesSettings set;
+        set.folder = dir.path();
+        set.exposure_s = 0.1;
+        set.interval_s = 0.01;
+        set.count = 100;
+        std::atomic<bool> stop{false};
+        int n = 0;
+        SeriesCallbacks cb;
+        cb.spectrum = [&](const Spectrum&) {
+            if (++n == 4) stop = true;
+        };
+        const QString folder = runTimeSeries(*s, set, stop, cb);
+        QCOMPARE(fileio::read(QDir(folder).filePath("series.jdx")).size(), size_t(4));
+        QCOMPARE(fileio::read(QDir(folder).filePath("series.spc")).size(), size_t(4));
+        QCOMPARE(fileio::read(QDir(folder).filePath("series.csv")).size(), size_t(4));
     }
 
     void safeNames() {

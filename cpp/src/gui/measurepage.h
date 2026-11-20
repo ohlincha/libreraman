@@ -2,7 +2,14 @@
 // The Measure area (Python gui/app.py MeasurePage): live spectrum with faded previous spectra, peak labels
 // and the processing preview (baseline drawn), series progress, trend of one band (or waterfall), detector
 // and last-spectrum panels, and at the right the settings panel with MEASURE / START SERIES / Stop.
+//
+// Fast series: addSpectrum() only does the bookkeeping (history, processed copy for the display cache, peaks,
+// one trend point, detector labels); the plots are redrawn by a coalescing timer at most every
+// kMinRedrawMs, and not at all while the page is hidden (redrawn when shown). Processed spectra are cached
+// per history entry (recomputed only when the processing settings change), at most kFaded previous spectra
+// are drawn faded, and the trend curve is updated in place.
 #include <QDateTime>
+#include <QElapsedTimer>
 #include <QString>
 #include <deque>
 #include <utility>
@@ -23,6 +30,7 @@ class QRadioButton;
 class QSlider;
 class QSpinBox;
 class QTimeEdit;
+class QTimer;
 class QToolButton;
 
 namespace lr::gui {
@@ -36,6 +44,8 @@ class MeasurePage : public Page {
     Q_OBJECT
 public:
     explicit MeasurePage(Controller* ctl, QWidget* parent = nullptr);
+    static constexpr int kMinRedrawMs = 150;          // plots redrawn at most ~7 times per second
+    static constexpr int kFaded = 4;                  // previous spectra drawn faded behind the newest
 
     // ---- settings as entered
     MeasureSettings measureSettings() const;          // single spectrum ("once" background -> "each")
@@ -83,6 +93,8 @@ public slots:
     void redraw();
     void redrawTrend();
     void recomputeTrend();
+    void flushRedraw();                               // a pending (throttled) redraw now
+    int redrawCount() const { return m_redraws; }     // tests: plot updates so far
 
 private:
     QWidget* buildSettingsPanel();
@@ -95,9 +107,24 @@ private:
     double bandValue(const lr::Vec& x, const lr::Vec& y) const;
     double trendTime(const lr::Spectrum& sp) const;
     void resizeEvent(QResizeEvent* e) override;
+    void showEvent(QShowEvent* e) override;
+    void scheduleRedraw();
+    void processingChanged();
+    struct Processed {                                // a history entry processed with the current settings
+        lr::Vec y, base;
+        unsigned stamp = 0;
+    };
+    const Processed& processedAt(std::size_t i);     // cached (recomputed when the settings changed)
 
     Controller* m_ctl;
     std::deque<lr::Spectrum> m_history;               // recent spectra (faded display, trend), at most 50
+    std::deque<Processed> m_processed;                // parallel to m_history
+    unsigned m_procStamp = 1;                         // incremented when the processing settings change
+    QTimer* m_redrawTimer = nullptr;
+    QElapsedTimer m_sinceRedraw;
+    bool m_redrawPending = false;
+    int m_redraws = 0;
+    Curve* m_trendCurve = nullptr;                    // the trend curve (updated in place)
     std::vector<std::pair<double, double>> m_trend;   // (elapsed s, band value)
     lr::Vec m_lastPeaks;
     bool m_bandAuto = true;

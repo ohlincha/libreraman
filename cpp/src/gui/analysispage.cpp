@@ -21,6 +21,7 @@
 #include <QSplitter>
 #include <QTabWidget>
 #include <QTextStream>
+#include <QElapsedTimer>
 #include <QTimer>
 #include <QToolButton>
 #include <QVBoxLayout>
@@ -166,6 +167,7 @@ AnalysisPage::AnalysisPage(QWidget* parent) : QWidget(parent) {
 AnalysisPage::~AnalysisPage() {
     m_stop = true;
     joinWorker();
+    if (m_autoThread.joinable()) m_autoThread.join();
 }
 
 PlotWidget* AnalysisPage::newPlot(const QString& xLabel, const QString& yLabel) {
@@ -276,7 +278,7 @@ QWidget* AnalysisPage::buildDataPanel() {
     dv->addWidget(m_list, 1);
     auto* row = new QHBoxLayout;
     auto* open = new QPushButton(QStringLiteral("Add files…"));
-    open->setToolTip(QStringLiteral("Spectra or a time-series table (series.csv); any format the Data area reads"));
+    open->setToolTip(QStringLiteral("Spectra or a time series (series.csv, series.jdx, series.spc); any format the Data area reads"));
     connect(open, &QPushButton::clicked, this, [this] {
         const QStringList files = QFileDialog::getOpenFileNames(this, QStringLiteral("Add spectra"), QString(),
             QStringLiteral("Spectra (*.csv *.txt *.spc *.jdx *.dx *.jcamp);;All files (*)"));
@@ -808,12 +810,20 @@ void AnalysisPage::setSpectra(const std::vector<Spectrum>& spectra) {
 
 void AnalysisPage::addSpectrum(const Spectrum& sp) { addSpectra({fromAcquisition(sp, int(m_spectra.size()))}); }
 
+void AnalysisPage::addSpectra(const std::vector<Spectrum>& spectra) {
+    std::vector<fileio::DataSpectrum> ds;
+    ds.reserve(spectra.size());
+    for (const Spectrum& sp : spectra) ds.push_back(fromAcquisition(sp, int(m_spectra.size() + ds.size())));
+    addSpectra(ds);
+}
+
 void AnalysisPage::addSpectra(const std::vector<fileio::DataSpectrum>& spectra) {
+    const size_t from = m_spectra.size();
     for (const auto& d : spectra) {
         m_spectra.push_back(d);
         m_checked.push_back(true);
     }
-    refreshList();
+    appendListItems(from);                        // not refreshList(): a long series would rebuild the list
     dataSetChanged();
 }
 
@@ -848,7 +858,13 @@ void AnalysisPage::clearSpectra() {
 void AnalysisPage::refreshList() {
     m_updating = true;
     m_list->clear();
-    for (size_t i = 0; i < m_spectra.size(); ++i) {
+    m_updating = false;
+    appendListItems(0);
+}
+
+void AnalysisPage::appendListItems(size_t from) {
+    m_updating = true;
+    for (size_t i = from; i < m_spectra.size(); ++i) {
         auto* it = new QListWidgetItem(m_spectra[i].name.isEmpty() ? QStringLiteral("spectrum %1").arg(i + 1)
                                                                    : m_spectra[i].name);
         it->setFlags(it->flags() | Qt::ItemIsUserCheckable);
@@ -1024,6 +1040,18 @@ void AnalysisPage::schedule() { m_timer->start(); }
 void AnalysisPage::runVisible() {
     const int i = m_tabs->currentIndex();
     if (i < 0 || !m_dirty[i]) return;
+    // large data sets (a long series): PCA and EFA in a background thread, so the GUI stays responsive
+    if ((Method(i) == Method::Pca || Method(i) == Method::Efa) && m_data.rows() >= kAsyncRows) {
+        runAsync(Method(i));
+        return;
+    }
+    QElapsedTimer t;
+    t.start();
+    struct Done {                                 // duration of this automatic run (host: update rate)
+        QElapsedTimer& t;
+        qint64& ms;
+        ~Done() { ms = t.elapsed(); }
+    } done{t, m_lastRunMs};
     switch (Method(i)) {
     case Method::Pca: runPca(); break;
     case Method::Efa: runEfa(); break;
@@ -1031,6 +1059,63 @@ void AnalysisPage::runVisible() {
     case Method::Mcr: break;                      // explicit Run
     case Method::Nnls: runNnls(); break;
     }
+}
+
+void AnalysisPage::runAsync(Method m) {
+    if (m_autoBusy) {                             // one at a time; runs again for the newest data afterwards
+        m_autoAgain = true;
+        return;
+    }
+    if (m_autoThread.joinable()) m_autoThread.join();
+    m_autoBusy = true;
+    m_autoAgain = false;
+    const unsigned gen = m_generation;
+    const int k = m == Method::Pca ? m_pcaK->value() : m_efaK->value();
+    const int scaling = m_pcaScaling->currentIndex();
+    m_autoThread = std::thread([this, m, gen, k, scaling, D = Matrix(m_data.D)] {
+        QElapsedTimer t;
+        t.start();
+        std::shared_ptr<PcaResult> p;
+        std::shared_ptr<EfaResult> e;
+        QString err;
+        try {
+            if (m == Method::Pca) p = std::make_shared<PcaResult>(pca(D, k, Scaling(scaling)));
+            else e = std::make_shared<EfaResult>(efa(D, k));
+        } catch (const std::exception& ex) {
+            err = QString::fromUtf8(ex.what());
+        }
+        const qint64 ms = t.elapsed();
+        QMetaObject::invokeMethod(
+            this, [this, m, gen, k, scaling, p, e, err, ms] { asyncDone(m, gen, k, scaling, p, e, err, ms); },
+            Qt::QueuedConnection);
+    });
+}
+
+void AnalysisPage::asyncDone(Method m, unsigned gen, int k, int scaling, std::shared_ptr<PcaResult> p,
+                             std::shared_ptr<EfaResult> e, const QString& err, qint64 ms) {
+    if (m_autoThread.joinable()) m_autoThread.join();
+    m_autoBusy = false;
+    QElapsedTimer t;                              // GUI-thread cost: drawing only (`ms` was spent elsewhere)
+    t.start();
+    const int i = methodIndex(m);
+    const bool current = gen == m_generation && m_dirty[i] &&
+                         (m == Method::Pca ? k == m_pcaK->value() && scaling == m_pcaScaling->currentIndex()
+                                           : k == m_efaK->value());
+    if (current) {
+        m_dirty[i] = false;
+        if (m == Method::Pca) {
+            m_pca = p ? std::make_unique<PcaResult>(std::move(*p)) : nullptr;
+            if (!err.isEmpty()) setInfo(m_pcaInfo, err, true);
+            drawPca();
+        } else {
+            m_efa = e ? std::make_unique<EfaResult>(std::move(*e)) : nullptr;
+            if (!err.isEmpty()) setInfo(m_efaInfo, err, true);
+            drawEfa();
+        }
+    }
+    m_lastRunMs = t.elapsed();
+    m_lastAsyncMs = ms;
+    if (!current || m_autoAgain) schedule();
 }
 
 void AnalysisPage::showMethod(Method m) {

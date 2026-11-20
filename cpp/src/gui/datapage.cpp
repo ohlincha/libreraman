@@ -30,6 +30,8 @@
 #include <QPixmap>
 #include <QPushButton>
 #include <QSlider>
+#include <QTimer>
+#include <QElapsedTimer>
 #include <QSplitter>
 #include <QStackedWidget>
 #include <QTableWidget>
@@ -237,6 +239,8 @@ void DataPage::build() {
     m->addAction(tr("Ticked spectra as CSV…"), this, [this] { exportDialog("csv"); });
     m->addAction(tr("Ticked spectra as JCAMP-DX…"), this, [this] { exportDialog("jdx"); });
     m->addAction(tr("Ticked spectra as one table (common axis)…"), this, [this] { exportDialog("table"); });
+    m->addAction(tr("Ticked spectra as one JCAMP-DX file (multi-block)…"), this, [this] { exportDialog("onejdx"); });
+    m->addAction(tr("Ticked spectra as one SPC file (multi-file)…"), this, [this] { exportDialog("onespc"); });
     m->addSeparator();
     m->addAction(tr("Plot as PNG…"), this, [this] { exportDialog("png"); });
     m->addAction(tr("Plot as SVG…"), this, [this] { exportDialog("svg"); });
@@ -320,13 +324,20 @@ void DataPage::addSpectrum(const Spectrum& sp) {
     addSpectrum(fileio::fromSpectrum(sp, name), true);
 }
 
+void DataPage::addSpectra(const std::vector<Spectrum>& spectra) {
+    ++m_batch;
+    for (const Spectrum& sp : spectra) addSpectrum(sp);
+    --m_batch;
+    if (m_dirty) redraw();
+}
+
 void DataPage::addSpectrum(const fileio::DataSpectrum& sp, bool checked) {
     addEntry(sp, checked);
     redraw();
 }
 
 void DataPage::addEntry(const fileio::DataSpectrum& sp, bool checked) {
-    m_entries.push_back({sp, QColor()});
+    m_entries.push_back({sp, QColor(), {}, {}, {}});
     auto* it = new QListWidgetItem(sp.name);
     it->setFlags(it->flags() | Qt::ItemIsUserCheckable | Qt::ItemIsEditable);
     it->setCheckState(checked ? Qt::Checked : Qt::Unchecked);
@@ -524,6 +535,14 @@ std::pair<Vec, Vec> DataPage::processed(const fileio::DataSpectrum& sp, QString*
     }
 }
 
+QString DataPage::settingsKey() const {
+    const processing::Settings s = settings();
+    return QStringLiteral("%1|%2|%3|%4|%5|%6|%7|%8|%9")
+        .arg(s.baseline, QString::number(s.strength, 'g', 17), QString::number(int(s.despike)),
+             QString::number(int(s.smooth)), QString::number(s.smoothWindow), QString::number(s.derivative),
+             QString::number(s.derivWindow), s.normalize, s.band ? QString::number(*s.band, 'g', 17) : QString());
+}
+
 QString DataPage::describeProcessing() const {
     const processing::Settings ps = m_settingsFn();
     return QStringLiteral("baseline=%1 strength=%2 despike=%3 smooth=%4 normalize=%5")
@@ -547,7 +566,7 @@ void DataPage::redraw() {
     m_heat->clear();
     m_heatItem = nullptr;
     m_note->clear();
-    const std::vector<int> rows = tickedRows();
+    std::vector<int> rows = tickedRows();
     const View mode = view();
     const bool diff = m_diff->isChecked() && rows.size() >= 2;
     m_stack->setCurrentIndex(mode == View::HeatMap && !diff ? 1 : 0);
@@ -557,16 +576,54 @@ void DataPage::redraw() {
         updatePeaks();
         return;
     }
+    // Overlay / stacked: at most kMaxCurves curves (evenly thinned, the newest always drawn); hundreds of
+    // overlapping curves are unreadable and slow to paint. The heat map shows every ticked spectrum.
+    QString thinned;
+    if (!diff && mode != View::HeatMap && rows.size() > size_t(kMaxCurves)) {
+        std::vector<int> sub;
+        const size_t n = rows.size();
+        for (int k = 0; k < kMaxCurves; ++k)
+            sub.push_back(rows[size_t(std::llround(double(k) * double(n - 1) / double(kMaxCurves - 1)))]);
+        thinned = tr("showing %1 of %2 ticked spectra (heat map: all)").arg(kMaxCurves).arg(n);
+        rows = std::move(sub);
+    }
     QStringList problems;
     std::vector<std::pair<Vec, Vec>> data;
+    const QString key = settingsKey();
+    // Processing is cached per entry. Spectra not processed yet are processed for at most kProcessBudgetMs per
+    // redraw (a long series added at once); the rest are drawn by follow-up redraws in later event-loop passes.
+    QElapsedTimer budget;
+    budget.start();
+    std::vector<int> shown;
+    bool incomplete = false;
     for (int r : rows) {
-        QString err;
-        data.push_back(processed(m_entries[size_t(r)].sp, &err));
-        if (!err.isEmpty()) problems << err;
+        Entry& e = m_entries[size_t(r)];
+        if (e.key != key) {
+            if (shown.size() >= 2 && budget.elapsed() >= kProcessBudgetMs) {
+                incomplete = true;
+                continue;
+            }
+            e.procError.clear();
+            e.procY = processed(e.sp, &e.procError).second;
+            e.key = key;
+        }
+        shown.push_back(r);
+        data.emplace_back(e.sp.x, e.procY);
+        if (!e.procError.isEmpty()) problems << e.procError;
+    }
+    rows = std::move(shown);
+    if (incomplete && !m_followUp) {
+        m_followUp = true;
+        QTimer::singleShot(0, this, [this] {
+            m_followUp = false;
+            redraw();
+        });
     }
     if (!problems.isEmpty()) {
         m_note->setText(tr("processing failed, shown unprocessed: %1").arg(problems.join("; ")));
         m_note->setToolTip(problems.join('\n'));
+    } else if (!thinned.isEmpty()) {
+        m_note->setText(thinned);
     }
     const PlotPalette& pal = m_plot->plotPalette();
     auto nameOf = [&](int k) { return m_entries[size_t(rows[size_t(k)])].sp.name; };
@@ -618,7 +675,9 @@ void DataPage::redraw() {
             Vec y = data[k].second;
             if (step != 0)
                 for (double& v : y) v += double(k) * step;
-            m_plot->addCurve(data[k].first, std::move(y), QPen(colorOf(rows[k]), 1.3), nameOf(int(k)));
+            // many curves: 1 px lines (Qt strokes wider antialiased lines through a much slower path)
+            m_plot->addCurve(data[k].first, std::move(y), QPen(colorOf(rows[k]), data.size() > 6 ? 1.0 : 1.3),
+                             nameOf(int(k)));
         }
     }
     updatePeaks();
@@ -841,6 +900,29 @@ bool DataPage::exportTable(const QString& path) {
     return true;
 }
 
+bool DataPage::exportOneFile(const QString& path) {
+    std::vector<fileio::DataSpectrum> list;
+    for (int r : tickedRows()) {
+        const fileio::DataSpectrum& s = m_entries[size_t(r)].sp;
+        fileio::DataSpectrum d;
+        d.name = s.name;
+        std::tie(d.x, d.y) = processed(s);
+        d.meta = s.meta;
+        d.setMeta(QStringLiteral("processing"), describeProcessing());
+        list.push_back(std::move(d));
+    }
+    if (list.empty()) return false;
+    const QString title = tr("%n spectra", nullptr, int(list.size()));
+    try {
+        if (path.endsWith(QStringLiteral(".spc"), Qt::CaseInsensitive)) fileio::writeSpcMulti(path, list, title);
+        else fileio::writeJcampMulti(path, list, title);
+    } catch (const std::exception& e) {
+        warn(tr("Export"), QString::fromUtf8(e.what()));
+        return false;
+    }
+    return true;
+}
+
 bool DataPage::exportPlot(const QString& path) {
     PlotWidget* w = m_stack->currentIndex() == 1 ? m_heat : m_plot;
     QSize size = w->isVisible() && w->width() > 200 ? w->size() : QSize(1000, 620);
@@ -868,6 +950,14 @@ void DataPage::exportDialog(const QString& kind) {
     if (kind == "table") {
         const QString p = QFileDialog::getSaveFileName(this, tr("Save table"), "spectra.csv", "CSV (*.csv)");
         if (!p.isEmpty()) exportTable(p);
+        return;
+    }
+    if (kind == "onejdx" || kind == "onespc") {
+        const bool spc = kind == "onespc";
+        const QString p = QFileDialog::getSaveFileName(this, tr("Save spectra in one file"),
+                                                       spc ? "spectra.spc" : "spectra.jdx",
+                                                       spc ? "Galactic SPC (*.spc)" : "JCAMP-DX (*.jdx *.dx)");
+        if (!p.isEmpty()) exportOneFile(p);
         return;
     }
     const QString d = QFileDialog::getExistingDirectory(this, tr("Folder for the exported spectra"));

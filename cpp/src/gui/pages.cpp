@@ -6,6 +6,7 @@
 #include "datapagehost.h"
 #include "librarypagehost.h"
 
+#include <QEvent>
 #include <QLabel>
 #include <QVBoxLayout>
 #include <map>
@@ -88,6 +89,46 @@ Page* createPage(const QString& area, const PageContext& ctx) {
     if (p)
         p->setController(ctx.controller);
     return p;
+}
+
+SpectrumBatcher::SpectrumBatcher(QWidget* page, int visibleMs, Deliver deliver)
+    : QObject(page), m_page(page), m_visibleMs(visibleMs), m_deliver(std::move(deliver)) {
+    m_timer.setSingleShot(true);
+    connect(&m_timer, &QTimer::timeout, this, &SpectrumBatcher::flush);
+    page->installEventFilter(this);
+}
+
+void SpectrumBatcher::add(const lr::Spectrum& sp) {
+    m_pending.push_back(sp);
+    schedule();
+}
+
+void SpectrumBatcher::schedule() {
+    if (m_pending.empty() || !m_page->isVisible() || m_timer.isActive())
+        return;
+    const qint64 interval = std::max<qint64>(m_visibleMs, kDuty * (m_lastCostMs + (m_extraCost ? m_extraCost() : 0)));
+    const qint64 wait = m_since.isValid() ? interval - m_since.elapsed() : 0;
+    m_timer.start(int(std::max<qint64>(0, wait)));
+}
+
+void SpectrumBatcher::flush() {
+    m_timer.stop();
+    if (m_pending.empty())
+        return;
+    std::vector<lr::Spectrum> batch;
+    batch.swap(m_pending);
+    ++m_deliveries;
+    QElapsedTimer cost;
+    cost.start();
+    m_deliver(std::move(batch));
+    m_lastCostMs = cost.elapsed();
+    m_since.start();                           // measured from the end of the (possibly long) update
+}
+
+bool SpectrumBatcher::eventFilter(QObject* watched, QEvent* e) {
+    if (watched == m_page && e->type() == QEvent::Show)
+        schedule();
+    return QObject::eventFilter(watched, e);
 }
 
 QString spectrumDisplayName(const lr::Spectrum& sp) {

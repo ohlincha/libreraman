@@ -6,6 +6,12 @@
 //
 // Thread safety: the Controller lives in the GUI thread; call its methods from there only. Signals may be
 // emitted from the worker thread (connect receivers normally: Qt queues them to the GUI thread).
+//
+// Series results (spectrum, seriesProgress) do not go through one queued event each: the worker appends them
+// to a pending list and posts at most one delivery at a time. A delivery emits pending spectra in order for
+// at most kDeliverBudgetMs, then yields to the event loop (and continues in the next pass); the newest
+// progress is emitted after the last pending spectrum (stale progress is dropped). A GUI that falls behind a
+// fast series stays responsive and catches up; busyChanged(false) comes after every result.
 #include <QMetaType>
 #include <QObject>
 #include <QString>
@@ -14,7 +20,11 @@
 #include <atomic>
 #include <functional>
 #include <memory>
+#include <deque>
+#include <mutex>
+#include <optional>
 #include <thread>
+#include <vector>
 
 #include "core/instrument.h"
 #include "core/series.h"
@@ -126,6 +136,13 @@ private:
     void ping(bool laserOn);
     void selectChannel(int ch);               // worker thread
     InstrumentInfo makeInfo(const QString& serial) const;
+    // worker thread: queue a series result for the GUI thread (see the top of this file)
+    void postSpectrum(const lr::Spectrum& sp);
+    void postProgress(const lr::SeriesProgress& p);
+    void postDelivery();                      // with m_pendingMutex held
+    void deliver();                           // GUI thread
+    bool deliveryPending();
+    static constexpr int kDeliverBudgetMs = 30;
 
     std::unique_ptr<lr::Instrument> m_inst;
     bool m_closed = false;                    // shutdown() closed m_inst
@@ -139,6 +156,11 @@ private:
     bool m_busy = false;                      // GUI thread
     bool m_series = false;
     std::atomic<bool> m_stop{false}, m_pause{false};
+
+    std::mutex m_pendingMutex;                // worker -> GUI results of a series
+    std::deque<lr::Spectrum> m_pendingSpectra;
+    std::optional<lr::SeriesProgress> m_pendingProgress;
+    bool m_deliveryPosted = false;
 
     QTimer m_timer;
     int m_ka = 0;

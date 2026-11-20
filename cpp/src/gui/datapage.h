@@ -7,7 +7,10 @@
 // normalisation and baseline switch. Other features: difference A − B of the first two ticked spectra,
 // a calculator a·A + b·B + c, the peak table of the current spectrum, profile fits of the bands inside the
 // visible x range (the fit window can then be dragged to refit), and export (CSV, JCAMP-DX, common-axis
-// table, plot as PNG/SVG). The intensity axis follows the visible x range (PlotWidget autoY).
+// table, all ticked spectra in one JCAMP-DX or SPC file, plot as PNG/SVG). Multi-spectrum files (JCAMP-DX
+// LINK files, multi-file SPC, series.csv) open as one entry per spectrum. Long series: processed spectra are
+// cached per entry, at most kMaxCurves ticked spectra are drawn in the overlay/stacked views (evenly thinned),
+// and a redraw processes new spectra for at most kProcessBudgetMs (the rest follow in later passes). The intensity axis follows the visible x range (PlotWidget autoY).
 //
 // The page is self-contained (no dependency on the main window).
 #include <QColor>
@@ -57,6 +60,7 @@ public:
     // (+ " #<series_index>"), ticked.
     void addSpectrum(const Spectrum& sp);
     void addSpectrum(const fileio::DataSpectrum& sp, bool checked = true);   // Python add()
+    void addSpectra(const std::vector<Spectrum>& spectra);                   // several, one redraw
     // Files or folders (recursively: .csv .txt .spc .jdx .dx). Unreadable files are reported in one
     // warning box (or only via the message() signal when messages are disabled). Returns the errors.
     QStringList openFiles(const QStringList& paths);
@@ -104,6 +108,8 @@ public:
 
     // ---- export (ticked spectra, processed as shown); return the written paths / success
     QStringList exportSpectra(const QString& dir, const QString& kind);   // kind "csv" or "jdx"
+    // All ticked spectra in one file: JCAMP-DX LINK file (.jdx/.dx) or multi-file SPC (.spc), by suffix.
+    bool exportOneFile(const QString& path);
     bool exportTable(const QString& path);
     bool exportPlot(const QString& path);       // .png (2000 px wide) or .svg, the plot shown
 
@@ -118,7 +124,7 @@ public:
 public slots:
     void openFilesDialog();
     void calculatorDialog();
-    void exportDialog(const QString& kind);      // "csv", "jdx", "table", "png", "svg"
+    void exportDialog(const QString& kind);      // "csv", "jdx", "table", "onejdx", "onespc", "png", "svg"
     void redraw();
 
 signals:
@@ -132,7 +138,15 @@ private:
     struct Entry {
         fileio::DataSpectrum sp;
         QColor color;                            // custom colour (invalid = automatic)
+        // processed(sp) for the settings `key` (redraw cache: a long series is not reprocessed per spectrum)
+        QString key;
+        Vec procY;
+        QString procError;
     };
+    QString settingsKey() const;
+    static constexpr int kProcessBudgetMs = 50;
+    static constexpr int kMaxCurves = 24;        // overlay / stacked: more ticked spectra are thinned out
+    bool m_followUp = false;                     // a redraw for spectra still to be processed is posted
     void build();
     void addEntry(const fileio::DataSpectrum& sp, bool checked);
     void openPaths(const QStringList& paths, QStringList& errors);
