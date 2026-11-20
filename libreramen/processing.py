@@ -110,19 +110,23 @@ def baseline(x, y, method="als", strength=5.0, **kw):
     raise ValueError(f"unknown baseline method {method!r}")
 
 
-def despike(y, threshold=6.0, width=3):
-    """Remove narrow positive spikes (cosmic rays) from a single spectrum."""
-    y = np.asarray(y, float).copy()
-    d = np.diff(y, 2, prepend=y[0], append=y[-1])
-    mad = np.median(np.abs(d - np.median(d))) or 1.0
-    z = 0.6745 * (d - np.median(d)) / mad
-    bad = np.where(np.abs(z) > threshold)[0]
-    for i in bad:
-        a, b = max(0, i - width), min(len(y), i + width + 1)
-        nb = np.r_[y[max(0, a - width):a], y[b:b + width]]
-        if len(nb) and y[i] > np.median(nb):
-            y[a:b] = np.interp(np.arange(a, b), [a - 1, b], [y[max(a - 1, 0)], y[min(b, len(y) - 1)]])
-    return y
+def despike(y, threshold=8.0):
+    """Remove cosmic-ray spikes (1-2 pixels wide) from a single spectrum without touching Raman bands.
+
+    A point is a spike if it rises far above a 5-point median (more than `threshold` x noise) AND that
+    excess is most of its height above the local background. The tip of a real band (about 10 pixels wide
+    here) only exceeds the 5-point median by a few per cent of its height, so it is kept."""
+    from scipy.ndimage import median_filter
+    y = np.asarray(y, float)
+    med = median_filter(y, size=5, mode="nearest")
+    res = y - med
+    noise = 1.4826 * np.median(np.abs(res - np.median(res))) or 1.0
+    base = median_filter(y, size=41, mode="nearest")
+    spike = (res > threshold * noise) & (res > 0.5 * (y - base))
+    spike = spike | np.roll(spike, 1) & (res > 3 * noise) | np.roll(spike, -1) & (res > 3 * noise)
+    out = y.copy()
+    out[spike] = med[spike]
+    return out
 
 
 def despike_frames(frames, k=5.0):

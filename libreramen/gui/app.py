@@ -137,6 +137,28 @@ class SpectrumViewBox(pg.ViewBox):
         self.home_x = None          # x range restored by double-click (None: full data range)
         self.auto_y = True          # our own automatic intensity scaling (with headroom for labels)
         self.on_auto = None         # callback to rescale after double-click
+        self.sigXRangeChanged.connect(lambda *_: self.rescale_y())
+
+    def rescale_y(self, headroom=0.18):
+        """Fit the intensity axis to the data visible in the current x range (only in automatic mode)."""
+        if not self.auto_y:
+            return
+        x0, x1 = self.viewRange()[0]
+        lo, hi = None, None
+        for item in self.addedItems:
+            if not isinstance(item, pg.PlotDataItem) or not item.isVisible():
+                continue
+            xd, yd = item.getData()
+            if xd is None or len(xd) == 0:
+                continue
+            m = (xd >= x0) & (xd <= x1) & np.isfinite(yd)
+            if m.any():
+                a, b = float(np.min(yd[m])), float(np.max(yd[m]))
+                lo = a if lo is None else min(lo, a)
+                hi = b if hi is None else max(hi, b)
+        if lo is not None:
+            self.enableAutoRange(y=False)
+            self.setYRange(lo, hi + headroom * (hi - lo or 1), padding=0.02)
 
     def wheelEvent(self, ev, axis=None):
         mods = ev.modifiers() if hasattr(ev, "modifiers") else Qt.NoModifier
@@ -708,9 +730,10 @@ class MainWindow(QMainWindow):
         self.stack = QStackedWidget()
         self.side_buttons = []
         self.measure = MeasurePage(ctl, self)
+        from .data import DataPage
+        self.data = DataPage(spectrum_plot, self.measure.proc_settings)
         pages = [self.measure,
-                 Placeholder("Data", "Overlay, stacked, waterfall and heat-map plots; comparison, difference spectra; "
-                                     "export to CSV, JCAMP-DX, SPC, HDF5, Excel, PNG/SVG/PDF."),
+                 self.data,
                  Placeholder("Library", "Spectral library (open databases, literature, your own spectra) and matching."),
                  Placeholder("Analysis", "PCA, EFA, OPA, SIMPLISMA, MCR-ALS, NNLS; comparison with computed spectra."),
                  Placeholder("Calibration", "Calibration against reference standards (wizard), quick checks, history. "
@@ -755,6 +778,7 @@ class MainWindow(QMainWindow):
         ctl.log.connect(self.add_log)
         ctl.error.connect(self.on_error)
         ctl.spectrum.connect(self.measure.add_spectrum)
+        ctl.spectrum.connect(self.add_to_data)
         ctl.series_progress.connect(self.measure.series_progress)
         ctl.busy.connect(self.measure.set_busy)
         ctl.connected.connect(self.on_connected)
@@ -770,6 +794,13 @@ class MainWindow(QMainWindow):
         w, h = min(1440, int(a.width() * 0.92)), min(900, int(a.height() * 0.92))
         self.resize(w, h)
         self.move(a.x() + (a.width() - w) // 2, a.y() + (a.height() - h) // 2)
+
+    def add_to_data(self, sp):
+        from .. import fileio
+        name = f"{sp.meta.get('sample', 'spectrum')} {time.strftime('%H:%M:%S', time.localtime(sp.t))}"
+        if "series_index" in sp.meta:
+            name += f" #{sp.meta['series_index']}"
+        self.data.add(fileio.from_spectrum(sp, name), checked=True)
 
     def show_area(self, k):
         self.stack.setCurrentIndex(k)

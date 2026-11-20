@@ -140,8 +140,8 @@ def fit(x, y, region, guesses=None, shape="pvoigt", fix_positions=False):
     y = np.asarray(y, float)
     m = (x >= region[0]) & (x <= region[1])
     xr, yr = x[m], y[m]
-    if guesses is None:
-        guesses = pick(xr, yr, snr=4)
+    if guesses is None:          # pick on the whole spectrum (a noise estimate from a zoomed band is far too high)
+        guesses = [p for p in pick(x, y, snr=4) if region[0] <= p.position <= region[1]]
     pos = [g.position if isinstance(g, Peak) else float(g) for g in guesses]
     if not pos:
         raise ValueError("no peaks to fit in this region")
