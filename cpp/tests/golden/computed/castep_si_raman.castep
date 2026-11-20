@@ -1,0 +1,69 @@
+
+ +-------------------------------------------------+
+ |                                                 |
+ |      CCC   AA    SSS  TTTTT  EEEEE  PPPP        |
+ |     C     A  A  S       T    E      P   P       |
+ |     C     AAAA   SS     T    EEE    PPPP        |
+ |     C     A  A     S    T    E      P           |
+ |      CCC  A  A  SSS     T    EEEEE  P           |
+ |                                                 |
+ +-------------------------------------------------+
+ |                                                 |
+ | Welcome to Academic Release CASTEP version 20.11|
+ | Ab Initio Total Energy Program                  |
+ +-------------------------------------------------+
+
+ ************************************ Title ************************************
+ Si phonon + Raman
+
+ ***************************** General Parameters ******************************
+ type of calculation                            : phonon calculation
+
+ *********************** Exchange-Correlation Parameters ***********************
+ using functional                               : Local Density Approximation
+
+ ************************* Basis Set Parameters *************************
+ plane wave basis set cut-off                   :   400.0000   eV
+
+                           -------------------------------
+                                      Cell Contents
+                           -------------------------------
+
+            xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+            x  Element    Atom        Fractional coordinates of atoms  x
+            x            Number           u          v          w      x
+            x----------------------------------------------------------x
+            x  Si           1         0.000000   0.000000   0.000000   x
+            x  Si           2         0.250000   0.250000   0.250000   x
+            xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+ ===============================================================================
+ +                           Vibrational Frequencies                           +
+ +                           -----------------------                           +
+ +                                                                             +
+ + Performing frequency calculation at  1 wavevector  (q-pt )                  +
+ + ==========================================================================  +
+ +                                                                             +
+ +   q-pt=    1 (  0.000000  0.000000  0.000000)     1.0000000000              +
+ +                                                                             +
+ + ------------------------------------------------------------------------------- +
+ +  N      Frequency irrep.    IR intensity active            Raman activity active +
+ +                (cm-1)         ((D/A)**2/amu)                  (A**4 amu**(-1))   +
+ +                                                                                 +
+ +  1      -0.031612   a          0.0000000  N                  0.0000000  N        +
+ +  2      -0.031612   a          0.0000000  N                  0.0000000  N        +
+ +  3      -0.031612   a          0.0000000  N                  0.0000000  N        +
+ +  4     508.456281   b          0.0000000  N                 31.2341213  Y        +
+ +  5     508.456281   b          0.0000000  N                 31.2341213  Y        +
+ +  6     508.456281   b          0.0000000  N                 31.2341213  Y        +
+ + .................................................................................. +
+ +        Character table from group theory analysis of eigenvectors               +
+ +                           Point Group =  32, Oh                                 +
+ + .................................................................................. +
+ +  Rep  Mul |    E   C3   C2   C4  C2'    I  S6   s_h  S4  s_d                    +
+ +  --- --- + ---------------------------------------------------                   +
+ + a T1u  1 |    3    0   -1    1   -1   -3    0    1   -1    1                    +
+ + b T2g  1 |    3    0   -1   -1    1    3    0   -1   -1    1                    +
+ ===============================================================================
+
+ Total time          =         45.21 s

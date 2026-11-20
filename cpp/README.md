@@ -22,7 +22,9 @@ Widget tests are `tests/gui_test_*.cpp` (linked with the `libreramen_gui` object
 without `main.cpp`; run offscreen). `-DLIBRERAMEN_GUI_PREVIEW=ON` builds `gui_preview`, which renders
 plots, status strip, splash and icon to PNG files for visual checks:
 `QT_QPA_PLATFORM=offscreen ./gui_preview <dir>`; `datapage_preview <dir>` renders the Data area
-(overlay, stacked, difference, fit, heat map). `tests/test_cli.cpp` runs the command line program against
+(overlay, stacked, difference, fit, heat map); `computed_preview <dir>` renders the computed-spectra panel
+against the simulator's measured CCl4/chloroform. `tests/golden/computed/` holds synthetic, truncated
+output excerpts written after each program's layout (not real runs). `tests/test_cli.cpp` runs the command line program against
 `tests/golden/cli.json` (output of the Python CLI).
 
 Development machine without root: `source ~/opt/libreramen-env.sh` and add `$LR_CMAKE_ARGS` to the
@@ -46,9 +48,11 @@ cmake configure line (Qt from aqtinstall, -dev packages extracted with `dpkg -x`
 | `src/core/calibrate.*` | `calibrate.py` | calibration against standards, JSON storage |
 | `src/core/standards.*` | `standards.py` | reference standards |
 | `src/core/fileio.*` | `fileio.py` | readers/writers (own CSV, vendor CSV/TXT/SPC, JCAMP-DX, columns) |
+| `src/core/computed*.*` | – (new in C++) | computed Raman spectra: readers for Gaussian, ORCA (.out/.hess), NWChem, CP2K, Quantum ESPRESSO, vasp_raman.py, Phonopy-Spectroscopy, CASTEP; activities → cross-sections, scaling fit, broadening, assignment, comparison |
 | `src/cli/` | `__main__.py` | command line |
 | `src/gui/` | `gui/` | Qt Widgets application with its own plot widget |
 | `src/gui/datapage.*` | `gui/data.py` | Data area: open/compare/process/fit/export spectra |
+| `src/gui/computedpanel.*` | – (new in C++) | computed spectra panel (for the Analysis page) |
 | `tests/` | – | QtTest; `tests/golden/` holds outputs of the Python reference |
 
 ## Conventions
