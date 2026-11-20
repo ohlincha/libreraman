@@ -6,6 +6,22 @@ on:
   workflow_dispatch:
 
 jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install pyinstaller pillow PySide6 pyqtgraph numpy scipy pyserial pyusb libusb-package
+      - run: >
+          pyinstaller --noconfirm --windowed --name LibreRamen --icon libreramen/data/icon.png
+          --collect-data libreramen --collect-all libusb_package --collect-submodules serial
+          --hidden-import usb.backend.libusb1 libreramen_app.py
+      - run: dist\LibreRamen\LibreRamen.exe standards
+      - run: Compress-Archive -Path dist\LibreRamen -DestinationPath dist\LibreRamen-Windows.zip
+      - uses: actions/upload-artifact@v4
+        with: { name: windows-zip, path: dist/LibreRamen-Windows.zip }
+
   macos-intel:
     # Intel build with macOS 12 (Monterey) as minimum; Qt 6.9 is the last Qt supporting macOS 12.
     runs-on: macos-15-intel

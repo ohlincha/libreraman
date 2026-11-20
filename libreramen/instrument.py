@@ -117,7 +117,13 @@ class Cora:
     def _wait_spec(self, ch, timeout=10):
         s = Spectrometer.find(ch, timeout)
         if not s:
-            raise CoraError(f"spectrometer for {ch} nm did not appear on USB")
+            hint = ""
+            import sys
+            if sys.platform == "win32":
+                hint = (" On Windows the spectrometers need the WinUSB driver once: run Zadig (zadig.akeo.ie), "
+                        "Options > List All Devices, select each 'ba8c:1688' device and install WinUSB. "
+                        "(The vendor software then can't use them on this PC.)")
+            raise CoraError(f"spectrometer for {ch} nm did not appear on USB.{hint}")
         self.spec[ch] = s
 
     def select_channel(self, ch, wait_cooling=True):

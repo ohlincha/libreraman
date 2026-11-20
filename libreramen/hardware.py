@@ -191,6 +191,136 @@ class _MacHid:
         self.iokit.IOHIDDeviceClose(self.dev, 0)
 
 
+class _WinHid:
+    """hid.dll/setupapi via ctypes (no driver needed). Output reports with WriteFile; a reader thread
+    collects input reports (ReadFile blocks; closing the handle ends it)."""
+
+    def __init__(self, vid_pid):
+        import ctypes
+        import queue
+        import threading
+        from ctypes import wintypes
+        self.ct, self.wt = ctypes, wintypes
+        path = self._find(int(vid_pid[0], 16), int(vid_pid[1], 16))
+        if not path:
+            raise HardwareError("MCP2200 HID device not found")
+        k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        k32.CreateFileW.restype = wintypes.HANDLE
+        k32.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, ctypes.c_void_p,
+                                    wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+        k32.ReadFile.argtypes = [wintypes.HANDLE, ctypes.c_void_p, wintypes.DWORD, ctypes.POINTER(wintypes.DWORD),
+                                 ctypes.c_void_p]
+        k32.WriteFile.argtypes = [wintypes.HANDLE, ctypes.c_void_p, wintypes.DWORD, ctypes.POINTER(wintypes.DWORD),
+                                  ctypes.c_void_p]
+        k32.CloseHandle.argtypes = [wintypes.HANDLE]
+        self.k32 = k32
+        h = k32.CreateFileW(path, 0xC0000000, 3, None, 3, 0, None)          # read/write, shared, existing
+        if h in (None, wintypes.HANDLE(-1).value):
+            raise HardwareError(f"cannot open the MCP2200 (error {ctypes.get_last_error()})")
+        self.h = h
+        self.in_len, self.out_len = self._caps()
+        self.q = queue.Queue()
+        self.running = True
+
+        def reader():
+            buf = ctypes.create_string_buffer(self.in_len)
+            n = wintypes.DWORD()
+            while self.running:
+                if not k32.ReadFile(self.h, buf, self.in_len, ctypes.byref(n), None):
+                    break
+                self.q.put(buf.raw[1:n.value])        # strip the report-ID byte
+        self.thread = threading.Thread(target=reader, daemon=True)
+        self.thread.start()
+
+    def _caps(self):
+        ct = self.ct
+        hid = ct.WinDLL("hid")
+        pp = ct.c_void_p()
+        hid.HidD_GetPreparsedData.argtypes = [ct.c_void_p, ct.POINTER(ct.c_void_p)]
+        if not hid.HidD_GetPreparsedData(self.h, ct.byref(pp)):
+            return 17, 17
+        caps = (ct.c_ushort * 64)()
+        hid.HidP_GetCaps.argtypes = [ct.c_void_p, ct.c_void_p]
+        hid.HidP_GetCaps(pp, caps)
+        hid.HidD_FreePreparsedData.argtypes = [ct.c_void_p]
+        hid.HidD_FreePreparsedData(pp)
+        return caps[2] or 17, caps[3] or 17       # InputReportByteLength, OutputReportByteLength
+
+    @staticmethod
+    def _find(vid, pid):
+        import ctypes
+        from ctypes import wintypes
+
+        class GUID(ctypes.Structure):
+            _fields_ = [("d1", wintypes.DWORD), ("d2", wintypes.WORD), ("d3", wintypes.WORD), ("d4", ctypes.c_ubyte * 8)]
+
+        class IFD(ctypes.Structure):
+            _fields_ = [("cbSize", wintypes.DWORD), ("guid", GUID), ("flags", wintypes.DWORD), ("reserved", ctypes.c_void_p)]
+
+        class ATTR(ctypes.Structure):
+            _fields_ = [("Size", wintypes.ULONG), ("VendorID", wintypes.USHORT), ("ProductID", wintypes.USHORT),
+                        ("VersionNumber", wintypes.USHORT)]
+        hid, sa, k32 = ctypes.WinDLL("hid"), ctypes.WinDLL("setupapi"), ctypes.WinDLL("kernel32")
+        sa.SetupDiGetClassDevsW.restype = ctypes.c_void_p
+        sa.SetupDiGetClassDevsW.argtypes = [ctypes.POINTER(GUID), wintypes.LPCWSTR, wintypes.HWND, wintypes.DWORD]
+        sa.SetupDiEnumDeviceInterfaces.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.POINTER(GUID), wintypes.DWORD,
+                                                   ctypes.POINTER(IFD)]
+        sa.SetupDiGetDeviceInterfaceDetailW.argtypes = [ctypes.c_void_p, ctypes.POINTER(IFD), ctypes.c_void_p,
+                                                        wintypes.DWORD, ctypes.POINTER(wintypes.DWORD), ctypes.c_void_p]
+        sa.SetupDiDestroyDeviceInfoList.argtypes = [ctypes.c_void_p]
+        k32.CreateFileW.restype = wintypes.HANDLE
+        k32.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, ctypes.c_void_p, wintypes.DWORD,
+                                    wintypes.DWORD, wintypes.HANDLE]
+        k32.CloseHandle.argtypes = [wintypes.HANDLE]
+        hid.HidD_GetAttributes.argtypes = [wintypes.HANDLE, ctypes.POINTER(ATTR)]
+        guid = GUID()
+        hid.HidD_GetHidGuid(ctypes.byref(guid))
+        info = sa.SetupDiGetClassDevsW(ctypes.byref(guid), None, None, 0x12)
+        found, idx = None, 0
+        while found is None:
+            ifd = IFD()
+            ifd.cbSize = ctypes.sizeof(IFD)
+            if not sa.SetupDiEnumDeviceInterfaces(info, None, ctypes.byref(guid), idx, ctypes.byref(ifd)):
+                break
+            idx += 1
+            need = wintypes.DWORD()
+            sa.SetupDiGetDeviceInterfaceDetailW(info, ctypes.byref(ifd), None, 0, ctypes.byref(need), None)
+            buf = ctypes.create_string_buffer(need.value + 4)
+            ctypes.c_uint32.from_buffer(buf).value = 8 if ctypes.sizeof(ctypes.c_void_p) == 8 else 6
+            if not sa.SetupDiGetDeviceInterfaceDetailW(info, ctypes.byref(ifd), buf, need, None, None):
+                continue
+            path = ctypes.wstring_at(ctypes.addressof(buf) + 4)
+            h = k32.CreateFileW(path, 0, 3, None, 3, 0, None)
+            if h in (None, wintypes.HANDLE(-1).value):
+                continue
+            a = ATTR()
+            a.Size = ctypes.sizeof(ATTR)
+            if hid.HidD_GetAttributes(h, ctypes.byref(a)) and (a.VendorID, a.ProductID) == (vid, pid):
+                found = path
+            k32.CloseHandle(h)
+        sa.SetupDiDestroyDeviceInfoList(info)
+        return found
+
+    def transact(self, data, reply=True, timeout=2.0):
+        import queue
+        while not self.q.empty():
+            self.q.get_nowait()
+        buf = self.ct.create_string_buffer(bytes([0]) + bytes(data).ljust(self.out_len - 1, b"\0"), self.out_len)
+        n = self.wt.DWORD()
+        if not self.k32.WriteFile(self.h, buf, self.out_len, self.ct.byref(n), None):
+            raise HardwareError(f"MCP2200 write failed (error {self.ct.get_last_error()})")
+        if not reply:
+            return b""
+        try:
+            return self.q.get(timeout=timeout)
+        except queue.Empty:
+            return b""
+
+    def close(self):
+        self.running = False
+        self.k32.CloseHandle(self.h)
+
+
 def open_mcp2200():
     """Platform HID transport for the MCP2200, or None if not found."""
     if sys.platform.startswith("linux"):
@@ -199,6 +329,13 @@ def open_mcp2200():
     if sys.platform == "darwin":
         try:
             return _MacHid(MCP2200)
+        except HardwareError as e:
+            if "not found" in str(e):
+                return None
+            raise
+    if sys.platform == "win32":
+        try:
+            return _WinHid(MCP2200)
         except HardwareError as e:
             if "not found" in str(e):
                 return None
