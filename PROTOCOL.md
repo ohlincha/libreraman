@@ -110,9 +110,13 @@ The probe found everything, identified by sitting behind the 0424:2517 hub. MCP2
 
 ## Linux: laser and first spectrum (2026-11-20, 10:39)
 
-- Arming = the soft-touch ARM button on the instrument (MCP2200 GPIO bit 0 = 0 while armed, which stays
-  until the compartment is opened). The physical interlock cuts the laser when the compartment is open.
-  Without arming, `IO L 09` produces no light.
+- **Arming is done by software:** the MCP2200 pulse (all outputs low, then high ~100 ms later) arms the laser,
+  and the instrument's red ARM light comes on; the next pulse disarms it and the light goes off (seen 2026-11-20 11:33).
+  It looks like a toggle with no read-back, so software must track the state: arm right before a measurement,
+  disarm right after, as the vendor software does. No button press is needed.
+- MCP2200 GPIO bit 0: meaning unclear (maybe the compartment interlock: it was 1 during the first test, which
+  gave no light, and went to 1 for 9 s in the vendor capture at 09:43; it didn't change in a 30 s watch later).
+- The physical interlock cuts the laser when the compartment is open (per the user).
 - The vendor initialisation must be completed before the 532 nm laser emits. The full line state after
   vendor init is: TECE; IO H 01, H 00, L 0a, H 0e, L 0c, L 0d, H 0b, H 08, H 07, L 0b
   (line 08 is the prime suspect for the 532 laser supply). `IO L 0d` brings up spectrometer #2.

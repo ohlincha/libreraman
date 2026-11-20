@@ -4,7 +4,7 @@
 Switch to 1064 (driver power, beam path), init detector #2, wait for cooling, then (armed only):
 laseron, current 0.39 A (= 50 mW), 1 s frame, current 0, background frame, laseroff.
 Always ends with current 0.00 + laseroff and switches back to the 532 nm path.
-Usage: python3 test1064.py --operator-present [cool_s]
+Usage: python3 test1064.py --operator-present [cool_s] [exposure_s] [power_mW]
 """
 import glob
 import os
@@ -18,6 +18,8 @@ import dark
 import laser
 
 CURRENT_50MW = 0.39
+PWR_COEFF = (0.275808, 0.002209)   # current (A) = c0 + c1 * P(mW), from the vendor ini (1064 nm)
+MAX_TEST_MW = 250
 WL1064 = (1067.709823464664, 1.417819808954, 0.000004218663, -0.000000348208)
 
 
@@ -59,6 +61,11 @@ def main():
         sys.exit("Refusing: run with --operator-present")
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     cool = float(args[0]) if args else 60
+    exposure = float(args[1]) if len(args) > 1 else 1.0
+    power = float(args[2]) if len(args) > 2 else 50.0
+    if not 0 < power <= MAX_TEST_MW or not 0.01 <= exposure <= 30:
+        sys.exit(f"power must be 0-{MAX_TEST_MW} mW and exposure 0.01-30 s")
+    current = PWR_COEFF[0] + PWR_COEFF[1] * power
     io = dark.IOBoard(dark.io_port())
     io.cmd("VOL 03")
     if not dark.find_spectrometer(1, "BS2BASE"):
@@ -94,14 +101,14 @@ def main():
     dark.ctrl_out(dev, 0xA4, 1, 0x03F0)
     dark.ctrl_out(dev, 0xAD, 0, 0x38)
     dark.ctrl_out(dev, 0xA4, 1, 0x03F0)
-    dark.ctrl_out(dev, 0xAE, 8, 0x30, struct.pack("<II", 1249975, 1))   # 1.0 s (0.8 us units)
+    dark.ctrl_out(dev, 0xAE, 8, 0x30, struct.pack("<II", round(exposure / 0.8e-6) - 25, 1))   # 0.8 us units
     print(f"Cooling {cool:.0f} s…", flush=True)
     time.sleep(cool)
 
     def expose():
         dark.ctrl_out(dev, 0xAA, 0xFFFF, 0xFFFF)
         try:
-            d = bytes(dev.read(0x82, 1024, timeout=6000))
+            d = bytes(dev.read(0x82, 1024, timeout=int(exposure * 1000) + 6000))
         finally:
             dark.ctrl_out(dev, 0xAA, 0, 0)
         return struct.unpack(f">{len(d) // 2}H", d)
@@ -119,7 +126,8 @@ def main():
             print(">>> 1064 LASER ON")
             t_on = time.time()
             ld.cmd("laseron")
-            ld.cmd(f"current {CURRENT_50MW:.2f}")
+            ld.cmd(f"current {current:.2f}")
+            print(f"    {power:.0f} mW -> current {current:.2f} A, exposure {exposure} s")
             time.sleep(1.5)
             sig = expose()
             ld.cmd("current 0.00")
