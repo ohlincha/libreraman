@@ -14,8 +14,8 @@ import time
 
 from . import calibrate as calib
 from . import calibration as calmod
-from .hardware import (CP210X, MCP2200, PROLIFIC, ArmStatus, HardwareError, IOBoard, LaserDriver,
-                       Spectrometer, find_hidraw, find_tty)
+from .hardware import (CP210X, PROLIFIC, ArmStatus, HardwareError, IOBoard, LaserDriver, Spectrometer,
+                       find_tty, open_mcp2200, tty_candidates)
 from .spectrum import Spectrum
 
 # Line states copied from the vendor software (see PROTOCOL.md).
@@ -65,14 +65,26 @@ class Cora:
     # ------------------------------------------------------------------ connection
     def connect(self):
         port = find_tty(PROLIFIC, inside_cora=True)
-        if not port:
-            raise CoraError("Cora not found (I/O board). Is the USB cable connected and the instrument on?")
-        self.io = IOBoard(port)
-        self.io.vol()                  # harmless query: proves communication
-        hid = find_hidraw(MCP2200)
-        if not hid:
+        candidates = [port] if port else tty_candidates(PROLIFIC)
+        for cand in candidates:            # several Prolific adapters (e.g. a Titrino cable): ask each politely
+            try:
+                io = IOBoard(cand)
+                io.vol()                   # harmless query that only the Cora's I/O board answers
+                self.io, port = io, cand
+                break
+            except Exception:  # noqa: BLE001
+                try:
+                    io.close()
+                except Exception:  # noqa: BLE001
+                    pass
+        if not self.io:
+            raise CoraError("Cora not found (I/O board). Is the USB cable connected and the instrument on "
+                            "(On pressed, screen ready)?")
+        t = open_mcp2200()
+        if not t:
             raise CoraError("MCP2200 (ARM status) not found")
-        self.arm = ArmStatus(hid)
+        self.arm = ArmStatus(t)
+        hid = type(t).__name__
         for ch in (532, 1064):
             s = Spectrometer.find(ch)
             if s:

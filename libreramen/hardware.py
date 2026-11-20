@@ -58,11 +58,152 @@ def find_tty(vid_pid, inside_cora=True):
             if chain and chain[0] == vid_pid and (not inside_cora or CORA_HUB in chain[1:]):
                 return dev
         return None
-    from serial.tools import list_ports   # other systems: match by USB ID only
+    c = tty_candidates(vid_pid)
+    return c[0] if c else None
+
+
+def tty_candidates(vid_pid):
+    """All serial ports with this USB ID (macOS/Windows: no hub information, so callers may need to probe)."""
+    if sys.platform.startswith("linux"):
+        d = find_tty(vid_pid, inside_cora=False)
+        return [d] if d else []
+    from serial.tools import list_ports
+    out = []
     for p in list_ports.comports():
         if p.vid is not None and (f"{p.vid:04x}", f"{p.pid:04x}") == vid_pid:
-            return p.device
-    return None
+            dev = p.device
+            if sys.platform == "darwin" and dev.startswith("/dev/tty."):
+                dev = "/dev/cu." + dev[len("/dev/tty."):]      # cu.* doesn't wait for carrier detect
+            out.append(dev)
+    return sorted(set(out))
+
+
+class _LinuxHid:
+    def __init__(self, path):
+        self.fd = os.open(path, os.O_RDWR)
+
+    def transact(self, data, reply=True, timeout=2.0):
+        os.write(self.fd, bytes([0]) + bytes(data).ljust(16, b"\0"))
+        if not reply:
+            return b""
+        r, _, _ = select.select([self.fd], [], [], timeout)
+        return os.read(self.fd, 64) if r else b""
+
+    def close(self):
+        os.close(self.fd)
+
+
+class _MacHid:
+    """IOKit HID for the MCP2200: output reports via IOHIDDeviceSetReport; input reports arrive through a
+    callback serviced by a dedicated thread running a CFRunLoop."""
+
+    def __init__(self, vid_pid):
+        import ctypes
+        import queue
+        import threading
+        from ctypes import c_bool, c_char_p, c_double, c_int32, c_long, c_uint8, c_uint32, c_void_p
+        self.ct = ctypes
+        iokit = ctypes.cdll.LoadLibrary("/System/Library/Frameworks/IOKit.framework/IOKit")
+        cf = ctypes.cdll.LoadLibrary("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation")
+        sig = {(cf, "CFStringCreateWithCString"): (c_void_p, [c_void_p, c_char_p, c_uint32]),
+               (cf, "CFNumberGetValue"): (c_bool, [c_void_p, c_long, c_void_p]),
+               (cf, "CFSetGetCount"): (c_long, [c_void_p]), (cf, "CFSetGetValues"): (None, [c_void_p, c_void_p]),
+               (cf, "CFRelease"): (None, [c_void_p]), (cf, "CFRetain"): (c_void_p, [c_void_p]),
+               (cf, "CFRunLoopGetCurrent"): (c_void_p, []), (cf, "CFRunLoopRunInMode"): (c_int32, [c_void_p, c_double, c_bool]),
+               (iokit, "IOHIDManagerCreate"): (c_void_p, [c_void_p, c_uint32]),
+               (iokit, "IOHIDManagerSetDeviceMatching"): (None, [c_void_p, c_void_p]),
+               (iokit, "IOHIDManagerCopyDevices"): (c_void_p, [c_void_p]),
+               (iokit, "IOHIDDeviceGetProperty"): (c_void_p, [c_void_p, c_void_p]),
+               (iokit, "IOHIDDeviceOpen"): (c_int32, [c_void_p, c_uint32]),
+               (iokit, "IOHIDDeviceClose"): (c_int32, [c_void_p, c_uint32]),
+               (iokit, "IOHIDDeviceSetReport"): (c_int32, [c_void_p, c_int32, c_long, c_void_p, c_long]),
+               (iokit, "IOHIDDeviceScheduleWithRunLoop"): (None, [c_void_p, c_void_p, c_void_p]),
+               (iokit, "IOHIDDeviceRegisterInputReportCallback"): (None, [c_void_p, c_void_p, c_long, c_void_p, c_void_p])}
+        for (lib, name), (res, args) in sig.items():
+            fn = getattr(lib, name)
+            fn.restype, fn.argtypes = res, args
+        self.iokit, self.cf = iokit, cf
+
+        def cfstr(t):
+            return cf.CFStringCreateWithCString(None, t.encode(), 0x08000100)
+
+        def prop(dev, key):
+            k = cfstr(key)
+            ref = iokit.IOHIDDeviceGetProperty(dev, k)
+            cf.CFRelease(k)
+            if not ref:
+                return None
+            v = ctypes.c_int32()
+            cf.CFNumberGetValue(ref, 3, ctypes.byref(v))
+            return v.value
+        self.mgr = iokit.IOHIDManagerCreate(None, 0)
+        iokit.IOHIDManagerSetDeviceMatching(self.mgr, None)
+        devset = iokit.IOHIDManagerCopyDevices(self.mgr)
+        self.dev = None
+        if devset:
+            n = cf.CFSetGetCount(devset)
+            arr = (c_void_p * n)()
+            cf.CFSetGetValues(devset, arr)
+            for d in arr:
+                if (prop(d, "VendorID"), prop(d, "ProductID")) == (int(vid_pid[0], 16), int(vid_pid[1], 16)):
+                    self.dev = cf.CFRetain(d)
+                    break
+        if not self.dev:
+            raise HardwareError("MCP2200 HID device not found")
+        if iokit.IOHIDDeviceOpen(self.dev, 0) != 0:
+            raise HardwareError("Cannot open the MCP2200 (macOS: allow LibreRamen under System Settings > "
+                                "Privacy & Security > Input Monitoring)")
+        self.q = queue.Queue()
+        self.buf = (c_uint8 * 64)()
+        CB = ctypes.CFUNCTYPE(None, c_void_p, c_int32, c_void_p, c_uint32, c_uint32, ctypes.POINTER(c_uint8), c_long)
+        self.cb = CB(lambda ctx, res, snd, typ, rid, rep, ln: self.q.put(bytes(rep[:ln])))
+        self.running = True
+        ready = threading.Event()
+
+        def loop():
+            mode = c_void_p.in_dll(cf, "kCFRunLoopDefaultMode")
+            iokit.IOHIDDeviceRegisterInputReportCallback(self.dev, self.buf, 64, self.cb, None)
+            iokit.IOHIDDeviceScheduleWithRunLoop(self.dev, cf.CFRunLoopGetCurrent(), mode)
+            ready.set()
+            while self.running:
+                cf.CFRunLoopRunInMode(mode, 0.2, False)
+        self.thread = threading.Thread(target=loop, daemon=True)
+        self.thread.start()
+        ready.wait(2)
+
+    def transact(self, data, reply=True, timeout=2.0):
+        import queue
+        while not self.q.empty():
+            self.q.get_nowait()
+        rep = (self.ct.c_uint8 * 16)(*bytes(data).ljust(16, b"\0"))
+        r = self.iokit.IOHIDDeviceSetReport(self.dev, 1, 0, rep, 16)      # kIOHIDReportTypeOutput
+        if r != 0:
+            raise HardwareError(f"MCP2200 write failed ({r})")
+        if not reply:
+            return b""
+        try:
+            return self.q.get(timeout=timeout)
+        except queue.Empty:
+            return b""
+
+    def close(self):
+        self.running = False
+        self.iokit.IOHIDDeviceClose(self.dev, 0)
+
+
+def open_mcp2200():
+    """Platform HID transport for the MCP2200, or None if not found."""
+    if sys.platform.startswith("linux"):
+        p = find_hidraw(MCP2200)
+        return _LinuxHid(p) if p else None
+    if sys.platform == "darwin":
+        try:
+            return _MacHid(MCP2200)
+        except HardwareError as e:
+            if "not found" in str(e):
+                return None
+            raise
+    raise HardwareError("MCP2200 access on this system is not implemented yet")
 
 
 def find_hidraw(vid_pid):
@@ -119,18 +260,14 @@ class ArmStatus:
     """MCP2200 over Linux hidraw. READ_ALL (0x80) -> byte 10 = GPIO port.
     bit 0 = 0: armed (ARM button pressed, cleared when the compartment opens); bit 7 = 0: compartment open."""
 
-    def __init__(self, path):
+    def __init__(self, transport):
         import threading
-        self.fd = os.open(path, os.O_RDWR)
+        self.t = transport
         self.lock = threading.Lock()      # status is polled from the GUI while a measurement runs
 
     def _cmd(self, data, reply=True):
         with self.lock:
-            os.write(self.fd, bytes([0]) + bytes(data).ljust(16, b"\0"))
-            if not reply:
-                return b""
-            r, _, _ = select.select([self.fd], [], [], 2.0)
-            return os.read(self.fd, 64) if r else b""
+            return self.t.transact(data, reply)
 
     def gpio(self):
         for _ in range(3):
@@ -150,7 +287,7 @@ class ArmStatus:
         self._cmd([0x08] + [0] * 10 + [0xFF, 0x00], reply=False)
 
     def close(self):
-        os.close(self.fd)
+        self.t.close()
 
 
 # ----------------------------------------------------------------------------- 1064 nm laser driver
@@ -213,9 +350,15 @@ class Spectrometer:
     def find(cls, channel, timeout=0.0):
         import usb.core
         import usb.util
+        backend = None
+        try:
+            import libusb_package               # bundled libusb (macOS/Windows wheels)
+            backend = libusb_package.get_libusb1_backend()
+        except ImportError:
+            pass
         t_end = time.monotonic() + timeout
         while True:
-            for d in usb.core.find(find_all=True, idVendor=BAYSPEC[0], idProduct=BAYSPEC[1]):
+            for d in usb.core.find(find_all=True, idVendor=BAYSPEC[0], idProduct=BAYSPEC[1], backend=backend):
                 try:
                     if usb.util.get_string(d, d.iProduct) == cls.PRODUCTS[channel]:
                         return cls(d, channel)

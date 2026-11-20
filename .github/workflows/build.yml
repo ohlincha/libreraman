@@ -1,0 +1,28 @@
+name: Build installers
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  macos-intel:
+    # Intel build with macOS 12 (Monterey) as minimum; Qt 6.9 is the last Qt supporting macOS 12.
+    runs-on: macos-15-intel
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "12.0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install pyinstaller "PySide6==6.9.*" pyqtgraph numpy scipy pyserial pyusb libusb-package
+      - run: |
+          pyinstaller --noconfirm --windowed --name LibreRamen \
+            --osx-bundle-identifier io.github.ohlincha.libreramen \
+            --collect-data libreramen --collect-all libusb_package --collect-submodules serial \
+            --hidden-import usb.backend.libusb1 libreramen_app.py
+          mkdir -p dmg && cp -R dist/LibreRamen.app dmg/ && ln -s /Applications dmg/Applications
+          hdiutil create -volname LibreRamen -srcfolder dmg -ov -format UDZO dist/LibreRamen-macOS-Intel.dmg
+      - run: dist/LibreRamen.app/Contents/MacOS/LibreRamen standards | head -3
+      - uses: actions/upload-artifact@v4
+        with: { name: macos-intel-dmg, path: dist/LibreRamen-macOS-Intel.dmg }
