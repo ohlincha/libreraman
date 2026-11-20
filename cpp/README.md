@@ -25,7 +25,9 @@ without `main.cpp`; run offscreen). `-DLIBRERAMEN_GUI_PREVIEW=ON` builds `gui_pr
 plots, status strip, splash and icon to PNG files for visual checks:
 `QT_QPA_PLATFORM=offscreen ./gui_preview <dir>`; `datapage_preview <dir>` renders the Data area
 (overlay, stacked, difference, fit, heat map), `calibration_preview <dir> [--dark]` the Calibration area
-with the simulator (temporary config dir). `tests/test_cli.cpp` runs the command line program against
+with the simulator (temporary config dir), `computed_preview <dir>` the computed-spectra panel against the
+simulator's measured CCl4/chloroform. `tests/golden/computed/` holds synthetic, truncated output excerpts
+written after each program's layout (not real runs). `tests/test_cli.cpp` runs the command line program against
 `tests/golden/cli.json` (output of the Python CLI).
 The Analysis page renders itself to `analysis-*.png` when `LIBRERAMEN_PREVIEW_DIR=<dir>` is set for
 `gui_test_analysispage`.
@@ -54,6 +56,7 @@ cmake configure line (Qt from aqtinstall, -dev packages extracted with `dpkg -x`
 | `src/core/library.*` | – (C++ only) | spectral library: SQLite file (Qt Sql), schema versioning, import (own spectra, files, RRUFF, band lists), export, demo library |
 | `src/core/match.*` | – (C++ only) | library matching: HQI full-spectrum search, peak matching, NNLS (Lawson–Hanson) mixtures |
 | `src/core/chemometrics.*` | – (C++ only) | Analysis: data matrix, preprocessing, PCA, EFA, OPA, SIMPLISMA, MCR-ALS (constraints, rotational-ambiguity bands), NNLS |
+| `src/core/computed*.*` | – (new in C++) | computed Raman spectra: readers for Gaussian, ORCA (.out/.hess), NWChem, CP2K, Quantum ESPRESSO, vasp_raman.py, Phonopy-Spectroscopy, CASTEP; activities → cross-sections, scaling fit, broadening, assignment, comparison |
 | `src/cli/` | `__main__.py` | command line |
 | `src/gui/controller.*` | `gui/controller.py` | instrument jobs in a worker thread, status poll, watchdog, saving |
 | `src/gui/mainwindow.*`, `measurepage.*` | `gui/app.py` | main window, Measure area |
@@ -62,6 +65,7 @@ cmake configure line (Qt from aqtinstall, -dev packages extracted with `dpkg -x`
 | `src/gui/calibrationpage.*`, `calibrationstore.*` | `calibrate.py` (CLI flow) | Calibration area: wizard, quick check, history, instrument log, reminder |
 | `src/gui/main.cpp` | `gui/app.py` main, `selftest.py` | `LibreRamen [--sim] [--screenshot F]`, `--selftest`, `--watchdog` |
 | `src/gui/` (other) | `gui/` | plot widget, theme, status strip, splash, icon |
+| `src/gui/computedpanel.*` | – (new in C++) | computed spectra panel (for the Analysis page) |
 | `tests/` | – | QtTest; `tests/golden/` holds outputs of the Python reference |
 
 ## Conventions

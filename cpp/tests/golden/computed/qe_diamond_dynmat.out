@@ -1,0 +1,38 @@
+
+     Program DYNMAT v.7.2 starts on 20Nov2026 at 10:12: 1
+
+     This program is part of the open-source Quantum ESPRESSO suite
+     for quantum simulation of materials; please cite
+         "P. Giannozzi et al., J. Phys.:Condens. Matter 21 395502 (2009);
+          URL http://www.quantum-espresso.org",
+
+     Parallel version (MPI), running on     1 processors
+
+     Reading Dynamical Matrix from file dyn
+     ...Force constants read
+     ...epsilon and Z* read
+     ...Raman cross sections read
+     Acoustic Sum Rule: || Z(ASR) - Z || =  0.000000E+00
+     Acoustic Sum Rule: || dyn(ASR) - dyn || =  3.461210E-03
+     A direction for q was not specified:TO-LO splitting will be absent
+
+     Polarizability (A^3 units)
+     multiply by 0.954372 for Clausius-Mossotti correction
+         6.284171    0.000000    0.000000
+         0.000000    6.284171    0.000000
+         0.000000    0.000000    6.284171
+
+     IR activities are in (D/A)^2/amu units
+     Raman activities are in A^4/amu units
+     multiply Raman by 0.910826 for Clausius-Mossotti correction
+
+# mode   [cm-1]    [THz]      IR          Raman   depol.fact
+    1      0.00    0.0000    0.0000         0.0000    0.0000
+    2      0.00    0.0000    0.0000         0.0000    0.0000
+    3      0.00    0.0000    0.0000         0.0000    0.0000
+    4   1293.21   38.7695    0.0000        84.3412    0.7500
+    5   1293.21   38.7695    0.0000        84.3412    0.7500
+    6   1293.21   38.7695    0.0000        84.3412    0.7500
+
+     DYNMAT       :      0.01s CPU      0.02s WALL
+

@@ -1,0 +1,78 @@
+ DBCSR| CPU Multiplication driver                                           XSMM
+
+  **** **** ******  **  PROGRAM STARTED AT               2026-11-20 10:00:00.000
+ ***** ** ***  *** **   PROGRAM STARTED ON                              node01
+ **    ****   ******    PROGRAM STARTED BY                                user
+ ***** **    ** ** **   PROGRAM PROCESS ID                               12345
+  **** **  *******  **  PROGRAM STARTED IN /scratch/chcl3
+
+ CP2K| version string:                                          CP2K version 2023.1
+ CP2K| source code revision number:                                  git:4e1cd1d
+ GLOBAL| Run type                                                 VIBRATIONAL_ANALYSIS
+
+ FUNCTIONAL| ROUTINE=NEW
+ FUNCTIONAL| PBE:
+ FUNCTIONAL| J.P. Perdew, K. Burke, M. Ernzerhof, Phys. Rev. Letter, vol. 77, n 18,
+ FUNCTIONAL| pp. 3865-3868, (1996){spin unpolarized}
+
+ ATOMIC KIND INFORMATION
+
+  1. Atomic kind: C                                     Number of atoms:       1
+
+     Orbital Basis Set                                             DZVP-MOLOPT-SR-GTH
+
+ MODULE QUICKSTEP:  ATOMIC COORDINATES IN angstrom
+  Atom  Kind  Element       X           Y           Z          Z(eff)       Mass
+
+      1     1 C     6    0.000000    0.000000    0.449600        4.00      12.0107
+      2     2 H     1    0.000000    0.000000    1.536700        1.00       1.0079
+      3     3 Cl   17    1.672800    0.000000   -0.147500        7.00      35.4530
+      4     3 Cl   17   -0.836400    1.448700   -0.147500        7.00      35.4530
+      5     3 Cl   17   -0.836400   -1.448700   -0.147500        7.00      35.4530
+
+
+ VIB| Vibrational Analysis Info
+ VIB|                         NORMAL MODES - CARTESIAN DISPLACEMENTS
+ VIB|
+ VIB|                      1                      2                      3
+ VIB|Frequency (cm^-1)                 -25.312400             252.104300             252.104300
+ VIB|IR int (KM/Mole)                    0.000120               0.014520               0.014520
+ VIB|Red.Masses (a.u.)                  12.500000              12.500000              12.500000
+ VIB|Frc consts (a.u.)                   0.012300               0.012300               0.012300
+
+  ATOM  EL        X      Y      Z        X      Y      Z        X      Y      Z  
+     1  C      0.100 -0.200  0.050    0.100 -0.200  0.050    0.100 -0.200  0.050
+     2  H      0.100 -0.200  0.050    0.100 -0.200  0.050    0.100 -0.200  0.050
+     3  Cl     0.100 -0.200  0.050    0.100 -0.200  0.050    0.100 -0.200  0.050
+     4  Cl     0.100 -0.200  0.050    0.100 -0.200  0.050    0.100 -0.200  0.050
+     5  Cl     0.100 -0.200  0.050    0.100 -0.200  0.050    0.100 -0.200  0.050
+
+ VIB|                      4                      5                      6
+ VIB|Frequency (cm^-1)                 355.921100             650.310800             718.440200
+ VIB|IR int (KM/Mole)                    0.881040               1.902330             170.112900
+ VIB|Red.Masses (a.u.)                  12.500000              12.500000              12.500000
+ VIB|Frc consts (a.u.)                   0.012300               0.012300               0.012300
+
+  ATOM  EL        X      Y      Z        X      Y      Z        X      Y      Z  
+     1  C      0.100 -0.200  0.050    0.100 -0.200  0.050    0.100 -0.200  0.050
+     2  H      0.100 -0.200  0.050    0.100 -0.200  0.050    0.100 -0.200  0.050
+     3  Cl     0.100 -0.200  0.050    0.100 -0.200  0.050    0.100 -0.200  0.050
+     4  Cl     0.100 -0.200  0.050    0.100 -0.200  0.050    0.100 -0.200  0.050
+     5  Cl     0.100 -0.200  0.050    0.100 -0.200  0.050    0.100 -0.200  0.050
+
+ VIB|                      7                      8                      9
+ VIB|Frequency (cm^-1)                 718.440200            1196.201700            3087.553100
+ VIB|IR int (KM/Mole)                  170.112900              35.720110               0.987610
+ VIB|Red.Masses (a.u.)                  12.500000              12.500000              12.500000
+ VIB|Frc consts (a.u.)                   0.012300               0.012300               0.012300
+
+  ATOM  EL        X      Y      Z        X      Y      Z        X      Y      Z  
+     1  C      0.100 -0.200  0.050    0.100 -0.200  0.050    0.100 -0.200  0.050
+     2  H      0.100 -0.200  0.050    0.100 -0.200  0.050    0.100 -0.200  0.050
+     3  Cl     0.100 -0.200  0.050    0.100 -0.200  0.050    0.100 -0.200  0.050
+     4  Cl     0.100 -0.200  0.050    0.100 -0.200  0.050    0.100 -0.200  0.050
+     5  Cl     0.100 -0.200  0.050    0.100 -0.200  0.050    0.100 -0.200  0.050
+
+ VIB| NORMAL MODES - CARTESIAN DISPLACEMENTS
+
+  **** **** ******  **  PROGRAM ENDED AT                 2026-11-20 11:00:00.000

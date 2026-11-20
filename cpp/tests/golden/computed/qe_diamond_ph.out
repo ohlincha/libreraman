@@ -1,0 +1,39 @@
+
+     Program PHONON v.7.2 starts on 20Nov2026 at 10:00: 0
+
+     This program is part of the open-source Quantum ESPRESSO suite
+
+     bravais-lattice index     =            2
+     lattice parameter (alat)  =       6.7400  a.u.
+     Exchange-correlation= PBE
+                           (   1   4   3   4   0   0   0)
+
+     celldm(1)=    6.74000  celldm(2)=    0.00000  celldm(3)=    0.00000
+
+     site n.  atom      mass           positions (alat units)
+        1     C   12.0107   tau(    1) = (    0.00000    0.00000    0.00000  )
+        2     C   12.0107   tau(    2) = (    0.25000    0.25000    0.25000  )
+
+     Computing dynamical matrix for
+                    q = (   0.0000000   0.0000000   0.0000000 )
+
+     Diagonalizing the dynamical matrix
+
+     q = (    0.000000000   0.000000000   0.000000000 )
+
+ **************************************************************************
+     freq (    1) =      -0.040562 [THz] =      -1.352989 [cm-1]
+     freq (    2) =      -0.040562 [THz] =      -1.352989 [cm-1]
+     freq (    3) =      -0.040562 [THz] =      -1.352989 [cm-1]
+     freq (    4) =      38.769549 [THz] =    1293.212342 [cm-1]
+     freq (    5) =      38.769549 [THz] =    1293.212342 [cm-1]
+     freq (    6) =      38.769549 [THz] =    1293.212342 [cm-1]
+ **************************************************************************
+
+     Mode symmetry, O_h (m-3m)  point group:
+
+     freq (  1 -  3) =         -1.4  [cm-1]   --> T_1u G_15  G_4- I
+     freq (  4 -  6) =       1293.2  [cm-1]   --> T_2g G_25' G_5+ R
+
+     PHONON       :     12.31s CPU     13.02s WALL
+
