@@ -175,7 +175,8 @@ jobs:
       - name: Deploy Qt and libraries (macdeployqt), sign ad hoc, check
         run: |
           APP=dist-mac/LibreRamen.app
-          macdeployqt "$APP" -executable="$APP/Contents/MacOS/LibreRamenCLI" -libpath="$QT_ROOT_DIR/lib" \
+          macdeployqt "$APP" -executable="$APP/Contents/MacOS/LibreRamenCLI" \
+            -executable="$APP/Contents/MacOS/LibreRamenMCP" -libpath="$QT_ROOT_DIR/lib" \
             -libpath="$DEPS/lib" -verbose=1
           # offscreen platform plugin (selftest, headless use); finds the bundle's frameworks via @rpath
           cp "$QT_ROOT_DIR/plugins/platforms/libqoffscreen.dylib" "$APP/Contents/PlugIns/platforms/"
@@ -240,8 +241,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { image: "ubuntu:24.04", tag: ubuntu24.04 }
-          - { image: "debian:trixie", tag: debian13 }
+          - { image: "ubuntu:24.04", tag: ubuntu24.04, qtdev: "libqt6serialport6-dev libqt6svg6-dev" }
+          - { image: "debian:trixie", tag: debian13, qtdev: "qt6-serialport-dev qt6-svg-dev" }
     runs-on: ubuntu-24.04
     container: ${{ matrix.image }}
     steps:
@@ -249,7 +250,7 @@ jobs:
         run: |
           apt-get update -qq
           DEBIAN_FRONTEND=noninteractive apt-get install -y -qq git cmake ninja-build g++ dpkg-dev file \
-            qt6-base-dev libqt6serialport6-dev libqt6svg6-dev libqt6sql6-sqlite \
+            qt6-base-dev ${{ matrix.qtdev }} libqt6sql6-sqlite \
             libusb-1.0-0-dev libhidapi-dev libeigen3-dev libgl1-mesa-dev
       - uses: actions/checkout@v4
       - name: Version
@@ -339,7 +340,9 @@ jobs:
           mkdir -p dist
           export QMAKE="$QT_ROOT_DIR/bin/qmake" LD_LIBRARY_PATH="$QT_ROOT_DIR/lib:${LD_LIBRARY_PATH:-}"
           export LDAI_OUTPUT="dist/LibreRamen-$LR_VERSION-Linux-x86_64.AppImage"
+          # libusb is on the AppImage excludelist (expected on the host) but missing on minimal systems: bundle it
           ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage \
+            --library "$(ldconfig -p | awk '/libusb-1.0.so.0 .*x86-64/{print $NF; exit}')" \
             --desktop-file AppDir/usr/share/applications/io.github.ohlincha.libreramen.desktop
           ls -l dist
           test -f AppDir/usr/plugins/sqldrivers/libqsqlite.so
