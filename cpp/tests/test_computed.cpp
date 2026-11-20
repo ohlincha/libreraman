@@ -83,6 +83,26 @@ private slots:
         QVERIFY(!c.hasActivities());                           // all zero -> treated as not computed
         QVERIFY(c.warnings.join(" ").contains("zero"));
     }
+    // A real ORCA 6.1.1 run (CCl4, PBE0/def2-SVP, Freq + %elprop Polar 1; host/dir lines anonymised).
+    void orcaReal() {
+        const auto calcs = lr::computed::read(DIR + "orca611_ccl4_pbe0_real.out");
+        QCOMPARE(int(calcs.size()), 1);
+        const auto& c = calcs[0];
+        QCOMPARE(c.format, QStringLiteral("orca"));
+        QCOMPARE(c.version, QStringLiteral("6.1.1"));
+        QCOMPARE(c.formula, QStringLiteral("CCl4"));
+        QCOMPARE(int(c.modes.size()), 9);
+        QVERIFY(c.hasActivities());
+        lr::computed::Options opt;
+        const auto b = lr::computed::bands(c, opt);           // degenerate modes summed: E, T2, A1, T2
+        QCOMPARE(int(b.size()), 4);
+        QVERIFY(std::abs(b[0].position - 218.03) < 0.01);
+        QVERIFY(std::abs(b[0].activity - 8.087264) < 1e-5);
+        QVERIFY(std::abs(b[1].activity - 15.050244) < 1e-5);
+        QVERIFY(std::abs(b[2].position - 472.58) < 0.01);
+        QVERIFY(std::abs(b[2].activity - 14.864084) < 1e-6);
+        QVERIFY(std::abs(c.modes[5].depolarization) < 1e-9);  // the totally symmetric A1 mode
+    }
     void detect() {
         const std::vector<std::pair<QString, QString>> cases = {
             {"gaussian_ccl4.log", "gaussian"},       {"gaussian_chcl3_hpmodes.out", "gaussian"},
@@ -551,7 +571,7 @@ private slots:
 
     void findOutputsInFolder() {
         const QStringList files = findOutputs(DIR);
-        QCOMPARE(files.size(), 15);                         // all fixtures except the plain note
+        QCOMPARE(files.size(), 16);                         // all fixtures except the plain note
         QVERIFY(!files.contains(DIR + "not_an_output.txt"));
         QTemporaryDir tmp;
         QDir(tmp.path()).mkpath("project/calc1");

@@ -191,14 +191,14 @@ private slots:
         p.show();
         QSignalSpy spy(&p, &ComputedPanel::message);
         const int n = p.loadFolder(DIR);
-        QCOMPARE(n, 15);                                      // 15 files, one without frequencies, one with 2 jobs
+        QCOMPARE(n, 16);                                      // 16 files, one without frequencies, one with 2 jobs
         QCOMPARE(spy.count(), 1);                             // gaussian_opt_only.log reported
         QVERIFY(spy.first().at(1).toString().contains("gaussian_opt_only.log"));
 
         p.setExperimental(experimental(1.0));
         QString err;
         const auto s = p.compareStructures(&err);
-        QCOMPARE(int(s.size()), 15);
+        QCOMPARE(int(s.size()), 16);
         // a CCl4 calculation wins (vasp_raman.py output has no atoms, hence the file name)
         const QString best = QFileInfo(p.calculation(s.front().index).source).fileName();
         QVERIFY2(best.contains("ccl4"), qPrintable(best));
