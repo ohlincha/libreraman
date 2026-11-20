@@ -84,6 +84,9 @@ public slots:
     // Closes the instrument (laser off) and forgets it (Windows driver repair). Refused while busy.
     void disconnectInstrument();
     bool measureOnce(const lr::gui::MeasureSettings& s);
+    // One spectrum for the Calibration page: like measureOnce (channel, ARM check -> error(), Stop) but not
+    // saved and not passed to the pages; delivered by acquired(sp, tag) instead of spectrum().
+    bool acquire(const lr::gui::MeasureSettings& s, const QString& tag);
     // Time series (runTimeSeries); channel 0 keeps the current channel.
     bool startSeries(const lr::SeriesSettings& s, int channel = 0);
     // Stop button: stop flag + laser(s) off right away, without waiting for the running job.
@@ -108,6 +111,7 @@ signals:
     void connectFailed(const QString& msg);
     void initProgress(double fraction);
     void spectrum(const lr::Spectrum& sp);
+    void acquired(const lr::Spectrum& sp, const QString& tag);   // result of acquire()
     void seriesProgress(const lr::SeriesProgress& p);
     void busyChanged(bool busy);
     void error(const QString& msg);           // user-readable

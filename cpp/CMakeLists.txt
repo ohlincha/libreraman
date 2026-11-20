@@ -71,6 +71,8 @@ if(LIBRERAMEN_GUI)
     target_link_libraries(gui_preview PRIVATE libreramen_gui)
     add_executable(datapage_preview tools/datapage_preview.cpp)
     target_link_libraries(datapage_preview PRIVATE libreramen_gui)
+    add_executable(calibration_preview tools/calibration_preview.cpp)
+    target_link_libraries(calibration_preview PRIVATE libreramen_gui)
   endif()
 endif()
 

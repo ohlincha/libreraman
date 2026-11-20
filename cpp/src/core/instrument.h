@@ -88,6 +88,8 @@ public:
     const Calibration& calibration() const { return cal_; }
     const std::map<int, UserCalibration>& userCalibration() const { return userCal_; }
     void setUserCalibration(int ch, const UserCalibration& c) { userCal_[ch] = c; }
+    void clearUserCalibration(int ch) { userCal_.erase(ch); }  // back to the factory calibration
+    // (set/clear: not while a measurement runs - makeSpectrum() reads the user calibration)
     virtual double laserSettleS() const { return channel_ == 1064 ? 1.5 : 3.6; }
     // Minimum time for one spectrum with these settings (s).
     double cycleTime(double exposure_s, int averages, bool background = true, bool laserStaysOn = false) const {

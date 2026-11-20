@@ -24,7 +24,8 @@ exits 0/1 (for checking packaged apps). Widget tests are `tests/gui_test_*.cpp` 
 without `main.cpp`; run offscreen). `-DLIBRERAMEN_GUI_PREVIEW=ON` builds `gui_preview`, which renders
 plots, status strip, splash and icon to PNG files for visual checks:
 `QT_QPA_PLATFORM=offscreen ./gui_preview <dir>`; `datapage_preview <dir>` renders the Data area
-(overlay, stacked, difference, fit, heat map). `tests/test_cli.cpp` runs the command line program against
+(overlay, stacked, difference, fit, heat map), `calibration_preview <dir> [--dark]` the Calibration area
+with the simulator (temporary config dir). `tests/test_cli.cpp` runs the command line program against
 `tests/golden/cli.json` (output of the Python CLI).
 The Analysis page renders itself to `analysis-*.png` when `LIBRERAMEN_PREVIEW_DIR=<dir>` is set for
 `gui_test_analysispage`.
@@ -58,6 +59,7 @@ cmake configure line (Qt from aqtinstall, -dev packages extracted with `dpkg -x`
 | `src/gui/mainwindow.*`, `measurepage.*` | `gui/app.py` | main window, Measure area |
 | `src/gui/page.h`, `pages.cpp` | – | `Page` interface and registry of the side-bar areas (Data, Library, …) |
 | `src/gui/datapage.*` | `gui/data.py` | Data area: open/compare/process/fit/export spectra |
+| `src/gui/calibrationpage.*`, `calibrationstore.*` | `calibrate.py` (CLI flow) | Calibration area: wizard, quick check, history, instrument log, reminder |
 | `src/gui/main.cpp` | `gui/app.py` main, `selftest.py` | `LibreRamen [--sim] [--screenshot F]`, `--selftest`, `--watchdog` |
 | `src/gui/` (other) | `gui/` | plot widget, theme, status strip, splash, icon |
 | `tests/` | – | QtTest; `tests/golden/` holds outputs of the Python reference |

@@ -2,6 +2,7 @@
 #include "page.h"
 
 #include "analysispagehost.h"
+#include "calibrationpage.h"
 #include "datapagehost.h"
 #include "librarypagehost.h"
 
@@ -20,6 +21,7 @@ std::map<QString, PageFactory> builtinPageFactories() {
         {QStringLiteral("Data"), [](const PageContext& c) -> Page* { return new DataPageHost(c); }},
         {QStringLiteral("Library"), [](const PageContext& c) -> Page* { return new LibraryPageHost(c); }},
         {QStringLiteral("Analysis"), [](const PageContext& c) -> Page* { return new AnalysisPageHost(c); }},
+        {QStringLiteral("Calibration"), [](const PageContext& c) -> Page* { return new CalibrationPage(c); }},
     };
 }
 
