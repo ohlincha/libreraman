@@ -713,6 +713,8 @@ def main(argv=None):
     pg.setConfigOptions(antialias=True)
     app = QApplication.instance() or QApplication([sys.argv[0]])
     app.setApplicationName("LibreRamen")
+    from .icon import app_icon
+    app.setWindowIcon(app_icon())
     splash = Splash()
     splash.show()
     splash.message("Starting…")
