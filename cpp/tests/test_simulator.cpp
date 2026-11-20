@@ -1,4 +1,5 @@
 // Simulated instrument (simulator.py behaviour), run fast (speed factor).
+#include <QThread>
 #include <QtTest>
 #include <atomic>
 #include <cmath>
@@ -241,12 +242,36 @@ private slots:
         auto s = ready();
         SimControls* c = dynamic_cast<SimControls*>(static_cast<Instrument*>(s.get()));
         QVERIFY(c);
-        QCOMPARE(c->sampleNames().size(), 5);
+        QCOMPARE(c->sampleNames().size(), 7);                 // 5 recorded + 2 reactions
         c->setSpeed(3.0);
         QCOMPARE(c->speed(), 3.0);
         auto inst = makeSimulator(defaultCalibration(), {}, 2.0);
         QVERIFY(inst->simulated());
         QCOMPARE(dynamic_cast<SimControls*>(inst.get())->speed(), 2.0);
+    }
+
+    // A -> B -> C (ethanol -> chloroform -> CCl4): ethanol's 882 band at the start, CCl4's 459 band later.
+    void reaction() {
+        auto s = ready(nullptr, 1000.0);                      // 1 s wall = 1000 s simulated
+        SimControls* c = dynamic_cast<SimControls*>(static_cast<Instrument*>(s.get()));
+        const QString name = c->sampleNames().last();
+        QVERIFY(name.startsWith("reaction: A"));
+        c->closeCompartment();
+        c->pressArm();
+        c->setSample(name);
+        AcquireOptions o;
+        o.exposure_s = 0.5;
+        auto band = [](const Spectrum& sp, double at) {
+            double m = 0;
+            for (size_t i = 0; i < sp.shift.size(); ++i)
+                if (std::abs(sp.shift[i] - at) < 8) m = std::max(m, sp.intensity[i]);
+            return m;
+        };
+        const Spectrum a = s->acquire(o);                     // t ~ 0: mostly ethanol
+        QVERIFY(band(a, 882) > 2 * band(a, 459));
+        QThread::msleep(3000);                                // ~3000 s = 50 min: mostly CCl4
+        const Spectrum b = s->acquire(o);
+        QVERIFY(band(b, 459) > 2 * band(b, 882));
     }
 };
 

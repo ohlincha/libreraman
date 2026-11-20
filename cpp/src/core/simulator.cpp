@@ -103,14 +103,69 @@ void SimCora::openCompartment() {
 
 void SimCora::closeCompartment() { open_ = false; }
 
+namespace {
+
+const QString kEvaporation = QStringLiteral("reaction: ethanol evaporating from water");
+const QString kConsecutive = QStringLiteral("reaction: A → B → C (ethanol → chloroform → CCl4, demo)");
+
+double monoNow() {
+    static QElapsedTimer t = [] {
+        QElapsedTimer e;
+        e.start();
+        return e;
+    }();
+    return t.nsecsElapsed() / 1e9;
+}
+
+}  // namespace
+
+void SimCora::setSpeed(double s) {
+    std::lock_guard<std::mutex> l(m_);
+    const double now = monoNow();                           // keep the reaction clock continuous
+    reactionSimT_ += (now - reactionWall0_) * speed_;
+    reactionWall0_ = now;
+    speed_ = s > 0 ? s : 1.0;
+}
+
 void SimCora::setSample(const QString& name) {
+    bool known = name == kEvaporation || name == kConsecutive;
     for (const auto& s : data_.samples)
-        if (s.first == name) {
-            std::lock_guard<std::mutex> l(m_);
-            sample_ = name;
-            return;
-        }
-    throw Error(("unknown sample: " + name).toStdString());
+        if (s.first == name) known = true;
+    if (!known) throw Error(("unknown sample: " + name).toStdString());
+    std::lock_guard<std::mutex> l(m_);
+    if (name != sample_ || name.startsWith(QStringLiteral("reaction:"))) {   // (re)choosing a reaction restarts it
+        reactionWall0_ = monoNow();
+        reactionSimT_ = 0.0;
+    }
+    sample_ = name;
+}
+
+// Spectrum (counts/s) of a sample. Reactions mix recorded spectra:
+//  * ethanol evaporating from water: ethanol volume fraction x(t) = 0.4·exp(−t/τ), τ = 15 min (rest water);
+//  * A → B → C, k1 = 1/(4 min), k2 = 1/(12 min) (consecutive first order, [A]0 = 1):
+//      A = e^(−k1 t), B = k1/(k2−k1)·(e^(−k1 t) − e^(−k2 t)), C = 1 − A − B.
+Vec SimCora::sampleSpectrum(const QString& name) const {
+    auto rec = [&](const QString& n) -> const Vec* {
+        for (const auto& kv : data_.samples)
+            if (kv.first == n) return &kv.second;
+        return nullptr;
+    };
+    if (const Vec* s = rec(name)) return *s;
+    const double t = reactionSimT_ + (monoNow() - reactionWall0_) * speed_;
+    std::vector<std::pair<const Vec*, double>> mix;
+    if (name == kEvaporation) {
+        const double x = 0.4 * std::exp(-t / 900.0);
+        mix = {{rec("ethanol"), x}, {rec("water"), 1.0 - x}};
+    } else if (name == kConsecutive) {
+        const double k1 = 1.0 / 240.0, k2 = 1.0 / 720.0;
+        const double a = std::exp(-k1 * t), b = k1 / (k2 - k1) * (std::exp(-k1 * t) - std::exp(-k2 * t));
+        mix = {{rec("ethanol"), a}, {rec("chloroform"), b}, {rec("carbon tetrachloride"), std::max(0.0, 1.0 - a - b)}};
+    }
+    Vec out(data_.darkOffset.size(), 0.0);
+    for (const auto& [v, w] : mix)
+        if (v)
+            for (size_t i = 0; i < out.size() && i < v->size(); ++i) out[i] += w * (*v)[i];
+    return out;
 }
 
 QString SimCora::sample() const {
@@ -121,6 +176,7 @@ QString SimCora::sample() const {
 QStringList SimCora::sampleNames() const {
     QStringList l;
     for (const auto& s : data_.samples) l << s.first;
+    l << kEvaporation << kConsecutive;
     return l;
 }
 
@@ -212,13 +268,10 @@ std::vector<Vec> SimCora::frames(double exposure_s, int n, const std::atomic<boo
             std::lock_guard<std::mutex> l(m_);
             for (size_t i = 0; i < y.size(); ++i) y[i] = data_.darkOffset[i] + data_.darkRate[i] * exposure_s;
             if (laserOn_) {
-                const Vec* s = nullptr;
-                for (const auto& kv : data_.samples)
-                    if (kv.first == sample_) s = &kv.second;
+                const Vec s = sampleSpectrum(sample_);
                 const double lt = laserTime_.count(sample_) ? laserTime_[sample_] : 0.0;
                 const double bleach = sample_ == "zinc sulfide" ? 0.6 + 0.4 * std::exp(-lt / 180.0) : 1.0;
-                if (s)
-                    for (size_t i = 0; i < y.size(); ++i) y[i] += (*s)[i] * exposure_s * bleach;
+                for (size_t i = 0; i < y.size() && i < s.size(); ++i) y[i] += s[i] * exposure_s * bleach;
                 laserTime_[sample_] = lt + exposure_s;
             }
             for (double& v : y) v += normal(rng_) * std::sqrt(std::max(v, 1.0) + 64.0);   // shot + read noise

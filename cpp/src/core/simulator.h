@@ -72,7 +72,7 @@ public:
     QString sample() const override;
     QStringList sampleNames() const override;
     double speed() const override { return speed_; }
-    void setSpeed(double s) override { speed_ = s > 0 ? s : 1.0; }
+    void setSpeed(double s) override;
 
 private:
     class LaserGuard;
@@ -87,6 +87,11 @@ private:
     mutable std::mutex m_;                    // sample_, laserTime_, rng_
     QString sample_ = QStringLiteral("ethanol");
     std::map<QString, double> laserTime_;     // sample -> accumulated laser exposure (s), for bleaching
+    // Reaction samples: concentrations evolve in simulated time (wall time × speed) since the sample was
+    // chosen; their spectra are mixtures of the recorded ones.
+    double reactionWall0_ = 0.0;              // monotonic seconds when the reaction sample was chosen
+    double reactionSimT_ = 0.0;               // simulated seconds accumulated before the last speed change
+    Vec sampleSpectrum(const QString& name) const;   // call with m_ held
     std::mt19937_64 rng_;
     std::recursive_mutex lock_;               // measurements
 };
