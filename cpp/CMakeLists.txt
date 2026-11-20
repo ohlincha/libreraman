@@ -21,7 +21,7 @@ find_package(Qt6 6.2 REQUIRED COMPONENTS Core SerialPort Network)
 if(LIBRERAMEN_GUI)
   find_package(Qt6 REQUIRED COMPONENTS Gui Widgets Svg)
 endif()
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(Eigen3 REQUIRED NO_MODULE)       # 3.4 (Debian/Ubuntu) or 5.x (vcpkg, Homebrew)
 find_package(PkgConfig)
 include(cmake/Deps.cmake)        # libusb-1.0 and hidapi (pkg-config, vcpkg or explicit paths)
 
