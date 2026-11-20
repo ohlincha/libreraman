@@ -1,7 +1,10 @@
-// Analysis area: data set, preprocessing with live preview, PCA / EFA / pure variables / MCR-ALS / NNLS.
+// Analysis area: data set, preprocessing with live preview, PCA / EFA / pure variables / MCR-ALS / NNLS /
+// peak trends.
 #include "analysispage.h"
 
+#include <QAbstractTableModel>
 #include <QCheckBox>
+#include <QColorDialog>
 #include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QFileDialog>
@@ -10,6 +13,7 @@
 #include <QGridLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
+#include <QHeaderView>
 #include <QLabel>
 #include <QListWidget>
 #include <QMenu>
@@ -20,6 +24,8 @@
 #include <QSpinBox>
 #include <QSplitter>
 #include <QTabWidget>
+#include <QTableView>
+#include <QTableWidget>
 #include <QTextStream>
 #include <QElapsedTimer>
 #include <QTimer>
@@ -28,6 +34,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 
 #include "core/errors.h"
 #include "core/processing.h"
@@ -147,11 +154,13 @@ AnalysisPage::AnalysisPage(QWidget* parent) : QWidget(parent) {
     m_tabs->addTab(buildPureTab(), QStringLiteral("Pure variables"));
     m_tabs->addTab(buildMcrTab(), QStringLiteral("MCR-ALS"));
     m_tabs->addTab(buildNnlsTab(), QStringLiteral("NNLS fit"));
+    m_tabs->addTab(buildTrendsTab(), QStringLiteral("Peak trends"));
     m_tabs->setTabToolTip(0, QStringLiteral("Principal component analysis: scores, loadings, explained variance"));
     m_tabs->setTabToolTip(1, QStringLiteral("Evolving factor analysis: where components appear and disappear"));
     m_tabs->setTabToolTip(2, QStringLiteral("OPA and SIMPLISMA: purest spectra or variables (initial estimates)"));
     m_tabs->setTabToolTip(3, QStringLiteral("Multivariate curve resolution: pure spectra and concentration profiles"));
     m_tabs->setTabToolTip(4, QStringLiteral("Non-negative least-squares fit with known spectra"));
+    m_tabs->setTabToolTip(5, QStringLiteral("Band heights, areas, fitted areas, positions and widths vs time (kinetics)"));
     connect(m_tabs, &QTabWidget::currentChanged, this, [this] { schedule(); });
     split->addWidget(m_tabs);
     split->setStretchFactor(0, 0);
@@ -166,8 +175,10 @@ AnalysisPage::AnalysisPage(QWidget* parent) : QWidget(parent) {
 
 AnalysisPage::~AnalysisPage() {
     m_stop = true;
+    m_trendStop = true;
     joinWorker();
     if (m_autoThread.joinable()) m_autoThread.join();
+    if (m_trendThread.joinable()) m_trendThread.join();
 }
 
 PlotWidget* AnalysisPage::newPlot(const QString& xLabel, const QString& yLabel) {
@@ -225,6 +236,10 @@ QToolButton* AnalysisPage::exportButton(Method m) {
     case Method::Nnls:
         csv = {{"Fit results (CSV)…", "nnls"}};
         plots = {"nnls-fit", "nnls-residual"};
+        break;
+    case Method::Trends:
+        csv = {{"Peak trends (CSV)…", "trends"}};
+        plots = {"trends-spectra", "trends"};
         break;
     }
     for (const Item& it : csv) {
@@ -1058,6 +1073,7 @@ void AnalysisPage::runVisible() {
     case Method::PureVariables: runPureVariables(); break;
     case Method::Mcr: break;                      // explicit Run
     case Method::Nnls: runNnls(); break;
+    case Method::Trends: runTrends(); break;
     }
 }
 
@@ -1854,6 +1870,819 @@ void AnalysisPage::drawNnls() {
                             QStringLiteral(". R² %1, residual norm %2.").arg(f.r2, 0, 'f', 5).arg(f.residualNorm, 0, 'g', 4));
 }
 
+// ============================================================================================ peak trends
+// Table model of the trend values (a long series: no item per cell).
+class TrendModel : public QAbstractTableModel {
+public:
+    using QAbstractTableModel::QAbstractTableModel;
+    // decimals per column of cols (-1 or missing: 6 significant digits)
+    void set(QStringList header, QStringList names, std::vector<Vec> cols, std::vector<int> decimals = {}) {
+        beginResetModel();
+        m_header = std::move(header);
+        m_names = std::move(names);
+        m_cols = std::move(cols);
+        m_decimals = std::move(decimals);
+        m_rows = m_names.size();
+        for (const Vec& c : m_cols) m_rows = std::max(m_rows, qsizetype(c.size()));
+        endResetModel();
+    }
+    int rowCount(const QModelIndex& parent = {}) const override { return parent.isValid() ? 0 : int(m_rows); }
+    int columnCount(const QModelIndex& parent = {}) const override { return parent.isValid() ? 0 : int(m_header.size()); }
+    QVariant data(const QModelIndex& index, int role) const override {
+        const int r = index.row(), c = index.column();
+        if (role == Qt::TextAlignmentRole && c > 0) return int(Qt::AlignRight | Qt::AlignVCenter);
+        if (role != Qt::DisplayRole) return {};
+        if (c == 0) return r < m_names.size() ? m_names[r] : QString();
+        const Vec& v = m_cols[size_t(c - 1)];
+        if (size_t(r) >= v.size() || !std::isfinite(v[size_t(r)])) return QString();
+        const int dec = size_t(c - 1) < m_decimals.size() ? m_decimals[size_t(c - 1)] : -1;
+        return dec >= 0 ? QString::number(v[size_t(r)], 'f', dec) : QString::number(v[size_t(r)], 'g', 6);
+    }
+    QVariant headerData(int section, Qt::Orientation o, int role) const override {
+        if (role != Qt::DisplayRole) return {};
+        if (o == Qt::Vertical) return section + 1;
+        return section < m_header.size() ? m_header[section] : QString();
+    }
+
+private:
+    QStringList m_header, m_names;
+    std::vector<Vec> m_cols;
+    std::vector<int> m_decimals;
+    qsizetype m_rows = 0;
+};
+
+namespace {
+
+enum BandColumn { ColColor, ColName, ColFrom, ColTo, ColQuantity, ColBaseline, ColProfile, BandColumns };
+
+quint64 fnv(quint64 h, double v) {                // FNV-1a over the bits of one double
+    quint64 bits = 0;
+    static_assert(sizeof bits == sizeof v, "double is 64 bits");
+    std::memcpy(&bits, &v, sizeof v);
+    h ^= bits;
+    return h * 1099511628211ULL;
+}
+
+bool intensityLike(bandtrend::Quantity q) {      // ratios and relative values make sense
+    using Q = bandtrend::Quantity;
+    return q == Q::Height || q == Q::Area || q == Q::FitArea || q == Q::FitHeight;
+}
+
+QLabel* boldLabel(const QString& text) {
+    auto* l = new QLabel(text);
+    QFont f = l->font();
+    f.setBold(true);
+    l->setFont(f);
+    return l;
+}
+
+}  // namespace
+
+QWidget* AnalysisPage::buildTrendsTab() {
+    auto* w = new QWidget;
+    auto* v = new QVBoxLayout(w);
+    auto* bar = new QHBoxLayout;
+    m_addBand = new QToolButton;
+    m_addBand->setText(QStringLiteral("Add band"));
+    m_addBand->setPopupMode(QToolButton::InstantPopup);
+    m_addBand->setToolTip(QStringLiteral("Add a band around a peak of the mean spectrum (±2 FWHM); right-click in the "
+                                         "spectra to add one anywhere"));
+    auto* addMenu = new QMenu(m_addBand);
+    m_addBand->setMenu(addMenu);
+    connect(addMenu, &QMenu::aboutToShow, this, &AnalysisPage::fillAddBandMenu);
+    auto* remove = new QPushButton(QStringLiteral("Remove band"));
+    connect(remove, &QPushButton::clicked, this, [this] {
+        const int r = m_bandTable->currentRow();
+        if (r >= 0) removeTrendBand(r);
+        else if (!m_trendBands.empty()) removeTrendBand(int(m_trendBands.size()) - 1);
+    });
+    m_trendNorm = new QComboBox;
+    m_trendNorm->addItem(QStringLiteral("None"));
+    m_trendNorm->addItem(QStringLiteral("Ratio to band"));
+    m_trendNorm->addItem(QStringLiteral("First spectrum = 1"));
+    m_trendNorm->setToolTip(QStringLiteral("Heights and areas divided by those of a reference band, or by their first "
+                                           "value (positions and widths are not normalised)"));
+    m_trendRef = new QComboBox;
+    m_trendRef->setMinimumContentsLength(9);
+    m_trendRef->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+    m_trendRef->setToolTip(QStringLiteral("Reference band of the ratio"));
+    m_trendRef->setEnabled(false);
+    m_trendKinetic = new QComboBox;
+    m_trendKinetic->addItem(QStringLiteral("None"));
+    m_trendKinetic->addItem(QStringLiteral("Exponential  A + B·e^(−t/τ)"));
+    m_trendKinetic->addItem(QStringLiteral("Linear  a + b·t"));
+    m_trendKinetic->setToolTip(QStringLiteral("Fitted to every trend (fitted quantities weighted by their errors)"));
+    connect(m_trendNorm, &QComboBox::currentIndexChanged, this, [this] {
+        m_trendRef->setEnabled(m_trendNorm->currentIndex() == int(TrendNormalisation::Ratio));
+        if (!m_updating) drawTrends();
+    });
+    for (QComboBox* c : {m_trendRef, m_trendKinetic})
+        connect(c, &QComboBox::currentIndexChanged, this, [this] {
+            if (!m_updating) drawTrends();
+        });
+    bar->addWidget(m_addBand);
+    bar->addWidget(remove);
+    bar->addSpacing(12);
+    bar->addWidget(new QLabel(QStringLiteral("Normalise")));
+    bar->addWidget(m_trendNorm);
+    bar->addWidget(m_trendRef);
+    bar->addSpacing(12);
+    bar->addWidget(new QLabel(QStringLiteral("Kinetic fit")));
+    bar->addWidget(m_trendKinetic);
+    bar->addStretch();
+    bar->addWidget(exportButton(Method::Trends));
+    v->addLayout(bar);
+
+    m_trendSpectra = newPlot(kShift, QStringLiteral("Preprocessed"));
+    m_trendSpectra->setHeadroom(0.16);
+    m_trendSpectra->setToolTip(PlotWidget::navigationHelp(WheelMode::ZoomX) +
+                               QStringLiteral("\nDrag a band's edges to resize it, its inside to move it; "
+                                              "right-click: add or remove a band"));
+    connect(m_trendSpectra, &PlotWidget::rightClicked, this, &AnalysisPage::trendSpectraMenu);
+    m_trendPlot = newPlot(QStringLiteral("Time (s)"), QStringLiteral("Height"));
+    m_trendPlot->setLegendVisible(true);
+    m_trendPlot->setHeadroom(0.32);                // room for the legend (fit results) above the data
+    m_trendPlot->setPanY(true);
+
+    m_bandTable = new QTableWidget(0, BandColumns);
+    m_bandTable->setHorizontalHeaderLabels({QString(), QStringLiteral("Name"), QStringLiteral("From"), QStringLiteral("To"),
+                                            QStringLiteral("Quantity"), QStringLiteral("Baseline"), QStringLiteral("Profile")});
+    m_bandTable->horizontalHeaderItem(ColBaseline)->setToolTip(QStringLiteral("Local linear baseline between the band edges"));
+    m_bandTable->horizontalHeaderItem(ColProfile)->setToolTip(QStringLiteral("Peak profile of the fitted quantities"));
+    m_bandTable->verticalHeader()->setVisible(false);
+    m_bandTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_bandTable->setSelectionMode(QAbstractItemView::SingleSelection);
+    QHeaderView* hh = m_bandTable->horizontalHeader();
+    hh->setSectionResizeMode(QHeaderView::ResizeToContents);
+    hh->setStretchLastSection(true);
+    m_bandTable->setColumnWidth(ColColor, 22);
+    hh->setSectionResizeMode(ColColor, QHeaderView::Fixed);
+    connect(m_bandTable, &QTableWidget::itemChanged, this, [this](QTableWidgetItem* it) {
+        if (m_updating) return;
+        const int r = it->row();
+        if (r < 0 || r >= int(m_trendBands.size())) return;
+        TrendBand& tb = m_trendBands[size_t(r)];
+        if (it->column() == ColName) {
+            tb.band.name = it->text().trimmed();          // not part of the cache key: no re-measuring
+            trendBandsChanged();
+        } else if (it->column() == ColBaseline) {
+            tb.band.localBaseline = it->checkState() == Qt::Checked;
+            trendBandsChanged();
+        }
+    });
+    connect(m_bandTable, &QTableWidget::cellClicked, this, [this](int r, int c) {
+        if (c != ColColor || r < 0 || r >= int(m_trendBands.size())) return;
+        const QColor col = QColorDialog::getColor(m_trendBands[size_t(r)].color, this, QStringLiteral("Band colour"));
+        if (!col.isValid()) return;
+        m_trendBands[size_t(r)].color = col;
+        refreshBandTable();
+        drawTrendSpectra();
+        drawTrends();
+    });
+    auto* bandPanel = new QWidget;
+    auto* bl = new QVBoxLayout(bandPanel);
+    bl->setContentsMargins(0, 0, 0, 0);
+    bl->setSpacing(2);
+    bl->addWidget(boldLabel(QStringLiteral("Bands")));
+    bl->addWidget(m_bandTable, 1);
+
+    m_trendModel = new TrendModel(this);
+    m_trendTable = new QTableView;
+    m_trendTable->setModel(m_trendModel);
+    m_trendTable->verticalHeader()->setVisible(false);
+    m_trendTable->verticalHeader()->setDefaultSectionSize(m_trendTable->fontMetrics().height() + 6);
+    m_trendTable->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    m_trendTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_trendTable->setAlternatingRowColors(true);
+    auto* valuePanel = new QWidget;
+    auto* vl = new QVBoxLayout(valuePanel);
+    vl->setContentsMargins(0, 0, 0, 0);
+    vl->setSpacing(2);
+    vl->addWidget(boldLabel(QStringLiteral("Values")));
+    vl->addWidget(m_trendTable, 1);
+
+    auto* top = new QSplitter(Qt::Horizontal);
+    top->addWidget(titled(QStringLiteral("trends-spectra"), QStringLiteral("Spectra and bands"), m_trendSpectra));
+    top->addWidget(bandPanel);
+    top->setStretchFactor(0, 1);
+    top->setSizes({620, 480});
+    auto* bottom = new QSplitter(Qt::Horizontal);
+    bottom->addWidget(titled(QStringLiteral("trends"), QStringLiteral("Trends"), m_trendPlot));
+    bottom->addWidget(valuePanel);
+    bottom->setStretchFactor(0, 1);
+    bottom->setSizes({680, 420});
+    auto* vs = new QSplitter(Qt::Vertical);
+    vs->addWidget(top);
+    vs->addWidget(bottom);
+    vs->setSizes({400, 460});
+    v->addWidget(vs, 1);
+    m_trendInfo = new QLabel(QStringLiteral("Add a band: from the peaks of the mean spectrum (Add band) or by "
+                                            "right-clicking in the spectra."));
+    m_trendInfo->setWordWrap(true);
+    m_trendInfo->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    v->addWidget(m_trendInfo);
+    return w;
+}
+
+QString AnalysisPage::trendKey(const bandtrend::Band& b) {
+    // everything the measurements depend on (not the name, not the quantity unless it needs a fit)
+    QString k = QStringLiteral("%1|%2|%3").arg(b.lo, 0, 'g', 17).arg(b.hi, 0, 'g', 17).arg(b.localBaseline);
+    if (bandtrend::needsFit(b.quantity)) {
+        k += QStringLiteral("|fit|%1|%2").arg(b.profile).arg(b.main);
+        for (const peaks::Peak& p : b.guesses) k += QStringLiteral("|%1/%2").arg(p.position, 0, 'g', 17).arg(p.fwhm, 0, 'g', 17);
+    }
+    return k;
+}
+
+void AnalysisPage::updateTrendMean() {
+    if (m_trendMeanGen == m_generation) return;
+    m_trendMeanGen = m_generation;
+    m_trendMean.clear();
+    m_trendPeaks.clear();
+    if (m_data.empty()) return;
+    m_trendMean = toVec(m_data.D.colwise().mean().transpose());
+    try {
+        m_trendPeaks = peaks::pick(m_data.x, m_trendMean, 5.0);
+    } catch (const std::exception&) {
+    }
+}
+
+const std::vector<peaks::Peak>& AnalysisPage::trendPeaks() {
+    updateTrendMean();
+    return m_trendPeaks;
+}
+
+int AnalysisPage::addBand(bandtrend::Band b) {
+    TrendBand tb;
+    if (b.lo > b.hi) std::swap(b.lo, b.hi);
+    tb.band = std::move(b);
+    tb.id = m_nextBandId++;
+    // the first palette colour not used yet
+    const PlotPalette& pal = m_trendPlot->plotPalette();
+    for (int k = 0; k < 64; ++k) {
+        const QColor c = pal.seriesColor(k);
+        bool used = false;
+        for (const TrendBand& o : m_trendBands) used = used || o.color == c;
+        if (!used) {
+            tb.color = c;
+            break;
+        }
+    }
+    if (!tb.color.isValid()) tb.color = pal.seriesColor(tb.id);
+    m_trendBands.push_back(tb);
+    m_trendCache.emplace_back();
+    refreshBandTable();
+    trendBandsChanged();
+    return int(m_trendBands.size()) - 1;
+}
+
+int AnalysisPage::addTrendBand(double lo, double hi, const QString& name) {
+    bandtrend::Band b;
+    b.lo = std::min(lo, hi);
+    b.hi = std::max(lo, hi);
+    b.name = name.isEmpty() ? bandtrend::defaultName((lo + hi) / 2) : name;
+    return addBand(b);
+}
+
+int AnalysisPage::addTrendBandAtPeak(double position) {
+    const std::vector<peaks::Peak>& pk = trendPeaks();
+    const peaks::Peak* best = nullptr;
+    for (const peaks::Peak& p : pk)
+        if (!best || std::abs(p.position - position) < std::abs(best->position - position)) best = &p;
+    if (!best || std::abs(best->position - position) > 25) return -1;
+    return addBand(bandtrend::bandAround(*best, m_data.x));
+}
+
+void AnalysisPage::removeTrendBand(int i) {
+    if (i < 0 || i >= int(m_trendBands.size())) return;
+    m_trendBands.erase(m_trendBands.begin() + i);
+    m_trendCache.erase(m_trendCache.begin() + i);
+    refreshBandTable();
+    trendBandsChanged();
+}
+
+void AnalysisPage::setTrendBand(int i, const bandtrend::Band& b) {
+    if (i < 0 || i >= int(m_trendBands.size())) return;
+    bandtrend::Band& o = m_trendBands[size_t(i)].band;
+    const bool refit = o.lo != b.lo || o.hi != b.hi || o.profile != b.profile;
+    o.name = b.name;
+    o.lo = std::min(b.lo, b.hi);
+    o.hi = std::max(b.lo, b.hi);
+    o.quantity = b.quantity;
+    o.localBaseline = b.localBaseline;
+    o.profile = b.profile;
+    if (!b.guesses.empty()) {
+        o.guesses = b.guesses;
+        o.main = b.main;
+    } else if (refit) {
+        o.guesses.clear();                        // from the mean spectrum at the next run
+    }
+    syncBandRow(i);
+    trendBandsChanged();
+}
+
+void AnalysisPage::setTrendQuantity(int i, bandtrend::Quantity q) {
+    if (i < 0 || i >= int(m_trendBands.size())) return;
+    bandtrend::Band b = m_trendBands[size_t(i)].band;
+    b.quantity = q;
+    setTrendBand(i, b);
+}
+
+void AnalysisPage::setTrendNormalisation(TrendNormalisation n, int reference) {
+    m_updating = true;
+    m_trendRef->setCurrentIndex(std::clamp(reference, 0, std::max(0, m_trendRef->count() - 1)));
+    m_trendNorm->setCurrentIndex(int(n));
+    m_trendRef->setEnabled(n == TrendNormalisation::Ratio);
+    m_updating = false;
+    drawTrends();
+}
+
+void AnalysisPage::setTrendKinetics(bandtrend::Kinetic k) {
+    m_trendKinetic->setCurrentIndex(int(k));      // redraws
+}
+
+void AnalysisPage::refreshBandTable() {
+    m_updating = true;
+    m_bandTable->setRowCount(int(m_trendBands.size()));
+    for (int r = 0; r < int(m_trendBands.size()); ++r) {
+        const TrendBand& tb = m_trendBands[size_t(r)];
+        auto* c = new QTableWidgetItem;
+        c->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+        c->setBackground(tb.color);
+        c->setToolTip(QStringLiteral("Click to change the colour"));
+        m_bandTable->setItem(r, ColColor, c);
+        auto* n = new QTableWidgetItem(tb.band.name);
+        n->setToolTip(QStringLiteral("Name (double-click to edit)"));
+        m_bandTable->setItem(r, ColName, n);
+        for (int col : {ColFrom, ColTo}) {
+            auto* sb = new QDoubleSpinBox;
+            sb->setRange(-2000, 10000);
+            sb->setDecimals(1);
+            sb->setFrame(false);
+            sb->setKeyboardTracking(false);
+            sb->setButtonSymbols(QAbstractSpinBox::NoButtons);
+            sb->setValue(col == ColFrom ? tb.band.lo : tb.band.hi);
+            const int id = tb.id;
+            connect(sb, &QDoubleSpinBox::valueChanged, this, [this, id, col](double val) {
+                if (m_updating) return;
+                for (size_t k = 0; k < m_trendBands.size(); ++k) {
+                    if (m_trendBands[k].id != id) continue;
+                    bandtrend::Band b = m_trendBands[k].band;
+                    (col == ColFrom ? b.lo : b.hi) = val;
+                    if (b.lo >= b.hi) return;
+                    setTrendBand(int(k), b);
+                }
+            });
+            m_bandTable->setCellWidget(r, col, sb);
+        }
+        auto* q = new QComboBox;
+        q->addItems(bandtrend::quantityNames());
+        q->setCurrentIndex(int(tb.band.quantity));
+        q->setToolTip(QStringLiteral("<p>Height: maximum in the band. Area: integrated (trapezoid). Centroid: centre of "
+                                     "the part above half maximum. FWHM: interpolated width at half maximum. Fitted: "
+                                     "profile fit of the band (number of peaks from the mean spectrum), main peak; "
+                                     "with standard errors.</p>"));
+        const int id = tb.id;
+        connect(q, &QComboBox::currentIndexChanged, this, [this, id](int qi) {
+            if (m_updating) return;
+            for (size_t k = 0; k < m_trendBands.size(); ++k)
+                if (m_trendBands[k].id == id) setTrendQuantity(int(k), bandtrend::Quantity(qi));
+        });
+        m_bandTable->setCellWidget(r, ColQuantity, q);
+        auto* b = new QTableWidgetItem;
+        b->setFlags(Qt::ItemIsEnabled | Qt::ItemIsUserCheckable | Qt::ItemIsSelectable);
+        b->setCheckState(tb.band.localBaseline ? Qt::Checked : Qt::Unchecked);
+        m_bandTable->setItem(r, ColBaseline, b);
+        auto* pr = new QComboBox;
+        pr->addItems(peaks::profiles());
+        pr->setCurrentIndex(std::max(0, pr->findText(tb.band.profile)));
+        pr->setEnabled(bandtrend::needsFit(tb.band.quantity));
+        connect(pr, &QComboBox::currentTextChanged, this, [this, id](const QString& shape) {
+            if (m_updating) return;
+            for (size_t k = 0; k < m_trendBands.size(); ++k)
+                if (m_trendBands[k].id == id) {
+                    bandtrend::Band bb = m_trendBands[k].band;
+                    bb.profile = shape;
+                    setTrendBand(int(k), bb);
+                }
+        });
+        m_bandTable->setCellWidget(r, ColProfile, pr);
+    }
+    // reference band choices
+    const int ref = m_trendRef->currentIndex();
+    m_trendRef->clear();
+    for (const TrendBand& tb : m_trendBands) m_trendRef->addItem(tb.band.name);
+    m_trendRef->setCurrentIndex(std::clamp(ref, 0, std::max(0, int(m_trendBands.size()) - 1)));
+    m_updating = false;
+}
+
+// Values of row i's cells from the band, in place (the cell widgets may be the senders of this change).
+void AnalysisPage::syncBandRow(int i) {
+    if (i < 0 || i >= m_bandTable->rowCount() || i >= int(m_trendBands.size())) return;
+    const bandtrend::Band& b = m_trendBands[size_t(i)].band;
+    m_updating = true;
+    if (QTableWidgetItem* n = m_bandTable->item(i, ColName)) n->setText(b.name);
+    if (QTableWidgetItem* c = m_bandTable->item(i, ColBaseline)) c->setCheckState(b.localBaseline ? Qt::Checked : Qt::Unchecked);
+    if (auto* sb = qobject_cast<QDoubleSpinBox*>(m_bandTable->cellWidget(i, ColFrom))) sb->setValue(b.lo);
+    if (auto* sb = qobject_cast<QDoubleSpinBox*>(m_bandTable->cellWidget(i, ColTo))) sb->setValue(b.hi);
+    if (auto* q = qobject_cast<QComboBox*>(m_bandTable->cellWidget(i, ColQuantity))) q->setCurrentIndex(int(b.quantity));
+    if (auto* pr = qobject_cast<QComboBox*>(m_bandTable->cellWidget(i, ColProfile))) pr->setCurrentIndex(std::max(0, pr->findText(b.profile)));
+    m_updating = false;
+}
+
+void AnalysisPage::trendBandsChanged(bool redrawSpectra) {
+    // a band's name may have changed: reference combo texts
+    m_updating = true;
+    for (int i = 0; i < m_trendRef->count() && i < int(m_trendBands.size()); ++i)
+        m_trendRef->setItemText(i, m_trendBands[size_t(i)].band.name);
+    for (int r = 0; r < m_bandTable->rowCount() && r < int(m_trendBands.size()); ++r)
+        if (auto* pr = qobject_cast<QComboBox*>(m_bandTable->cellWidget(r, ColProfile)))
+            pr->setEnabled(bandtrend::needsFit(m_trendBands[size_t(r)].band.quantity));
+    m_updating = false;
+    m_dirty[methodIndex(Method::Trends)] = true;
+    if (redrawSpectra) drawTrendSpectra();
+    drawTrends();
+    schedule();
+}
+
+void AnalysisPage::runTrends(bool wait) {
+    m_dirty[methodIndex(Method::Trends)] = false;
+    updateTrendMean();
+    const int n = m_data.rows();
+    // hashes of the preprocessed spectra (including the axis): the cached rows that are still valid
+    quint64 gx = 1469598103934665603ULL;
+    for (double v : m_data.x) gx = fnv(gx, v);
+    std::vector<quint64> hashes(size_t(std::max(n, 0)));
+    for (int i = 0; i < n; ++i) {
+        quint64 h = gx;
+        for (Eigen::Index j = 0; j < m_data.D.cols(); ++j) h = fnv(h, m_data.D(i, j));
+        hashes[size_t(i)] = h;
+    }
+    const size_t before = m_trendHashes.size();
+    size_t valid = 0;
+    while (valid < hashes.size() && valid < m_trendHashes.size() && hashes[valid] == m_trendHashes[valid]) ++valid;
+    m_trendHashes = std::move(hashes);
+    if (m_trendBusy && valid < before) m_trendStop = true;   // the worker measures spectra that changed
+    size_t fits = 0;
+    for (size_t b = 0; b < m_trendBands.size(); ++b) {
+        bandtrend::Band& band = m_trendBands[b].band;
+        if (bandtrend::needsFit(band.quantity) && band.guesses.empty() && !m_trendMean.empty())
+            bandtrend::setGuesses(band, m_data.x, m_trendMean);
+        TrendCache& c = m_trendCache[b];
+        const QString key = trendKey(band);
+        if (c.key != key) {
+            c.key = key;
+            c.rows.clear();
+        }
+        if (c.rows.size() > valid) c.rows.resize(valid);
+        if (bandtrend::needsFit(band.quantity)) fits += size_t(n) - c.rows.size();
+    }
+    if (m_trendBusy && wait) {                    // finish synchronously instead
+        m_trendStop = true;
+        if (m_trendThread.joinable()) m_trendThread.join();
+        m_trendBusy = false;
+        m_trendStop = false;
+        ++m_trendRun;                             // its completion message is stale now
+    }
+    const bool async = !wait && (m_trendBusy || fits > size_t(kAsyncFits));
+    // measure the missing spectra (fitted bands: in the background if there are many)
+    for (size_t b = 0; b < m_trendBands.size(); ++b) {
+        const bandtrend::Band& band = m_trendBands[b].band;
+        if (async && bandtrend::needsFit(band.quantity)) continue;
+        TrendCache& c = m_trendCache[b];
+        for (int i = int(c.rows.size()); i < n; ++i)
+            c.rows.push_back(bandtrend::measure(m_data.x, m_data.row(i), band, bandtrend::needsFit(band.quantity)));
+    }
+    if (async) {
+        if (m_trendBusy) m_trendAgain = true;     // one at a time: runs again for the newest data afterwards
+        else if (fits > 0) runTrendsAsync();
+    }
+    drawTrendSpectra();
+    drawTrends();
+}
+
+void AnalysisPage::runTrendsAsync() {
+    if (m_trendThread.joinable()) m_trendThread.join();
+    std::vector<int> ids;
+    std::vector<QString> keys;
+    std::vector<size_t> starts;
+    std::vector<bandtrend::Band> bands;
+    size_t from = size_t(m_data.rows());
+    for (size_t b = 0; b < m_trendBands.size(); ++b) {
+        if (!bandtrend::needsFit(m_trendBands[b].band.quantity)) continue;
+        if (m_trendCache[b].rows.size() >= size_t(m_data.rows())) continue;
+        ids.push_back(m_trendBands[b].id);
+        keys.push_back(m_trendCache[b].key);
+        starts.push_back(m_trendCache[b].rows.size());
+        bands.push_back(m_trendBands[b].band);
+        from = std::min(from, starts.back());
+    }
+    if (ids.empty()) return;
+    std::vector<Vec> rows;
+    for (int i = int(from); i < m_data.rows(); ++i) rows.push_back(m_data.row(i));
+    std::vector<quint64> hashes(m_trendHashes.begin() + std::ptrdiff_t(from), m_trendHashes.end());
+    m_trendBusy = true;
+    m_trendAgain = false;
+    m_trendStop = false;
+    const unsigned run = ++m_trendRun;
+    m_trendThread = std::thread([this, x = m_data.x, rows = std::move(rows), hashes = std::move(hashes), ids, keys,
+                                 starts, bands, from, run] {
+        constexpr size_t kChunk = 16;
+        const size_t end = from + rows.size();
+        for (size_t c0 = from; c0 < end && !m_trendStop; c0 += kChunk) {
+            const size_t c1 = std::min(end, c0 + kChunk);
+            auto chunk = std::make_shared<TrendChunk>();
+            chunk->ids = ids;
+            chunk->keys = keys;
+            chunk->from = c0;
+            chunk->hashes.assign(hashes.begin() + std::ptrdiff_t(c0 - from), hashes.begin() + std::ptrdiff_t(c1 - from));
+            for (size_t b = 0; b < bands.size(); ++b) {
+                const size_t s = std::max(starts[b], c0);
+                chunk->starts.push_back(s);
+                std::vector<bandtrend::Measure> m;
+                for (size_t i = s; i < c1 && !m_trendStop; ++i)
+                    m.push_back(bandtrend::measure(x, rows[i - from], bands[b], true));
+                chunk->rows.push_back(std::move(m));
+            }
+            if (m_trendStop) break;
+            QMetaObject::invokeMethod(this, [this, chunk] { mergeTrendChunk(*chunk); }, Qt::QueuedConnection);
+        }
+        QMetaObject::invokeMethod(
+            this,
+            [this, run] {
+                if (run != m_trendRun) return;     // superseded (runTrends(wait) joined it)
+                if (m_trendThread.joinable()) m_trendThread.join();
+                m_trendBusy = false;
+                m_trendStop = false;
+                drawTrends();
+                emit trendsFinished();
+                bool missing = m_trendAgain;
+                for (const TrendCache& c : m_trendCache) missing = missing || c.rows.size() < size_t(m_data.rows());
+                if (missing) {
+                    m_dirty[methodIndex(Method::Trends)] = true;
+                    schedule();
+                }
+            },
+            Qt::QueuedConnection);
+    });
+}
+
+void AnalysisPage::mergeTrendChunk(const TrendChunk& c) {
+    bool any = false;
+    for (size_t k = 0; k < c.ids.size(); ++k) {
+        size_t b = 0;
+        while (b < m_trendBands.size() && m_trendBands[b].id != c.ids[k]) ++b;
+        if (b == m_trendBands.size()) continue;   // removed meanwhile
+        TrendCache& cache = m_trendCache[b];
+        if (cache.key != c.keys[k] || cache.rows.size() != c.starts[k]) continue;
+        bool same = true;                          // measured on the spectra we still have?
+        for (size_t j = 0; j < c.rows[k].size() && same; ++j) {
+            const size_t i = c.starts[k] + j;
+            same = i < m_trendHashes.size() && m_trendHashes[i] == c.hashes[i - c.from];
+        }
+        if (!same) continue;
+        cache.rows.insert(cache.rows.end(), c.rows[k].begin(), c.rows[k].end());
+        any = true;
+    }
+    if (any) drawTrends();
+}
+
+void AnalysisPage::drawTrendSpectra() {
+    const bool first = m_trendSpectra->items().empty();
+    m_trendSpectra->clear();
+    const DataMatrix& d = m_data;
+    if (d.empty()) return;
+    const PlotPalette& pal = m_trendSpectra->plotPalette();
+    const int n = d.rows();
+    const int stride = std::max(1, (n + 39) / 40);         // at most ~40 curves (as the preview, thinner)
+    std::vector<std::pair<int, Vec>> shown;
+    for (int i = 0; i < n; i += stride) shown.emplace_back(i, d.row(i));
+    if (n > 1 && shown.back().first != n - 1) shown.emplace_back(n - 1, d.row(n - 1));   // always the newest
+    for (const auto& [i, y] : shown) {
+        const double t = n > 1 ? double(i) / (n - 1) : 0.0;
+        // grey, oldest faint, newest strong: the coloured bands stand out
+        const QColor c = n > 1 ? colorMapColor(ColorMap::Grey, pal.isDark() ? 0.35 + 0.5 * t : 0.72 - 0.5 * t) : pal.main;
+        auto* cv = m_trendSpectra->addCurve(d.x, y, QPen(c, 1.0));
+        cv->setOpacity(n > 1 ? 0.75 : 1.0);
+    }
+    for (size_t b = 0; b < m_trendBands.size(); ++b) {
+        const TrendBand& tb = m_trendBands[b];
+        auto* r = m_trendSpectra->addRegion(tb.band.lo, tb.band.hi);
+        r->setBrush(faded(tb.color, pal.isDark() ? 70 : 45));
+        r->setEdgePen(QPen(tb.color, 1.4));
+        const int id = tb.id;
+        connect(r, &RegionItem::regionChangeFinished, this, [this, id](double a, double bb) {
+            // later: redrawing deletes this region, which must not happen inside its own signal
+            QTimer::singleShot(0, this, [this, id, a, bb] {
+                for (size_t k = 0; k < m_trendBands.size(); ++k) {
+                    if (m_trendBands[k].id != id) continue;
+                    bandtrend::Band band = m_trendBands[k].band;
+                    const QString oldDefault = bandtrend::defaultName((band.lo + band.hi) / 2);
+                    band.lo = std::min(a, bb);
+                    band.hi = std::max(a, bb);
+                    if (band.name == oldDefault) band.name = bandtrend::defaultName((band.lo + band.hi) / 2);
+                    setTrendBand(int(k), band);
+                }
+            });
+        });
+        // name above the tallest shown point in the band
+        double top = -std::numeric_limits<double>::infinity();
+        for (const auto& sp : shown)
+            for (size_t j = 0; j < d.x.size(); ++j)
+                if (d.x[j] >= tb.band.lo && d.x[j] <= tb.band.hi && std::isfinite(sp.second[j])) top = std::max(top, sp.second[j]);
+        if (std::isfinite(top)) {
+            auto* t = m_trendSpectra->addText(tb.band.name, (tb.band.lo + tb.band.hi) / 2, top, QPointF(0.5, 1.15));
+            t->setColor(tb.color);
+            QFont f = m_trendSpectra->font();
+            f.setBold(true);
+            t->setFont(f);
+        }
+    }
+    if (first) m_trendSpectra->autoRange();
+}
+
+void AnalysisPage::drawTrends() {
+    using namespace bandtrend;
+    m_trendPlot->clear();
+    const int n = m_data.rows();
+    const size_t nb = m_trendBands.size();
+    m_trendSeries.assign(nb, {});
+    m_trendFits.assign(nb, {});
+    // time axis
+    Vec tsec, tplot;
+    QString unit = QStringLiteral("s");
+    double scale = 1;
+    if (m_data.hasTimes && n > 0) {
+        std::tie(unit, scale) = timeUnit(m_data.times.back() - m_data.times.front());
+        tsec = m_data.times;
+        for (double t : tsec) tplot.push_back(t / scale);
+        m_trendPlot->setLabel(Axis::Bottom, QStringLiteral("Time (%1)").arg(unit));
+    } else {
+        for (int i = 0; i < n; ++i) {
+            tsec.push_back(i + 1);
+            tplot.push_back(i + 1);
+        }
+        unit = QStringLiteral("spectra");
+        m_trendPlot->setLabel(Axis::Bottom, QStringLiteral("Spectrum"));
+    }
+    const auto norm = TrendNormalisation(m_trendNorm->currentIndex());
+    const int ref = norm == TrendNormalisation::Ratio ? m_trendRef->currentIndex() : -1;
+    const auto model = Kinetic(m_trendKinetic->currentIndex());
+    const PlotPalette& pal = m_trendPlot->plotPalette();
+    QStringList head{QStringLiteral("Spectrum"), m_data.hasTimes ? QStringLiteral("Time (%1)").arg(unit) : QStringLiteral("Index")};
+    std::vector<Vec> cols{Vec(tplot.begin(), tplot.begin() + std::min<std::ptrdiff_t>(n, std::ptrdiff_t(tplot.size())))};
+    QStringList fitText, notes;
+    std::vector<Quantity> plotted;
+    bool pending = false;
+    for (size_t b = 0; b < nb; ++b) {
+        const TrendBand& tb = m_trendBands[b];
+        static const std::vector<Measure> none;
+        // rows of other settings (a band just edited): nothing until measured again
+        const std::vector<Measure>& rows = m_trendCache[b].key == trendKey(tb.band) ? m_trendCache[b].rows : none;
+        pending = pending || rows.size() < size_t(n);
+        if (int(b) == ref) continue;
+        Series s = extract(rows, tb.band.quantity);
+        if (intensityLike(tb.band.quantity)) {
+            if (ref >= 0 && ref < int(nb)) {
+                const TrendBand& rb = m_trendBands[size_t(ref)];
+                const std::vector<Measure>& rr = m_trendCache[size_t(ref)].key == trendKey(rb.band) ? m_trendCache[size_t(ref)].rows : none;
+                if (intensityLike(rb.band.quantity)) s = ratio(s, extract(rr, rb.band.quantity));
+                else notes << QStringLiteral("the reference band must be a height or an area");
+            } else if (norm == TrendNormalisation::First) {
+                s = relativeToFirst(s);
+            }
+        } else if (norm != TrendNormalisation::None) {
+            notes << QStringLiteral("%1: %2 not normalised").arg(tb.band.name, quantityNames()[int(tb.band.quantity)].toLower());
+        }
+        const size_t len = std::min(s.value.size(), tplot.size());
+        s.value.resize(len);
+        s.error.resize(len, kNaN);
+        const Vec tp(tplot.begin(), tplot.begin() + std::ptrdiff_t(len)), ts(tsec.begin(), tsec.begin() + std::ptrdiff_t(len));
+        KineticFit f = fitKinetic(model, ts, s.value, s.error);
+        QString name = tb.band.name;
+        if (model != Kinetic::None) {
+            if (f.ok) name += QStringLiteral(":  ") + f.summary(unit, scale);
+            fitText << QStringLiteral("<b>%1</b>: %2").arg(tb.band.name.toHtmlEscaped(),
+                                                           f.ok ? f.summary(unit, scale).toHtmlEscaped() : f.message.toHtmlEscaped());
+        }
+        bool hasErr = false;
+        for (double e : s.error) hasErr = hasErr || (std::isfinite(e) && e > 0);
+        if (len > 0) {
+            if (hasErr) m_trendPlot->addErrorBars(tp, s.value, s.error, QPen(faded(tb.color, 170), 1.0));
+            const bool fitted = model != Kinetic::None && f.ok;    // fitted: points + model curve
+            auto* c = m_trendPlot->addCurve(tp, s.value, QPen(fitted ? faded(tb.color, 80) : tb.color, fitted ? 1.0 : 1.6), name);
+            c->setMarker(Marker::Circle, len > 150 ? 3.5 : 5.5, QBrush(tb.color));
+            c->setDecimation(false);
+            if (fitted) {
+                Vec fx, fy;
+                const double a = ts.front(), z = ts.back();
+                for (int k = 0; k <= 240; ++k) {
+                    const double t = a + (z - a) * k / 240.0;
+                    fx.push_back(t / scale);
+                    fy.push_back(f(t));
+                }
+                m_trendPlot->addCurve(fx, fy, QPen(tb.color, 1.8, Qt::DashLine))->setAutoScale(false);
+            }
+        }
+        plotted.push_back(tb.band.quantity);
+        const QString u = quantityUnit(tb.band.quantity);
+        head << (u.isEmpty() ? tb.band.name : QStringLiteral("%1 (%2)").arg(tb.band.name, u));
+        cols.push_back(s.value);
+        if (hasErr) {
+            head << QStringLiteral("± %1").arg(tb.band.name);
+            cols.push_back(s.error);
+        }
+        m_trendSeries[b] = s;
+        m_trendFits[b] = f;
+    }
+    // y axis title
+    QString ylabel = QStringLiteral("Value");
+    bool same = !plotted.empty();
+    for (Quantity q : plotted) same = same && q == plotted.front();
+    const bool normalised = norm != TrendNormalisation::None && same && intensityLike(plotted.front());
+    if (normalised && ref >= 0 && ref < int(nb))
+        ylabel = QStringLiteral("%1 / %2").arg(quantityNames()[int(plotted.front())], m_trendBands[size_t(ref)].band.name);
+    else if (normalised)
+        ylabel = QStringLiteral("%1 (first = 1)").arg(quantityNames()[int(plotted.front())]);
+    else if (same) {
+        const QString u = quantityUnit(plotted.front());
+        ylabel = u.isEmpty() ? quantityNames()[int(plotted.front())] : QStringLiteral("%1 (%2)").arg(quantityNames()[int(plotted.front())], u);
+    }
+    m_trendPlot->setLabel(Axis::Left, ylabel);
+    if (!plotted.empty() && std::all_of(plotted.begin(), plotted.end(), [](Quantity q) { return intensityLike(q); }) &&
+        norm == TrendNormalisation::None)
+        m_trendPlot->addHLine(0, QPen(faded(pal.reference, 120), 1, Qt::DashLine))->setAutoScale(false);
+    std::vector<int> decimals(cols.size(), -1);
+    decimals[0] = !m_data.hasTimes ? 0 : scale >= 3600 ? 3 : scale >= 60 ? 2 : 1;
+    m_trendModel->set(head, QStringList(m_data.names.mid(0, n)), cols, decimals);
+
+    QStringList info;
+    if (m_trendBands.empty())
+        info << QStringLiteral("Add a band: from the peaks of the mean spectrum (Add band) or by right-clicking in the spectra.");
+    else if (n == 0)
+        info << QStringLiteral("No spectra.");
+    if (m_trendBusy || (pending && n > 0))
+        info << QStringLiteral("Fitting peaks in the background…");
+    if (!fitText.isEmpty()) info << fitText.join(QStringLiteral("; "));
+    notes.removeDuplicates();
+    if (!notes.isEmpty()) info << QStringLiteral("Note: ") + notes.join(QStringLiteral("; ")).toHtmlEscaped();
+    m_trendInfo->setText(info.join(QStringLiteral("<br>")));
+    m_trendInfo->setStyleSheet(QString());
+}
+
+bandtrend::Series AnalysisPage::trendSeries(int i) const {
+    return i >= 0 && size_t(i) < m_trendSeries.size() ? m_trendSeries[size_t(i)] : bandtrend::Series{};
+}
+
+bandtrend::KineticFit AnalysisPage::trendFit(int i) const {
+    return i >= 0 && size_t(i) < m_trendFits.size() ? m_trendFits[size_t(i)] : bandtrend::KineticFit{};
+}
+
+void AnalysisPage::fillAddBandMenu() {
+    QMenu* m = m_addBand->menu();
+    m->clear();
+    std::vector<peaks::Peak> pk = trendPeaks();
+    std::sort(pk.begin(), pk.end(), [](const peaks::Peak& a, const peaks::Peak& b) { return a.height > b.height; });
+    if (pk.size() > 16) pk.resize(16);
+    std::sort(pk.begin(), pk.end(), [](const peaks::Peak& a, const peaks::Peak& b) { return a.position < b.position; });
+    if (pk.empty()) m->addAction(QStringLiteral("(no peaks in the mean spectrum)"))->setEnabled(false);
+    for (const peaks::Peak& p : pk)
+        m->addAction(QStringLiteral("%1 cm⁻¹   (FWHM %2)").arg(p.position, 0, 'f', 0).arg(p.fwhm, 0, 'f', 1), this,
+                     [this, p] { addBand(bandtrend::bandAround(p, m_data.x)); });
+    m->addSeparator();
+    m->addAction(QStringLiteral("Right-click in the spectra for a band anywhere"))->setEnabled(false);
+}
+
+void AnalysisPage::trendSpectraMenu(const QPointF& data, const QPoint& globalPos) {
+    QMenu m(this);
+    const double x = data.x();
+    const std::vector<peaks::Peak>& pk = trendPeaks();
+    const peaks::Peak* near = nullptr;
+    for (const peaks::Peak& p : pk)
+        if (!near || std::abs(p.position - x) < std::abs(near->position - x)) near = &p;
+    if (near && std::abs(near->position - x) < 25) {
+        const peaks::Peak p = *near;
+        m.addAction(QStringLiteral("Add band at peak %1 cm⁻¹").arg(p.position, 0, 'f', 0), this,
+                    [this, p] { addBand(bandtrend::bandAround(p, m_data.x)); });
+    }
+    m.addAction(QStringLiteral("Add band here (%1 ± 15 cm⁻¹)").arg(x, 0, 'f', 0), this,
+                [this, x] { addTrendBand(x - 15, x + 15); });
+    for (size_t b = 0; b < m_trendBands.size(); ++b)
+        if (x >= m_trendBands[b].band.lo && x <= m_trendBands[b].band.hi) {
+            const int id = m_trendBands[b].id;
+            m.addAction(QStringLiteral("Remove band %1").arg(m_trendBands[b].band.name), this, [this, id] {
+                for (size_t k = 0; k < m_trendBands.size(); ++k)
+                    if (m_trendBands[k].id == id) {
+                        removeTrendBand(int(k));
+                        return;
+                    }
+            });
+        }
+    m.addSeparator();
+    m.addAction(QStringLiteral("Full view"), m_trendSpectra, &PlotWidget::autoRange);
+    m.exec(globalPos);
+}
+
 // ============================================================================================ export
 PlotWidget* AnalysisPage::plot(const QString& name) const {
     for (const PlotEntry& e : m_plots)
@@ -2039,6 +2868,70 @@ bool AnalysisPage::exportCsv(const QString& kind, const QString& path) {
                          QStringLiteral("residual"), QStringLiteral("background")};
         std::vector<Vec> cols{m_data.x, m_data.row(target), f.fitted, f.residual, f.background};
         return writeCsv(path, c, head, {}, cols, m_error);
+    }
+    if (kind == QLatin1String("trends")) {
+        if (m_trendBands.empty() || m_data.empty()) return none(QStringLiteral("peak trend"));
+        using namespace bandtrend;
+        QStringList c = common;
+        const auto norm = TrendNormalisation(m_trendNorm->currentIndex());
+        c << QStringLiteral("normalisation: %1%2")
+                 .arg(m_trendNorm->currentText())
+                 .arg(norm == TrendNormalisation::Ratio ? QStringLiteral(" (%1)").arg(m_trendRef->currentText()) : QString());
+        QStringList head{QStringLiteral("name"), tcol};
+        std::vector<Vec> cols{m_data.times};
+        if (!m_data.hasTimes) {
+            cols[0].clear();
+            for (int i = 0; i < m_data.rows(); ++i) cols[0].push_back(i + 1);
+        }
+        for (size_t b = 0; b < m_trendBands.size(); ++b) {
+            const Band& band = m_trendBands[b].band;
+            QString def = QStringLiteral("band %1: %2-%3 cm-1, %4, local baseline %5")
+                              .arg(band.name)
+                              .arg(band.lo, 0, 'f', 1)
+                              .arg(band.hi, 0, 'f', 1)
+                              .arg(quantityKey(band.quantity))
+                              .arg(band.localBaseline ? "on" : "off");
+            if (needsFit(band.quantity)) {
+                QStringList g;
+                for (const peaks::Peak& p : band.guesses) g << QString::number(p.position, 'f', 1);
+                def += QStringLiteral(", profile %1, start peaks %2, main %3").arg(band.profile, g.join(' ')).arg(band.main + 1);
+            }
+            c << def;
+            const KineticFit f = trendFit(int(b));
+            if (f.model != Kinetic::None)
+                c << (f.ok ? QStringLiteral("fit %1: %2 (A %3 ± %4, B %5 ± %6, rate %7 ± %8 per s, t0 %9 s)")
+                                 .arg(band.name, f.summary())
+                                 .arg(f.a, 0, 'g', 8).arg(f.aErr, 0, 'g', 3).arg(f.b, 0, 'g', 8).arg(f.bErr, 0, 'g', 3)
+                                 .arg(f.rate, 0, 'g', 8).arg(f.rateErr, 0, 'g', 3).arg(f.t0)
+                           : QStringLiteral("fit %1: %2").arg(band.name, f.message));
+            const Series s = trendSeries(int(b));
+            if (!s.value.empty()) {
+                head << band.name;
+                cols.push_back(s.value);
+                head << band.name + QStringLiteral(" error");
+                cols.push_back(s.error);
+            }
+            // the raw measurements
+            const std::vector<Measure>& rows = m_trendCache[b].rows;
+            std::vector<Quantity> qs{Quantity::Height, Quantity::Area, Quantity::Centroid, Quantity::Fwhm};
+            if (needsFit(band.quantity)) qs.insert(qs.end(), {Quantity::FitArea, Quantity::FitHeight, Quantity::FitPosition, Quantity::FitFwhm});
+            for (Quantity q : qs) {
+                const Series e = extract(rows, q);
+                head << QStringLiteral("%1 %2").arg(band.name, quantityKey(q));
+                cols.push_back(e.value);
+                if (needsFit(q)) {
+                    head << QStringLiteral("%1 %2_err").arg(band.name, quantityKey(q));
+                    cols.push_back(e.error);
+                }
+            }
+            if (needsFit(band.quantity)) {
+                Vec r2;
+                for (const Measure& m : rows) r2.push_back(m.fitR2);
+                head << QStringLiteral("%1 fit_r2").arg(band.name);
+                cols.push_back(r2);
+            }
+        }
+        return writeCsv(path, c, head, m_data.names, cols, m_error);
     }
     m_error = QStringLiteral("unknown export %1").arg(kind);
     return false;

@@ -29,7 +29,8 @@ only), the Measure page redraws at most every 150 ms (cached processing, 4 faded
 in place), the Data/Analysis areas get measured spectra in batches (`SpectrumBatcher`: at most every 1 s / 2 s
 while visible and at most 1/5 of the GUI thread's time, on activation when hidden), the Data area caches
 processed spectra and draws at most 24 curves in the overlay, and the Analysis area runs PCA/EFA of large data
-sets in a background thread. `-DLIBRERAMEN_GUI_PREVIEW=ON` builds `gui_preview`, which renders
+sets in a background thread and measures peak trends incrementally (only new spectra; peak fits of many
+spectra in a background thread). `-DLIBRERAMEN_GUI_PREVIEW=ON` builds `gui_preview`, which renders
 plots, status strip, splash and icon to PNG files for visual checks:
 `QT_QPA_PLATFORM=offscreen ./gui_preview <dir>`; `datapage_preview <dir>` renders the Data area
 (overlay, stacked, difference, fit, heat map), `calibration_preview <dir> [--dark]` the Calibration area
@@ -85,6 +86,7 @@ of the package (no wrapper scripts). Local `.deb` with a Qt not from the distrib
 | `src/core/library.*` | – (C++ only) | spectral library: SQLite file (Qt Sql), schema versioning, import (own spectra, files, RRUFF, band lists), export, demo library |
 | `src/core/match.*` | – (C++ only) | library matching: HQI full-spectrum search, peak matching, NNLS (Lawson–Hanson) mixtures |
 | `src/core/chemometrics.*` | – (C++ only) | Analysis: data matrix, preprocessing, PCA, EFA, OPA, SIMPLISMA, MCR-ALS (constraints, rotational-ambiguity bands), NNLS |
+| `src/core/bandtrend.*` | – (C++ only) | Analysis: peak trends of a series (band height/area/centroid/FWHM, fitted area with errors, ratio, exponential and linear kinetic fits; formulas in the header) |
 | `src/core/computed*.*` | – (new in C++) | computed Raman spectra: readers for Gaussian, ORCA (.out/.hess), NWChem, CP2K, Quantum ESPRESSO, vasp_raman.py, Phonopy-Spectroscopy, CASTEP; activities → cross-sections, scaling fit, broadening, assignment, comparison |
 | `src/cli/` | `__main__.py` | command line (`remote.*`: `--remote` client of the local API) |
 | `src/core/httpserver.*`, `apiclient.*` | – | small HTTP/1.1 server; API file, blocking API client |

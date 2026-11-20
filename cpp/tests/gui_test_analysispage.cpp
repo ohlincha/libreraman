@@ -239,6 +239,91 @@ private slots:
                  qPrintable(QString("%1 %2 %3").arg(c[0]).arg(c[1]).arg(c[2])));
     }
 
+    void peakTrends() {
+        using namespace lr::bandtrend;
+        AnalysisPage page;
+        page.resize(1400, 900);
+        page.show();
+        auto all = series(36);
+        page.setSpectra(std::vector<fileio::DataSpectrum>(all.begin(), all.begin() + 30));
+        chemo::Preprocess p;
+        p.baseline = "snip";
+        page.setPreprocess(p);
+        page.showMethod(AnalysisPage::Method::Trends);
+        QCOMPARE(page.currentMethod(), AnalysisPage::Method::Trends);
+        QVERIFY(!page.trendPeaks().empty());
+        // A (460 cm⁻¹) decays as exp(-0.012 t); C (1700 cm⁻¹) grows
+        const int a = page.addTrendBandAtPeak(462);
+        QCOMPARE(a, 0);
+        QVERIFY(std::abs((page.trendBand(a).lo + page.trendBand(a).hi) / 2 - 460) < 3);
+        QCOMPARE(page.trendBand(a).name, QString("460 cm⁻¹"));
+        QCOMPARE(page.addTrendBandAtPeak(5000), -1);
+        const int c = page.addTrendBand(1670, 1730);
+        QCOMPARE(page.trendBand(c).name, QString("1700 cm⁻¹"));
+        QCOMPARE(page.trendBandCount(), 2);
+        page.runTrends(true);
+        Series sa = page.trendSeries(a), sc = page.trendSeries(c);
+        QCOMPARE(int(sa.value.size()), 30);
+        QVERIFY(sa.value[0] > 10 * sa.value[29] && sa.value[0] > 500);
+        QVERIFY(sc.value[29] > 5 * std::max(sc.value[0], 1.0));
+        // exponential fit of the decay: τ = 1/0.012 s
+        page.setTrendKinetics(Kinetic::Exponential);
+        KineticFit f = page.trendFit(a);
+        QVERIFY2(f.ok && std::abs(f.tau / (1 / 0.012) - 1) < 0.05, qPrintable(f.summary()));
+        // fitted areas: 30 fits > kAsyncFits, in the background
+        page.setTrendQuantity(a, Quantity::FitArea);
+        QSignalSpy done(&page, &AnalysisPage::trendsFinished);
+        page.runTrends(false);
+        QVERIFY(page.trendsRunning());
+        QVERIFY(done.wait(60000));
+        QVERIFY(!page.trendsRunning());
+        sa = page.trendSeries(a);
+        QCOMPARE(int(sa.value.size()), 30);
+        for (size_t i = 0; i < 10; ++i) QVERIFY(std::isfinite(sa.value[i]) && sa.error[i] > 0 && sa.error[i] < 0.1 * sa.value[i]);
+        f = page.trendFit(a);
+        QVERIFY2(f.ok && std::abs(f.tau / (1 / 0.012) - 1) < 0.05, qPrintable(f.summary()));
+        // a growing series: the new spectra are added, the old values are kept
+        const Vec before = sa.value;
+        page.addSpectra(std::vector<fileio::DataSpectrum>(all.begin() + 30, all.end()));
+        page.runTrends(true);
+        sa = page.trendSeries(a);
+        QCOMPARE(int(sa.value.size()), 36);
+        for (size_t i = 0; i < 30; ++i) QCOMPARE(sa.value[i], before[i]);
+        // ratio to C, relative to the first spectrum
+        page.setTrendQuantity(a, Quantity::Height);
+        page.runTrends(true);
+        page.setTrendNormalisation(AnalysisPage::TrendNormalisation::Ratio, c);
+        QVERIFY(page.trendSeries(c).value.empty());
+        const Series r = page.trendSeries(a);
+        QCOMPARE(int(r.value.size()), 36);
+        QVERIFY(r.value[0] > 100 * r.value[35]);
+        page.setTrendNormalisation(AnalysisPage::TrendNormalisation::First);
+        QCOMPARE(page.trendSeries(a).value[0], 1.0);
+        page.setTrendNormalisation(AnalysisPage::TrendNormalisation::None);
+        page.setTrendKinetics(Kinetic::Linear);
+        QVERIFY(page.trendFit(c).ok);
+        // export
+        QTemporaryDir dir;
+        QVERIFY2(page.exportCsv("trends", dir.filePath("trends.csv")), qPrintable(page.lastError()));
+        QFile in(dir.filePath("trends.csv"));
+        QVERIFY(in.open(QIODevice::ReadOnly | QIODevice::Text));
+        const QString csv = QString::fromUtf8(in.readAll());
+        QVERIFY(csv.contains("band 460 cm⁻¹: ") && csv.contains("1700 cm⁻¹ height") && csv.contains("fit 1700 cm⁻¹"));
+        int data = 0;
+        for (const QString& line : csv.split('\n', Qt::SkipEmptyParts)) data += line.startsWith('#') ? 0 : 1;
+        QCOMPARE(data, 1 + 36);                       // column names + one line per spectrum
+        for (const QString name : {"trends", "trends-spectra"}) {
+            QVERIFY(page.exportPlot(name, dir.filePath(name + ".png")));
+            QVERIFY(QFileInfo(dir.filePath(name + ".png")).size() > 1000);
+        }
+        QVERIFY(page.exportPlot("trends", dir.filePath("trends.svg")));
+        page.removeTrendBand(c);
+        QCOMPARE(page.trendBandCount(), 1);
+        page.clearSpectra();
+        page.runTrends(true);
+        QVERIFY(page.trendSeries(a).value.empty());
+    }
+
     void preview() {
         const QString out = qEnvironmentVariable("LIBRERAMEN_PREVIEW_DIR");
         if (out.isEmpty()) QSKIP("set LIBRERAMEN_PREVIEW_DIR to render analysis-*.png");
@@ -298,6 +383,14 @@ private slots:
             page.runMcr(true);
             page.computeAmbiguity(true);
             shot("mcr");
+            // peak trends: ethanol (884, decays; fitted area), chloroform (667, intermediate), CCl4 (459, grows)
+            page.showMethod(AnalysisPage::Method::Trends);
+            for (double pos : {884.0, 667.0, 459.0})
+                QVERIFY2(page.addTrendBandAtPeak(pos) >= 0, qPrintable(QString::number(pos)));
+            for (int b = 0; b < 3; ++b) page.setTrendQuantity(b, bandtrend::Quantity::FitArea);
+            page.setTrendKinetics(bandtrend::Kinetic::Exponential);
+            page.runTrends(true);
+            shot("trends");
             if (dark) continue;
             page.showMethod(AnalysisPage::Method::Pca);
             shot("pca");

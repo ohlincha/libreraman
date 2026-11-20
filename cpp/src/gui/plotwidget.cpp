@@ -573,6 +573,63 @@ void Curve::paintLegendSymbol(QPainter& p, const QRectF& r) const {
     }
 }
 
+// ============================================================================================ ErrorBars
+void ErrorBars::setData(Vec x, Vec y, Vec err) {
+    m_x = std::move(x);
+    m_y = std::move(y);
+    m_err = std::move(err);
+    changed(true);
+}
+
+void ErrorBars::setPen(const QPen& pen) {
+    m_pen = pen;
+    m_hasPen = true;
+    changed();
+}
+
+void ErrorBars::setCapWidth(double px) {
+    m_cap = std::max(0.0, px);
+    changed();
+}
+
+Bounds ErrorBars::xBounds() const {
+    Bounds b;
+    for (std::size_t i = 0; i < size(); ++i)
+        if (finite(m_y[i]) && finite(m_err[i]) && m_err[i] > 0)
+            b.add(m_x[i]);
+    return b;
+}
+
+Bounds ErrorBars::yBounds(double x0, double x1) const {
+    Bounds b;
+    for (std::size_t i = 0; i < size(); ++i)
+        if (m_x[i] >= x0 && m_x[i] <= x1 && finite(m_y[i]) && finite(m_err[i]) && m_err[i] > 0) {
+            b.add(m_y[i] - m_err[i]);
+            b.add(m_y[i] + m_err[i]);
+        }
+    return b;
+}
+
+void ErrorBars::paint(QPainter& p, const PlotTransform& t) {
+    const PlotWidget* pw = plot();
+    QPen pen = m_hasPen ? m_pen : QPen(pw ? pw->plotPalette().main : QColor(Qt::black), 1.0);
+    pen.setCapStyle(Qt::FlatCap);
+    p.setPen(pen);
+    p.setBrush(Qt::NoBrush);
+    const double half = m_cap / 2;
+    for (std::size_t i = 0; i < size(); ++i) {
+        const double x = m_x[i], y = m_y[i], e = m_err[i];
+        if (!finite(x) || !finite(y) || !finite(e) || e <= 0 || x < t.x.lo || x > t.x.hi)
+            continue;
+        const double px = t.px(x), lo = clampPx(t.py(y - e)), hi = clampPx(t.py(y + e));
+        p.drawLine(QPointF(px, lo), QPointF(px, hi));
+        if (half > 0) {
+            p.drawLine(QPointF(px - half, lo), QPointF(px + half, lo));
+            p.drawLine(QPointF(px - half, hi), QPointF(px + half, hi));
+        }
+    }
+}
+
 // ============================================================================================ TextItem
 void TextItem::setText(const QString& text) {
     m_text = text;
@@ -1106,6 +1163,14 @@ Curve* PlotWidget::addScatter(Vec x, Vec y, const QColor& color, double size, Ma
     c->setMarker(m, size, QBrush(color));
     c->setData(std::move(x), std::move(y));
     return c;
+}
+
+ErrorBars* PlotWidget::addErrorBars(Vec x, Vec y, Vec err, const QPen& pen) {
+    auto* e = new ErrorBars(this);
+    if (pen.style() != Qt::NoPen && pen != QPen())
+        e->setPen(pen);
+    e->setData(std::move(x), std::move(y), std::move(err));
+    return e;
 }
 
 TextItem* PlotWidget::addText(const QString& text, double x, double y, const QPointF& anchor) {
