@@ -5,7 +5,7 @@ from libreramen.__main__ import main
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    if args and sys.platform == "win32":          # windowed exe used from a console: attach so output shows
+    if args and sys.platform == "win32" and sys.stdout is None:   # windowed exe used from a console
         import ctypes
         import os
         import tempfile
