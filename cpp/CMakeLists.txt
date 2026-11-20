@@ -102,3 +102,6 @@ if(LIBRERAMEN_TESTS)
     endforeach()
   endif()
 endif()
+
+# ---- installation, platform resources and packages
+include(cmake/Install.cmake)

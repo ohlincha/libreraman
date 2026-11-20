@@ -1,0 +1,62 @@
+name: USB driver installer (wdi-simple)
+# Reusable workflow, called by build.yml for both Windows installers (Python and C++). Produces the
+# artifact "wdi-simple": wdi-simple.exe (x64) and LIBWDI-LICENSE.txt, i.e. the installers' dist\drivers.
+# wdi-simple comes from libwdi (the library behind Zadig), built like libwdi's own CI, with WinUSB only.
+# The result is cached: it only changes with LIBWDI_REF or CACHE_REV.
+on:
+  workflow_call:
+  workflow_dispatch:
+
+env:
+  LIBWDI_REF: v1.5.1
+  CACHE_REV: "1"            # bump to force a rebuild
+
+jobs:
+  wdi:
+    # windows-2022: libwdi's projects need the VS 2022 (v143) toolsets incl. ARM64.
+    runs-on: windows-2022
+    steps:
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: out
+          key: wdi-simple-${{ env.LIBWDI_REF }}-winusb-${{ env.CACHE_REV }}
+      - uses: actions/checkout@v4
+        if: steps.cache.outputs.cache-hit != 'true'
+        with: { repository: pbatard/libwdi, ref: "${{ env.LIBWDI_REF }}", path: libwdi }
+      - name: libwdi support files (WDK 8.0 redistributables with WinUSB); WinUSB only
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        working-directory: libwdi
+        run: |
+          curl.exe -sSL "https://go.microsoft.com/fwlink/p/?LinkID=253170" -o wdk-redist.msi
+          Start-Process msiexec -ArgumentList "/a wdk-redist.msi /qn TARGETDIR=$PWD\wdk" -Wait
+          # Only WinUSB is needed: drop the libusb0/libusbK defaults from the MSVC config (embedder_files.h
+          # and libwdi.c only embed those drivers when LIBUSB0_DIR/LIBUSBK_DIR are defined).
+          $c = Get-Content -Raw msvc\config.h
+          $c = $c -replace '(?s)#ifndef LIBUSB0_DIR.*?#endif', '' -replace '(?s)#ifndef LIBUSBK_DIR.*?#endif', ''
+          Set-Content msvc\config.h $c
+          Select-String -Path msvc\config.h -Pattern 'LIBUSB' | ForEach-Object { $_.Line }
+      - uses: microsoft/setup-msbuild@v2
+        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Build wdi-simple (Win32 first, as libwdi's CI does, then x64)
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: cmd
+        working-directory: libwdi
+        run: |
+          for %%P in (Win32 x64) do (
+            msbuild libwdi.sln /m /p:Configuration=Release,Platform=%%P,BuildMacros="WDK_DIR=\"../wdk/Windows Kits/8.0\"" || exit /b 1
+          )
+      - name: Collect wdi-simple.exe and its licence notice
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force out | Out-Null
+          Copy-Item libwdi\x64\Release\examples\wdi-simple.exe out\
+          $notice = "wdi-simple.exe is built from libwdi $env:LIBWDI_REF (https://github.com/pbatard/libwdi, " +
+                    "source: https://github.com/pbatard/libwdi/tree/$env:LIBWDI_REF), (c) Pete Batard and contributors, " +
+                    "licensed under the GNU LGPL v3 or later (text below, followed by the GPL v3 it refers to).`r`n`r`n"
+          $notice + (Get-Content -Raw libwdi\COPYING-LGPL) + "`r`n`r`n" + (Get-Content -Raw libwdi\COPYING) |
+            Set-Content -Encoding utf8 out\LIBWDI-LICENSE.txt
+      - uses: actions/upload-artifact@v4
+        with: { name: wdi-simple, path: out, if-no-files-found: error }

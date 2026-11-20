@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Name=LibreRamen
+GenericName=Raman Spectrometer
+Comment=Measure, calibrate and compare Raman spectra (Anton Paar Cora 5000 and simulator)
+Exec=LibreRamen
+Icon=io.github.ohlincha.libreramen
+Terminal=false
+Categories=Science;Chemistry;Physics;
+Keywords=Raman;spectroscopy;spectrometer;spectrum;Cora;BaySpec;
+StartupWMClass=LibreRamen
+Actions=Simulator;
+
+[Desktop Action Simulator]
+Name=LibreRamen (simulator)
+Exec=LibreRamen --sim

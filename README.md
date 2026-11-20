@@ -15,18 +15,30 @@ tools, not the finished program.
 
 ![LibreRamen measuring a time series (simulator, ZnS)](docs/screenshot-measure.png)
 
-```
-python3 -m venv --system-site-packages .venv          # Debian/Ubuntu: don't pip into the system Python
-.venv/bin/pip install PySide6 pyqtgraph numpy scipy pyserial pyusb
-.venv/bin/python -m libreramen gui          # with the instrument
-.venv/bin/python -m libreramen gui --sim    # simulator: spectra recorded on a real Cora 5000
-```
-(Installers that need none of this are planned.)
+## Install
+
+Installers of the **C++ version** (Qt 6, recommended) are attached to each
+[release](https://github.com/ohlincha/libreramen/releases) (and to every CI run of *Build installers*):
+
+| System | File | Notes |
+|---|---|---|
+| Windows 10 (1809+)/11, x64 | `LibreRamen-<version>-Windows-x64-Setup.exe` | also installs the USB drivers, see below |
+| macOS 12+ (Apple Silicon and Intel) | `LibreRamen-<version>-macOS-universal.dmg` | drag LibreRamen to Applications |
+| Ubuntu 24.04+, Debian 13+ | `libreramen_<version>_amd64.deb` | `sudo apt install ./libreramen_<version>_amd64.deb` |
+| other Linux (Debian 12, Ubuntu 22.04, Fedora, …) | `LibreRamen-<version>-Linux-x86_64.AppImage` | `chmod +x` and run; udev rule see below |
+
+The older **Python version** is still built as well: `LibreRamen-Setup-<version>.exe`, `LibreRamen-Windows.zip`,
+`LibreRamenCLI-Windows.zip` (Windows) and `LibreRamen-macOS-Intel.dmg`. Both Windows installers install into the
+same place; installing one replaces the other.
+
+Every package contains the program `LibreRamen` and the command line `LibreRamenCLI`
+(Windows: both in the installation folder; macOS: `LibreRamen.app/Contents/MacOS/LibreRamenCLI`;
+Linux: `/usr/bin`). `LibreRamen --sim` starts with the simulator instead of the instrument.
 
 ### Windows
 
-Run `LibreRamen-Setup-<version>.exe` (from the CI artifacts / releases) and accept the administrator
-prompt: it also installs the USB drivers. The instrument's USB devices need Microsoft's generic WinUSB
+Run `LibreRamen-<version>-Windows-x64-Setup.exe` (C++) or `LibreRamen-Setup-<version>.exe` (Python) and accept
+the administrator prompt: it also installs the USB drivers. The instrument's USB devices need Microsoft's generic WinUSB
 driver; the installer binds it with [libwdi](https://github.com/pbatard/libwdi)'s `wdi-simple`
 (the library behind Zadig), so nothing has to be downloaded separately:
 
@@ -40,6 +52,32 @@ If the instrument was not connected during installation, or Windows Update later
 back, use **Instrument → Repair USB drivers…** (or *Start menu → LibreRamen → Repair USB drivers*).
 A log is kept in `%ProgramData%\LibreRamen\drivers.log`. After this, the vendor software no longer
 works on that PC.
+
+### macOS
+
+The app is not notarised (no paid Apple developer account), so macOS refuses the first start: open
+*System Settings → Privacy & Security* and click **Open Anyway** (macOS 15), or right-click the app → **Open**
+(macOS 12–14). Alternatively: `xattr -dr com.apple.quarantine /Applications/LibreRamen.app`. LibreRamen uses macOS's own
+USB and serial drivers; nothing else is installed.
+
+### Linux
+
+The `.deb` installs a udev rule (`/usr/lib/udev/rules.d/70-libreramen.rules`) that gives the logged-in user
+access to the spectrometers and the ARM button; the I/O board's serial port needs membership in the `dialout`
+group (`sudo usermod -aG dialout $USER`, then log in again). With the AppImage, install the rule yourself:
+`sudo cp 70-cora.rules /etc/udev/rules.d/ && sudo udevadm control --reload && sudo udevadm trigger`.
+The AppImage's command line program is in the image: `./LibreRamen-*.AppImage --appimage-extract`, then
+`squashfs-root/usr/bin/LibreRamenCLI`.
+
+### From source (Python version)
+
+```
+python3 -m venv --system-site-packages .venv          # Debian/Ubuntu: don't pip into the system Python
+.venv/bin/pip install PySide6 pyqtgraph numpy scipy pyserial pyusb
+.venv/bin/python -m libreramen gui          # with the instrument
+.venv/bin/python -m libreramen gui --sim    # simulator: spectra recorded on a real Cora 5000
+```
+The C++ version is built with CMake, see [cpp/README.md](cpp/README.md).
 
 The full feature plan is in [docs/SPECIFICATION.md](docs/SPECIFICATION.md).
 

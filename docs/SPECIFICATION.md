@@ -183,8 +183,9 @@ top and can be changed later for a whole series.
 - Windows 10 (1809+)/11: installer including the WinUSB driver for the spectrometers (warns that
   the vendor software then can't use them on that PC; offers undo). Note: the Prolific chip may
   need an older driver version.
-- macOS 12+ (Intel and Apple Silicon): `.dmg` with libusb bundled.
-- Debian 12/13, Ubuntu 22.04/24.04: `.deb` with udev rule and desktop entry.
+- macOS 12+ (Intel and Apple Silicon): `.dmg` (universal) with libusb and hidapi bundled.
+- Debian 12/13, Ubuntu 22.04/24.04: `.deb` with udev rule and desktop entry (Ubuntu 24.04+/Debian 13+;
+  built against the distribution's Qt), AppImage for older and other distributions.
 - Built automatically on GitHub for each release. Signing optional (later).
 - Test machines: Linux PC at the instrument (primary), Windows 11 laptop, macOS 12 laptop.
   The old Windows 10 1511 PC keeps the vendor software (Qt 6 doesn't support 1511).

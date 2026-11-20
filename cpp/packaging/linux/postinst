@@ -1,0 +1,9 @@
+#!/bin/sh
+# LibreRamen .deb: make the new udev rule effective for devices that are already connected.
+set -e
+if [ "$1" = "configure" ] && command -v udevadm >/dev/null 2>&1 && [ -d /run/udev ]; then
+    udevadm control --reload-rules || true
+    udevadm trigger --action=change --attr-match=idVendor=ba8c --subsystem-match=usb || true
+    udevadm trigger --action=change --subsystem-match=hidraw || true
+fi
+exit 0

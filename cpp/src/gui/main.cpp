@@ -110,6 +110,7 @@ int main(int argc, char** argv) {
     QApplication::setApplicationName(QStringLiteral("LibreRamen"));
     QApplication::setOrganizationName(QStringLiteral("LibreRamen"));
     QApplication::setApplicationVersion(QStringLiteral(LIBRERAMEN_VERSION));
+    QGuiApplication::setDesktopFileName(QStringLiteral("io.github.ohlincha.libreramen"));   // Wayland app id
     QApplication::setWindowIcon(appIcon());
     const QStringList args = app.arguments().mid(1);
     theme::apply(app, args.contains(QStringLiteral("--dark"))    ? theme::Mode::Dark
