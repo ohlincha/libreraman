@@ -1,0 +1,5 @@
+# Cora 5000 Raman: user access to the MCP2200 HID interface and the BaySpec spectrometers.
+# Install: sudo cp 70-cora.rules /etc/udev/rules.d/ && sudo udevadm control --reload && sudo udevadm trigger
+# (The serial ports are already accessible to the 'dialout' group.)
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="00df", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTR{idVendor}=="ba8c", ATTR{idProduct}=="1688", MODE="0660", GROUP="plugdev", TAG+="uaccess"

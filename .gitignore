@@ -1,0 +1,8 @@
+# Raw USB captures contain keystrokes; vendor software is proprietary. Never commit these.
+captures/
+*.pcap
+*.pcapng
+*.spc
+# measurement output
+*.csv
+__pycache__/
