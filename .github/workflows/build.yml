@@ -361,7 +361,7 @@ jobs:
         env: { APPIMAGE_EXTRACT_AND_RUN: "1" }
         run: |
           apt-get update -qq
-          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq libgl1 libegl1 libfontconfig1 libfreetype6 \
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq libgl1 libopengl0 libegl1 libfontconfig1 libfreetype6 \
             libx11-6 libx11-xcb1 libxcb1 libxkbcommon0 libglib2.0-0 libdbus-1-3 xvfb xauth
           app=$(ls appimage/*.AppImage)
           chmod +x "$app"
