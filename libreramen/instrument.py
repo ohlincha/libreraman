@@ -80,6 +80,11 @@ class Cora:
         if not self.io:
             raise CoraError("Cora not found (I/O board). Is the USB cable connected and the instrument on "
                             "(On pressed, screen ready)?")
+        self.io_port = port
+        try:                               # safety: whatever happened before, start with the 532 nm laser off
+            self.io.set_line("09", True, _allow_laser=True)
+        except Exception:  # noqa: BLE001
+            pass
         t = open_mcp2200()
         if not t:
             raise CoraError("MCP2200 (ARM status) not found")
@@ -92,6 +97,14 @@ class Cora:
         self.load_user_calibration()
         self.log(f"Connected: I/O board {port}, ARM status {hid}, spectrometers {sorted(self.spec)}")
         return self
+
+    def keepalive(self):
+        """Like the vendor software's regular VOL query; skipped while a measurement holds the instrument."""
+        if self.io and self.lock.acquire(blocking=False):
+            try:
+                self.io.vol()
+            finally:
+                self.lock.release()
 
     def status(self):
         st = self.arm.state()

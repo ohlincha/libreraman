@@ -37,6 +37,8 @@ class Controller(QObject):
         self.timer.timeout.connect(self.poll)
         self.timer.start(500)
         self.series_settings = None
+        self.watchdog = None
+        self._ka = 0
 
     # ------------------------------------------------------------------ helpers
     def _run(self, fn, *args):
@@ -69,11 +71,35 @@ class Controller(QObject):
         if self.inst is not None and self.connection == "connected":
             try:
                 st.update(self.inst.status())
+                self._ping(st.get("laser_on"))
+                self._ka += 1
+                if self._ka % 4 == 0:
+                    self.inst.keepalive()
             except Exception as e:  # noqa: BLE001
                 self.connection = "lost"
                 st["connection"] = "lost"
                 self._log(f"Connection lost: {e}")
         self.status.emit(st)
+
+    def _ping(self, laser_on):
+        if self.watchdog is None:
+            return
+        try:
+            self.watchdog.stdin.write(f"ping {'on' if laser_on else 'off'}\n")
+            if self.inst is not None and getattr(self.inst, "driver", None) is not None:
+                self.watchdog.stdin.write(f"driver {self.inst.driver.s.port}\n")
+        except (OSError, ValueError):
+            self.watchdog = None
+
+    def _start_watchdog(self):
+        if self.simulated or not getattr(self.inst, "io_port", None):
+            return
+        try:
+            from ..watchdog import start
+            self.watchdog = start(self.inst.io_port)
+            self._log("Laser watchdog running")
+        except Exception as e:  # noqa: BLE001
+            self._log(f"Could not start the laser watchdog: {e}")
 
     @property
     def is_busy(self):
@@ -106,6 +132,7 @@ class Controller(QObject):
                     inst.spec[532].init()
             self.init_progress.emit(1.0)
             self.connection = "connected"
+            self._start_watchdog()
             serial = "SIMULATOR" if simulate else inst.spec[532].serial()
             self.connected.emit({"model": "Cora 5000", "serial": serial, "simulated": simulate,
                                  "calibration": ", ".join(f"{ch} nm: {c['date']}" for ch, c in inst.user_cal.items())
@@ -242,6 +269,12 @@ class Controller(QObject):
 
     def shutdown(self, power_down=False):
         self.stop()
+        if self.watchdog is not None:
+            try:
+                self.watchdog.stdin.write("quit\n")
+                self.watchdog.stdin.close()
+            except (OSError, ValueError):
+                pass
         if self.inst is not None:
             try:
                 self.inst.close(power_down=power_down)

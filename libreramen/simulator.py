@@ -66,6 +66,11 @@ class SimCora(Cora):
     def close_compartment(self):
         self.compartment_open = False
 
+    io_port = None
+
+    def keepalive(self):
+        pass
+
     def laser_settle_s(self):
         return 1.0 / self.speed
 
