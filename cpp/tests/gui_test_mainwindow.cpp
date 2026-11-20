@@ -146,7 +146,7 @@ void GuiTestMainWindow::connectSimulator() {
     QTRY_VERIFY(m_win->simulatorBar()->isVisible());
     QTRY_COMPARE(m_win->statusStrip()->instrumentTile()->mainText(), QStringLiteral("● SIMULATOR"));
     QCOMPARE(m_win->statusStrip()->channelTile()->mainText(), QStringLiteral("532 nm"));
-    QVERIFY(m_win->measurePage()->measureButton()->isEnabled());
+    QTRY_VERIFY(m_win->measurePage()->measureButton()->isEnabled());
     QVERIFY(log().contains(QStringLiteral("Instrument ready: Cora 5000 S/N SIMULATOR")));
     // the simulator bar's sample is applied to the simulator
     m_win->simulatorSample()->setCurrentText(QStringLiteral("carbon tetrachloride"));
@@ -191,7 +191,7 @@ void GuiTestMainWindow::measureOnce() {
     // shown: spectrum, peaks (CCl4: 459 cm-1 is the tallest band, followed by the trend)
     QCOMPARE(int(m->history().size()), 1);
     QVERIFY(!m->lastPeaks().empty());
-    QVERIFY(std::abs(m->bandBox()->value() - 459) <= 3);
+    QTRY_VERIFY(std::abs(m->bandBox()->value() - 459) <= 3);
     QCOMPARE(int(m->trend().size()), 1);
     // ... and passed to the other pages (Data page hook)
     QCOMPARE(g_recorder->names.size(), 1);
