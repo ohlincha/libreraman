@@ -18,6 +18,11 @@ cmake --build build && ctest --test-dir build --output-on-failure
 macOS: `brew install qt libusb hidapi eigen`. Windows: Qt from the online installer or aqtinstall,
 `vcpkg install libusb hidapi eigen3`.
 
+Widget tests are `tests/gui_test_*.cpp` (linked with the `libreramen_gui` object library = `src/gui`
+without `main.cpp`; run offscreen). `-DLIBRERAMEN_GUI_PREVIEW=ON` builds `gui_preview`, which renders
+plots, status strip, splash and icon to PNG files for visual checks:
+`QT_QPA_PLATFORM=offscreen ./gui_preview <dir>`.
+
 Development machine without root: `source ~/opt/libreramen-env.sh` and add `$LR_CMAKE_ARGS` to the
 cmake configure line (Qt from aqtinstall, -dev packages extracted with `dpkg -x`).
 

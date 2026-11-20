@@ -47,14 +47,26 @@ target_link_libraries(libreramen-cli PRIVATE libreramen_core)
 set_target_properties(libreramen-cli PROPERTIES OUTPUT_NAME LibreRamenCLI)
 
 # ---- GUI
+# src/gui (without main.cpp) is an OBJECT library so that the application and the widget tests
+# (tests/gui_test_*.cpp) share the compiled widgets and the gui.qrc resources (no Q_INIT_RESOURCE needed).
 if(LIBRERAMEN_GUI)
   file(GLOB_RECURSE GUI_SOURCES CONFIGURE_DEPENDS src/gui/*.cpp src/gui/*.h src/gui/*.ui)
-  add_executable(libreramen WIN32 MACOSX_BUNDLE ${GUI_SOURCES} resources/gui.qrc)
-  target_link_libraries(libreramen PRIVATE libreramen_core Qt6::Gui Qt6::Widgets Qt6::Svg)
+  list(FILTER GUI_SOURCES EXCLUDE REGEX "/src/gui/main\\.cpp$")
+  add_library(libreramen_gui OBJECT ${GUI_SOURCES} resources/gui.qrc)
+  target_link_libraries(libreramen_gui PUBLIC libreramen_core Qt6::Gui Qt6::Widgets Qt6::Svg)
+  add_executable(libreramen WIN32 MACOSX_BUNDLE src/gui/main.cpp)
+  target_link_libraries(libreramen PRIVATE libreramen_gui)
   set_target_properties(libreramen PROPERTIES OUTPUT_NAME LibreRamen
     MACOSX_BUNDLE_GUI_IDENTIFIER io.github.ohlincha.libreramen
     MACOSX_BUNDLE_BUNDLE_NAME LibreRamen
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION})
+
+  # tools/gui_preview renders the widgets to PNG files (for looking at them); not built by default
+  option(LIBRERAMEN_GUI_PREVIEW "Build tools/gui_preview" OFF)
+  if(LIBRERAMEN_GUI_PREVIEW)
+    add_executable(gui_preview tools/gui_preview.cpp)
+    target_link_libraries(gui_preview PRIVATE libreramen_gui)
+  endif()
 endif()
 
 # ---- tests
@@ -70,4 +82,14 @@ if(LIBRERAMEN_TESTS)
     add_test(NAME ${name} COMMAND ${name})
     set_tests_properties(${name} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
   endforeach()
+  if(LIBRERAMEN_GUI)                       # widget tests: also link the GUI object library
+    file(GLOB GUI_TEST_SOURCES CONFIGURE_DEPENDS tests/gui_test_*.cpp)
+    foreach(src ${GUI_TEST_SOURCES})
+      get_filename_component(name ${src} NAME_WE)
+      add_executable(${name} ${src})
+      target_link_libraries(${name} PRIVATE libreramen_gui Qt6::Test)
+      add_test(NAME ${name} COMMAND ${name})
+      set_tests_properties(${name} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endforeach()
+  endif()
 endif()
