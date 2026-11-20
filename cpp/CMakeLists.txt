@@ -17,7 +17,7 @@ set(CMAKE_AUTORCC ON)
 option(LIBRERAMEN_GUI "Build the Qt Widgets application" ON)
 option(LIBRERAMEN_TESTS "Build the unit tests" ON)
 
-find_package(Qt6 6.2 REQUIRED COMPONENTS Core SerialPort Network)
+find_package(Qt6 6.2 REQUIRED COMPONENTS Core SerialPort Network Sql)
 if(LIBRERAMEN_GUI)
   find_package(Qt6 REQUIRED COMPONENTS Gui Widgets Svg)
 endif()
@@ -37,7 +37,7 @@ endif()
 file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS src/core/*.cpp src/core/*.h)
 add_library(libreramen_core STATIC ${CORE_SOURCES} resources/core.qrc)
 target_include_directories(libreramen_core PUBLIC src)
-target_link_libraries(libreramen_core PUBLIC Qt6::Core Qt6::SerialPort Qt6::Network Eigen3::Eigen
+target_link_libraries(libreramen_core PUBLIC Qt6::Core Qt6::SerialPort Qt6::Network Qt6::Sql Eigen3::Eigen
                       LibreRamen::libusb LibreRamen::hidapi)
 if(WIN32)
   target_link_libraries(libreramen_core PUBLIC setupapi shell32)
