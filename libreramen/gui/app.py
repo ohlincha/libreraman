@@ -630,7 +630,10 @@ class MainWindow(QMainWindow):
 
         self.logview = QPlainTextEdit(readOnly=True)
         self.logview.setMaximumHeight(70)
-        self.logview.setStyleSheet("font-family: monospace; font-size: 9pt;")
+        from PySide6.QtGui import QFontDatabase
+        mono = QFontDatabase.systemFont(QFontDatabase.FixedFont)
+        mono.setPointSize(9)
+        self.logview.setFont(mono)
         outer.addWidget(self.logview)
         self.setCentralWidget(central)
         self.show_area(0)
