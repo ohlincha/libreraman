@@ -110,12 +110,16 @@ The probe found everything, identified by sitting behind the 0424:2517 hub. MCP2
 
 ## Linux: laser and first spectrum (2026-11-20, 10:39)
 
-- **Arming is done by software:** the MCP2200 pulse (all outputs low, then high ~100 ms later) arms the laser,
-  and the instrument's red ARM light comes on; the next pulse disarms it and the light goes off (seen 2026-11-20 11:33).
-  It looks like a toggle with no read-back, so software must track the state: arm right before a measurement,
-  disarm right after, as the vendor software does. No button press is needed.
-- MCP2200 GPIO bit 0: meaning unclear (maybe the compartment interlock: it was 1 during the first test, which
-  gave no light, and went to 1 for 9 s in the vendor capture at 09:43; it didn't change in a 30 s watch later).
+- **Arming (verified 2026-11-20 ~11:45):** MCP2200 GPIO (READ_ALL byte 10):
+  - **bit 7 = compartment switch** (0 while open);
+  - **bit 0 = armed** (0 = armed). Pressing the instrument's **ARM button** sets it to 0 (only with the compartment
+    closed). **Opening the compartment clears it** (→ 1), and it stays 1 until ARM is pressed again.
+  - The MCP2200 pulse (outputs low then high) does NOT arm (no change in bit 0, no light); its purpose is unknown.
+    Keep sending it as the vendor software does.
+  - The **red light = laser emitting** (on with `IO L 09` while armed), not "armed".
+  - Without arming, `IO L 09` produces no light (first test, 10:29).
+  So the software can't arm by itself: a person at the instrument must press ARM after each sample change.
+  Software should read bits 0 and 7 and show armed / compartment state.
 - The physical interlock cuts the laser when the compartment is open (per the user).
 - The vendor initialisation must be completed before the 532 nm laser emits. The full line state after
   vendor init is: TECE; IO H 01, H 00, L 0a, H 0e, L 0c, L 0d, H 0b, H 08, H 07, L 0b
