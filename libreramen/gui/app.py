@@ -812,6 +812,18 @@ def main(argv=None):
         splash.finish(win)
     ctl.connected.connect(ready)
     ctl.connect_failed.connect(failed)
+    if "--screenshot" in argv:                      # documentation/testing: save the window as an image
+        shot = argv[argv.index("--screenshot") + 1]
+
+        def demo():
+            if simulate:
+                ctl.sim("arm")
+                ctl.sim("sample", "carbon tetrachloride")
+                win.measure.exposure.setValue(0.5)
+                win.measure.averages.setValue(1)
+                win.measure.measure_once()
+        ctl.connected.connect(lambda i: QTimer.singleShot(800, demo))
+        QTimer.singleShot(15000, lambda: win.grab().save(shot))
     splash.message("Searching for instrument…")
     QTimer.singleShot(200, lambda: ctl.connect_instrument(simulate))
     return app.exec()

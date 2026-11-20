@@ -41,6 +41,7 @@ def main(argv=None):
                     help="saved spectrum CSV (one per --standard, same order)")
     ap.add_argument("--degree", type=int)
     ap.add_argument("--sim", action="store_true", help="use the simulator (gui)")
+    ap.add_argument("--screenshot", help="gui: save the window as an image after 15 s")
     ap.add_argument("--port", help="watchdog: I/O board serial port")
     ap.add_argument("--parent", type=int, help="watchdog: pid of the main program")
     a = ap.parse_args(argv)
@@ -52,7 +53,8 @@ def main(argv=None):
         return run(a.port, parent_pid=a.parent)
     if a.cmd == "gui":
         from .gui.app import main as gui_main
-        return gui_main(["--sim"] if a.sim else [])
+        extra = ["--screenshot", a.screenshot] if a.screenshot else []
+        return gui_main((["--sim"] if a.sim else []) + extra)
 
     def on_signal(signum, frame):
         raise KeyboardInterrupt
