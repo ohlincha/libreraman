@@ -1,7 +1,11 @@
 // Widget test of the Calibration area with the simulator at high speed (offscreen, files in a temporary
 // XDG_CONFIG_HOME): wizard with carbon tetrachloride + chloroform (measure, match, fit, accept -> history copy and
 // active file, the instrument's calibration changes at once), NotArmed, Stop, one-point offset, quick check,
-// loading a saved spectrum, history (make active, revert to factory), instrument log and reminder.
+// loading a saved spectrum, history (make active, revert to factory), instrument log and reminder. Calibration
+// fixes from the hardware test round: carbon tetrachloride alone must not give an extrapolating calibration,
+// acceptance checklist (Accept refused when a rule fails), matching from a wrong calibration in use (2 of 8 ethanol
+// bands -> refused, "Match against the factory calibration", automatic retry), revert in the header, "standard k
+// of N" and warning about ticked standards without a spectrum.
 #include "gui/calibrationpage.h"
 #include "gui/calibrationstore.h"
 #include "gui/controller.h"
@@ -50,6 +54,8 @@ private slots:
     void loadSavedSpectrum();
     void history();
     void reminder();
+    void ccl4Only();
+    void wrongCalibrationInUse();
 
 private:
     void arm();
@@ -165,11 +171,20 @@ void GuiTestCalibrationPage::wizardPolynomial() {
     m_page->setSelectedStandards({QStringLiteral("ccl4"), QStringLiteral("chcl3")});   // aliases
     QCOMPARE(m_page->selectedStandards(),
              QStringList({QStringLiteral("carbon tetrachloride"), QStringLiteral("chloroform")}));
+    QCOMPARE(m_page->samplesTable()->currentRow(), 0);
+    QVERIFY(m_page->instructionsLabel()->text().contains(QStringLiteral("Standard 1 of 2")));
+    QVERIFY(m_page->samplesTable()->item(0, 0)->text().startsWith(QStringLiteral("▶")));   // MEASURE applies here
     measure(QStringLiteral("carbon tetrachloride"));
+    // the next standard without a spectrum is selected for MEASURE
+    QCOMPARE(m_page->samplesTable()->currentRow(), 1);
+    QVERIFY(m_page->instructionsLabel()->text().contains(QStringLiteral("Standard 2 of 2")));
+    QVERIFY(m_page->samplesTable()->item(1, 0)->text().startsWith(QStringLiteral("▶")));
+    QVERIFY(!m_page->samplesTable()->item(0, 0)->text().startsWith(QStringLiteral("▶")));
     measure(QStringLiteral("chloroform"));
     const auto* ccl4 = m_page->sample(QStringLiteral("carbon tetrachloride"));
     const auto* chcl3 = m_page->sample(QStringLiteral("chloroform"));
     QVERIFY(ccl4 && chcl3);
+    QVERIFY(!m_page->headerRevertButton()->isVisibleTo(m_page));      // factory calibration in use
     QVERIFY(ccl4->matches.size() >= 3);
     QVERIFY(chcl3->matches.size() >= 3);
     QVERIFY(QFileInfo::exists(ccl4->file));                       // measured spectra are kept (provenance)
@@ -191,7 +206,16 @@ void GuiTestCalibrationPage::wizardPolynomial() {
     QCOMPARE(r.standards.size(), std::size_t(2));
     QCOMPARE(m_page->residualTable()->rowCount(), int(r.residuals.size()));
     QVERIFY(!m_page->residualTable()->item(0, 3)->text().isEmpty());    // "after" column
+    // wide coverage (CCl4 + chloroform: pixels 257-1367): quadratic correction, every check passes
+    QCOMPARE(r.degree, 2);
+    QVERIFY(m_page->acceptable());
     QVERIFY(m_page->acceptButton()->isEnabled());
+    const lr::calib::ShiftFn factory = m_page->factoryShift();
+    for (int p = 0; p < 2048; p += 5)
+        QVERIFY(std::abs(r.poly(p) - factory(p)) < 5.0);
+    QVERIFY(m_page->checklistLabel()->text().contains(QStringLiteral("Bands cover 218–3019 cm⁻¹")));
+    QVERIFY(!m_page->checklistLabel()->text().contains(QStringLiteral("✗")));
+    QVERIFY(m_page->detectorPlot()->items().size() >= 3);              // zero line, covered range, new - factory
     // degree choice refits
     m_page->setDegree(1);
     QCOMPARE(m_page->result().degree, 1);
@@ -234,6 +258,7 @@ void GuiTestCalibrationPage::wizardPolynomial() {
     QVERIFY(log().contains(QStringLiteral("Calibration accepted for 532 nm")));
     // a new spectrum is matched against the new calibration: deviations are now small
     QVERIFY(m_page->reminderText().isEmpty());
+    QVERIFY(m_page->headerRevertButton()->isVisibleTo(m_page));       // user calibration in use
 }
 
 void GuiTestCalibrationPage::stopMeasurement() {
@@ -282,9 +307,9 @@ void GuiTestCalibrationPage::oneSampleOffset() {
     QVERIFY(m_page->fit());
     QVERIFY(std::isfinite(m_page->offset()));
     QVERIFY(std::abs(m_page->offset()) < 3.0);                   // already calibrated
-    const lr::calib::ShiftFn cur = m_page->currentShift();
-    // a constant shift of the calibration in use
-    const double d0 = m_page->result().poly(200.0) - cur(200.0), d1 = m_page->result().poly(1800.0) - cur(1800.0);
+    const lr::calib::ShiftFn fac = m_page->factoryShift();
+    // a constant shift of the factory calibration (= a corrected laser wavelength)
+    const double d0 = m_page->result().poly(200.0) - fac(200.0), d1 = m_page->result().poly(1800.0) - fac(1800.0);
     QVERIFY(std::abs(d0 - m_page->offset()) < 0.05);
     QVERIFY(std::abs(d1 - m_page->offset()) < 0.05);
     QVERIFY(m_page->acceptCalibration());
@@ -400,6 +425,109 @@ void GuiTestCalibrationPage::reminder() {
     QVERIFY(inst()->userCalibration().count(532));
     QCOMPARE(inst()->shiftOf(532, 1000.0), 1000.0);             // the identity polynomial written above
     QVERIFY(m_page->revertToFactory());
+}
+
+void GuiTestCalibrationPage::ccl4Only() {
+    // hardware test round: CCl4 alone (bands on pixels 257-441 of 2048) gave an auto cubic that put pixel 2047 at
+    // 27453 cm-1. Now: an offset correction (narrow coverage), within 15 cm-1 of factory over the whole detector;
+    // a forced linear correction runs away and Accept is refused.
+    arm();
+    QVERIFY(m_page->activeCalibrationText().startsWith(QStringLiteral("Factory")));
+    m_page->setMode(CalibrationPage::Mode::Polynomial);
+    m_page->setDegree(0);
+    // ticked standard without a spectrum: warned before fitting
+    m_page->setSelectedStandards({QStringLiteral("carbon tetrachloride"), QStringLiteral("chloroform")});
+    measure(QStringLiteral("carbon tetrachloride"));
+    QCOMPARE(m_page->samplesTable()->currentRow(), 1);
+    QVERIFY(m_page->fit());
+    QVERIFY(log().contains(QStringLiteral("No spectrum yet for chloroform (ticked)")));
+    m_page->setSelectedStandards({QStringLiteral("carbon tetrachloride")});
+    QVERIFY(m_page->fit());
+    const lr::calib::Result r = m_page->result();
+    QCOMPARE(r.degree, 0);
+    const lr::calib::ShiftFn factory = m_page->factoryShift();
+    double worst = 0;
+    for (int p = 1000; p < 2048; ++p)
+        worst = std::max(worst, std::abs(r.poly(p) - factory(p)));
+    QVERIFY2(worst <= 15.0, qPrintable(QString::number(worst)));
+    QVERIFY(m_page->acceptable());
+    QVERIFY(m_page->checklistLabel()->text().contains(QStringLiteral("Bands cover 218–790 cm⁻¹")));
+    QVERIFY(m_page->checklistLabel()->text().contains(QStringLiteral("the offset applies to the whole detector")));
+    // forced linear correction: extrapolates by > 15 cm-1 -> refused
+    m_page->setDegree(1);
+    QCOMPARE(m_page->result().degree, 1);
+    QVERIFY(!m_page->acceptable());
+    QVERIFY(!m_page->acceptButton()->isEnabled());
+    QVERIFY(m_page->checklistLabel()->text().contains(QStringLiteral("Beyond the bands the correction changes by")));
+    QVERIFY(!m_page->acceptCalibration());
+    QVERIFY(!QFileInfo::exists(calstore::activePath(QStringLiteral("SIMULATOR"), 532)));
+    m_page->setDegree(0);
+    QVERIFY(m_page->acceptable());
+    m_page->rejectCalibration();
+}
+
+void GuiTestCalibrationPage::wrongCalibrationInUse() {
+    // the calibration in use = the old CCl4-only cubic (free polynomial): ethanol matched against it finds only
+    // 433 and 882 (as on the instrument) -> Accept refused, with "Match against the factory calibration"
+    arm();
+    const auto* ccl4 = m_page->sample(QStringLiteral("carbon tetrachloride"));
+    QVERIFY(ccl4);
+    lr::calib::Result bad;
+    const lr::calib::FitOutput cubic = lr::calib::fit(ccl4->matches, 3);
+    bad.poly = cubic.poly;
+    bad.residuals = cubic.residuals;
+    bad.rms = cubic.rms;
+    bad.standards = {QStringLiteral("carbon tetrachloride")};
+    bad.date = QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd HH:mm"));
+    bad.degree = 3;
+    calstore::accept(bad, 532, QStringLiteral("SIMULATOR"), QStringLiteral("polynomial"));
+    m_page->refreshHistory();
+    QVERIFY(m_page->makeActive(0));
+    QVERIFY(std::abs(inst()->shiftOf(532, 2047.0) - 4190.0) > 1000.0);     // wildly extrapolating
+    QVERIFY(m_page->headerRevertButton()->isVisibleTo(m_page));
+    QVERIFY(m_page->detectorPlot()->items().size() >= 2);                  // calibration in use - factory
+
+    m_page->setAutoFactoryRetry(false);
+    m_page->setStart(CalibrationPage::Start::InUse);
+    m_page->setMode(CalibrationPage::Mode::Polynomial);
+    m_page->setDegree(0);
+    m_page->setSelectedStandards({QStringLiteral("ethanol")});
+    measure(QStringLiteral("ethanol"));
+    const int found = int(m_page->sample(QStringLiteral("ethanol"))->matches.size());
+    QVERIFY2(found >= 1 && found <= 3, qPrintable(QString::number(found)));   // 433, 882 (+ a stray one, noise)
+    QVERIFY(m_page->fit());
+    QVERIFY(!m_page->acceptable());
+    QVERIFY(!m_page->acceptButton()->isEnabled());
+    QVERIFY(m_page->checklistLabel()->text().contains(
+        QStringLiteral("Only %1 of 8 ethanol bands found — the calibration in use may be wrong").arg(found)));
+    QVERIFY(!m_page->factoryMatchButton()->isHidden());
+    QVERIFY(!m_page->acceptCalibration());
+    // "Match against the factory calibration": all 8 bands, fitted again, acceptable
+    m_page->factoryMatchButton()->click();
+    QCOMPARE(m_page->start(), CalibrationPage::Start::Factory);
+    QVERIFY(m_page->sample(QStringLiteral("ethanol"))->matches.size() >= 7);
+    QVERIFY(m_page->hasFit());
+    QVERIFY(m_page->acceptable());
+    QVERIFY(m_page->factoryMatchButton()->isHidden());
+    QCOMPARE(m_page->result().degree, 2);
+    const lr::calib::ShiftFn factory = m_page->factoryShift();
+    for (int p = 0; p < 2048; p += 5)
+        QVERIFY(std::abs(m_page->result().poly(p) - factory(p)) < 5.0);
+    // automatic retry: matched against the calibration in use first, then against the factory calibration
+    m_page->setAutoFactoryRetry(true);
+    m_page->setStart(CalibrationPage::Start::InUse);
+    QVERIFY(m_page->sample(QStringLiteral("ethanol"))->matches.size() >= 7);
+    QVERIFY(m_page->sample(QStringLiteral("ethanol"))->retried);
+    QVERIFY(log().contains(QStringLiteral("of 8 ethanol bands found with the calibration in use – matched against the "
+                                          "factory calibration instead: ")));
+    QVERIFY(m_page->acceptable());
+    QVERIFY(m_page->checklistLabel()->text().contains(QStringLiteral("(matched against the factory calibration)")));
+    // revert from the page header
+    m_page->rejectCalibration();
+    m_page->headerRevertButton()->click();
+    QVERIFY(m_page->activeCalibrationText().startsWith(QStringLiteral("Factory")));
+    QVERIFY(inst()->userCalibration().empty());
+    QVERIFY(!m_page->headerRevertButton()->isVisibleTo(m_page));
 }
 
 QTEST_MAIN(GuiTestCalibrationPage)

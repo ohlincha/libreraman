@@ -3,9 +3,13 @@ Calibration against reference standards.
 
 1. Find peaks in a background-subtracted spectrum (in calibration-pixel order).
 2. Match them to the standard's reference bands, using the current calibration as the starting point.
-3. Fit a polynomial Raman shift(pixel) through all matches (several standards can be combined).
+3. Fit a CORRECTION to the factory calibration through all matches (several standards can be combined):
+   delta(p) = reference shift - factory shift(p). Its degree is limited by how much of the detector the
+   matched bands cover (a free cubic through five bands on 9 % of the detector extrapolated to 27000 cm-1 at
+   the far end), and outside the matched pixel range the correction is only extrapolated linearly.
 
-The fitted polynomial replaces the factory wavelength calibration for that channel; the result
+The result is stored as a plain polynomial shift(p) = factory(p) + delta(p) (fitted over the whole detector),
+so readers of the file need nothing new; it replaces the factory calibration for that channel. The result
 lists the residual of every band so the user can judge the quality.
 """
 
@@ -105,44 +109,109 @@ def match(peaks, shift_of, standard, window=12.0):
     return out
 
 
-def fit(matches, deg=None, base=None):
-    """matches from one or more standards -> shift polynomial + per-band residuals.
-    With a single band (e.g. silicon) the current calibration `base` is shifted by a constant offset
-    (one-point calibration: only valid for a fixed grating, as here)."""
-    if len(matches) == 1:
-        if base is None:
-            raise ValueError("one-point calibration needs the current calibration")
-        px, ref = matches[0][0], matches[0][1]
-        offset = ref - base(px)
-        grid = list(range(0, 2048, 16))
-        p = polyfit(grid, [base(g) + offset for g in grid], 4)
-        return p, [(ref, polyval(p, px) - ref, px)], 0.0
-    if len(matches) < 2:
+# Degree of the stored polynomial shift(p) = factory(p) + delta(p): the factory calibration (cubic in wavelength)
+# is reproduced to < 0.01 cm-1 by degree 6 over the whole 532 nm detector (degree 4: 0.55 cm-1).
+STORE_DEG = 6
+STORE_STEP = 8          # pixel grid of that fit (plus the last pixel)
+DEGREE_NAMES = {0: "offset", 1: "linear", 2: "quadratic", 3: "cubic"}
+
+
+def auto_degree(pixels, npix=2048):
+    """Degree of the correction to the factory calibration, limited by the coverage of the matched bands:
+    span < 25 % of the detector -> offset only (even a straight line through bands on 9 % of the detector
+    extrapolates by ~20 cm-1 at the far end with +-2 cm-1 scatter); >= 25 %: linear (2-3 bands), quadratic
+    (4+ bands); cubic needs 6+ bands spread over >= 60 % (no gap wider than 30 % of their span). A correction on
+    top of the factory calibration is smooth: quadratic is nearly always enough."""
+    n = len(pixels)
+    px = sorted(pixels)
+    span = px[-1] - px[0]
+    if n < 2 or span < 0.25 * npix:
+        return 0
+    gap = max(b - a for a, b in zip(px, px[1:]))
+    if n >= 6 and span >= 0.6 * npix and gap <= 0.3 * span:
+        return 3
+    return 2 if n >= 4 else 1
+
+
+def correction(matches, deg, base):
+    """delta(p) = reference - base(p) through the matches: weighted polynomial of degree deg inside the matched
+    pixel range; outside it continues linearly from the edge value with the slope of a weighted straight-line
+    fit (constant for degree 0), so it never runs away like a polynomial would. Returns delta(p)."""
+    px = [m[0] for m in matches]
+    d = [m[1] - base(m[0]) for m in matches]
+    w = [float(m[2]) for m in matches]
+    lo, hi = min(px), max(px)
+    c = polyfit(px, d, deg, w)
+    slope = 0.0
+    if deg >= 1:
+        lin = polyfit(px, d, 1, w)
+        slope = lin["coeff"][1] / lin["scale"]
+    c_lo, c_hi = polyval(c, lo), polyval(c, hi)
+
+    def delta(p):
+        if p < lo:
+            return c_lo + slope * (p - lo)
+        if p > hi:
+            return c_hi + slope * (p - hi)
+        return polyval(c, p)
+    return delta
+
+
+def fit(matches, deg=None, base=None, npix=2048):
+    """matches from one or more standards -> (shift polynomial, per-band residuals, RMS, correction degree).
+    With base (the factory calibration) a correction delta(p) = reference - base(p) is fitted (correction()):
+    degree deg, or auto_degree() from the coverage; one band = a constant offset (silicon; the same as a
+    corrected laser wavelength). shift(p) = base(p) + delta(p) is then stored as a degree-STORE_DEG polynomial
+    over the whole detector. Without base: a free polynomial through the bands (no extrapolation guard)."""
+    if not matches:
         raise ValueError("no reference band matched")
     px = [m[0] for m in matches]
-    deg = deg if deg is not None else min(3, len(matches) - 2 if len(matches) > 3 else 1)
-    p = polyfit(px, [m[1] for m in matches], deg, [float(m[2]) for m in matches])
+    distinct = len(set(px))
+    if base is None:
+        if len(matches) == 1:
+            raise ValueError("one-point calibration needs the current calibration")
+        deg = deg if deg is not None else max(1, auto_degree(px, npix))
+        deg = min(deg, distinct - 1)
+        p = polyfit(px, [m[1] for m in matches], deg, [float(m[2]) for m in matches])
+    else:
+        deg = deg if deg is not None else auto_degree(px, npix)
+        deg = max(0, min(deg, distinct - 1))
+        delta = correction(matches, deg, base)
+        grid = list(range(0, npix, STORE_STEP))
+        if grid[-1] != npix - 1:
+            grid.append(npix - 1)
+        p = polyfit(grid, [base(g) + delta(g) for g in grid], STORE_DEG)
     res = [(m[1], polyval(p, m[0]) - m[1], m[0]) for m in matches]
     rms = (sum(r[1] ** 2 for r in res) / len(res)) ** 0.5
-    return p, res, rms
+    return p, res, rms, deg
 
 
-def calibrate(samples, shift_of, deg=None, window=12.0):
-    """samples: [(intensities in calibration-pixel order, standard name)]. Returns a result dict."""
+def calibrate(samples, shift_of, deg=None, window=12.0, base=None):
+    """samples: [(intensities in calibration-pixel order, standard name)]. shift_of: calibration the peaks are
+    matched against; base: calibration the correction is fitted to (default shift_of; normally the factory
+    calibration). Returns a result dict ("degree" = degree of the correction)."""
     all_m, per = [], []
     for y, name in samples:
         m = match(find_peaks(y), shift_of, name, window)
         per.append((name, m))
         all_m += m
-    p, res, rms = fit(all_m, deg, base=shift_of)
+    p, res, rms, d = fit(all_m, deg, base=base or shift_of, npix=len(samples[0][0]) if samples else 2048)
     return {"poly": p, "residuals": res, "rms": rms, "matches": per,
             "standards": [n for _, n in samples], "date": time.strftime("%Y-%m-%d %H:%M"),
-            "degree": len(p["coeff"]) - 1}
+            "degree": d}
 
 
 def report(result, before=None):
+    d = result["degree"]
+    kind = DEGREE_NAMES.get(d, "degree %d" % d)
     lines = [f"Calibration with {', '.join(result['standards'])}: {len(result['residuals'])} bands, "
-             f"polynomial degree {result['degree']}, RMS {result['rms']:.2f} cm-1"]
+             f"{kind} correction to the factory calibration, RMS {result['rms']:.2f} cm-1"]
+    refs = [r[0] for r in result["residuals"]]
+    pix = [r[2] for r in result["residuals"]]
+    if refs:
+        rest = ("the offset applies to the whole detector" if d == 0
+                else "outside this range the correction is extrapolated linearly")
+        lines.append(f"  bands cover {min(refs):.0f}-{max(refs):.0f} cm-1 (pixels {min(pix):.0f}-{max(pix):.0f}); {rest}")
     for name, m in result["matches"]:
         lines.append(f"  {name}: {len(m)} of {len(std_lib.bands(name))} reference bands matched")
     lines.append("  reference   residual   pixel" + ("   before" if before else ""))

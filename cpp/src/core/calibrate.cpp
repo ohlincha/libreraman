@@ -139,32 +139,82 @@ std::vector<Match> match(const std::vector<PixelPeak>& peaks, const ShiftFn& shi
     return out;
 }
 
-FitOutput fit(const std::vector<Match>& matches, std::optional<int> deg, const ShiftFn& base) {
-    FitOutput r;
-    if (matches.size() == 1) {
-        if (!base) throw Error("one-point calibration needs the current calibration");
-        const double px = matches[0].pixel, ref = matches[0].reference;
-        const double offset = ref - base(px);
-        Vec grid, val;
-        for (int g = 0; g < 2048; g += 16) {
-            grid.push_back(g);
-            val.push_back(base(g) + offset);
-        }
-        r.poly = polyfit(grid, val, 4);
-        r.residuals = {{ref, r.poly(px) - ref, px}};
-        r.rms = 0.0;
-        return r;
+// ----------------------------------------------------------------------------- correction model
+QString degreeName(int degree) {
+    switch (degree) {
+    case 0: return "offset";
+    case 1: return "linear";
+    case 2: return "quadratic";
+    case 3: return "cubic";
+    default: return QString("degree %1").arg(degree);
     }
-    if (matches.size() < 2) throw Error("no reference band matched");
-    const int n = int(matches.size());
-    const int d = deg ? *deg : std::min(3, n > 3 ? n - 2 : 1);
-    Vec px, ref, w;
+}
+
+int autoDegree(const Vec& pixels, int npix) {
+    const size_t n = pixels.size();
+    Vec px = pixels;
+    std::sort(px.begin(), px.end());
+    const double span = n ? px.back() - px.front() : 0.0;
+    if (n < 2 || span < 0.25 * npix) return 0;
+    double gap = 0.0;
+    for (size_t i = 1; i < n; ++i) gap = std::max(gap, px[i] - px[i - 1]);
+    if (n >= 6 && span >= 0.6 * npix && gap <= 0.3 * span) return 3;
+    return n >= 4 ? 2 : 1;
+}
+
+ShiftFn correction(const std::vector<Match>& matches, int deg, const ShiftFn& base) {
+    Vec px, d, w;
     for (const Match& m : matches) {
         px.push_back(m.pixel);
-        ref.push_back(m.reference);
+        d.push_back(m.reference - base(m.pixel));
         w.push_back(double(m.strength));
     }
-    r.poly = polyfit(px, ref, d, w);
+    const double lo = *std::min_element(px.begin(), px.end()), hi = *std::max_element(px.begin(), px.end());
+    const Poly c = polyfit(px, d, deg, w);
+    double slope = 0.0;                          // linear continuation outside [lo, hi]; degree 0: constant
+    if (deg >= 1) {
+        const Poly lin = polyfit(px, d, 1, w);
+        slope = lin.coeff[1] / lin.scale;
+    }
+    const double cLo = c(lo), cHi = c(hi);
+    return [c, lo, hi, cLo, cHi, slope](double p) {
+        if (p < lo) return cLo + slope * (p - lo);
+        if (p > hi) return cHi + slope * (p - hi);
+        return c(p);
+    };
+}
+
+// ----------------------------------------------------------------------------- fit
+FitOutput fit(const std::vector<Match>& matches, std::optional<int> deg, const ShiftFn& base, int npix) {
+    FitOutput r;
+    if (matches.empty()) throw Error("no reference band matched");
+    Vec px;
+    for (const Match& m : matches) px.push_back(m.pixel);
+    Vec uniq = px;
+    std::sort(uniq.begin(), uniq.end());
+    const int distinct = int(std::unique(uniq.begin(), uniq.end()) - uniq.begin());
+    if (!base) {
+        if (matches.size() == 1) throw Error("one-point calibration needs the current calibration");
+        int d = deg ? *deg : std::max(1, autoDegree(px, npix));
+        d = std::min(d, distinct - 1);
+        Vec ref, w;
+        for (const Match& m : matches) {
+            ref.push_back(m.reference);
+            w.push_back(double(m.strength));
+        }
+        r.poly = polyfit(px, ref, d, w);
+        r.degree = d;
+    } else {
+        int d = deg ? *deg : autoDegree(px, npix);
+        d = std::max(0, std::min(d, distinct - 1));
+        const ShiftFn delta = correction(matches, d, base);
+        Vec grid, val;
+        for (int g = 0; g < npix; g += kStoreStep) grid.push_back(g);
+        if (grid.back() != npix - 1) grid.push_back(npix - 1);
+        for (double g : grid) val.push_back(base(g) + delta(g));
+        r.poly = polyfit(grid, val, kStoreDegree);
+        r.degree = d;
+    }
     double ss = 0.0;
     for (const Match& m : matches) {
         r.residuals.push_back({m.reference, r.poly(m.pixel) - m.reference, m.pixel});
@@ -175,7 +225,7 @@ FitOutput fit(const std::vector<Match>& matches, std::optional<int> deg, const S
 }
 
 Result calibrate(const std::vector<std::pair<Vec, QString>>& samples, const ShiftFn& shiftOf, std::optional<int> deg,
-                 double window) {
+                 double window, const ShiftFn& base) {
     Result res;
     std::vector<Match> all;
     for (const auto& [y, name] : samples) {
@@ -183,13 +233,13 @@ Result calibrate(const std::vector<std::pair<Vec, QString>>& samples, const Shif
         res.matches.emplace_back(name, m);
         all.insert(all.end(), m.begin(), m.end());
     }
-    const FitOutput f = fit(all, deg, shiftOf);
+    const FitOutput f = fit(all, deg, base ? base : shiftOf, samples.empty() ? 2048 : int(samples.front().first.size()));
     res.poly = f.poly;
     res.residuals = f.residuals;
     res.rms = f.rms;
     for (const auto& s : samples) res.standards.push_back(s.second);
     res.date = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm");
-    res.degree = int(f.poly.coeff.size()) - 1;
+    res.degree = f.degree;
     return res;
 }
 
@@ -206,8 +256,20 @@ QString report(const Result& result, const ShiftFn& before) {
     QStringList names;
     for (const QString& s : result.standards) names << s;
     QStringList lines;
-    lines << QString("Calibration with %1: %2 bands, polynomial degree %3, RMS %4 cm-1")
-                 .arg(names.join(", ")).arg(result.residuals.size()).arg(result.degree).arg(result.rms, 0, 'f', 2);
+    lines << QString("Calibration with %1: %2 bands, %3 correction to the factory calibration, RMS %4 cm-1")
+                 .arg(names.join(", ")).arg(result.residuals.size()).arg(degreeName(result.degree)).arg(result.rms, 0, 'f', 2);
+    if (!result.residuals.empty()) {
+        double rlo = result.residuals[0].reference, rhi = rlo, plo = result.residuals[0].pixel, phi = plo;
+        for (const Residual& r : result.residuals) {
+            rlo = std::min(rlo, r.reference);
+            rhi = std::max(rhi, r.reference);
+            plo = std::min(plo, r.pixel);
+            phi = std::max(phi, r.pixel);
+        }
+        lines << QString::asprintf("  bands cover %.0f-%.0f cm-1 (pixels %.0f-%.0f); ", rlo, rhi, plo, phi) +
+                     (result.degree == 0 ? "the offset applies to the whole detector"
+                                         : "outside this range the correction is extrapolated linearly");
+    }
     for (const auto& [name, m] : result.matches)
         lines << QString("  %1: %2 of %3 reference bands matched").arg(name).arg(m.size()).arg(standards::bands(name).size());
     lines << QString("  reference   residual   pixel") + (before ? "   before" : "");

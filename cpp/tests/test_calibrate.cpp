@@ -180,9 +180,15 @@ private slots:
     void fitSpecialCases() {
         const QJsonObject one = g["fit_one"].toObject();
         const calib::FitOutput f1 = calib::fit(matchesFrom(one["matches"].toArray()), std::nullopt, factory());
-        CHECK_MSG(comparePoly(f1.poly, one["poly"].toObject(), 1e-9));
+        // degree-6 fit of the factory curve: the highest coefficients amplify the last-digit differences of the
+        // factory evaluation (repeated multiplication vs pow); compare them loosely and the curve tightly
+        CHECK_MSG(comparePoly(f1.poly, one["poly"].toObject(), 1e-7));
+        for (double px = 0; px < 2048; px += 97)
+            COMPARE_NUM(f1.poly(px), polyFrom(one["poly"].toObject())(px), 1e-8, 0, "one-point curve");
+        QCOMPARE(f1.degree, 0);
         CHECK_MSG(compareResiduals(f1.residuals, one["residuals"].toArray(), 1e-9));
-        QCOMPARE(f1.rms, 0.0);
+        COMPARE_NUM(f1.rms, one["rms"].toDouble(), 1e-8, 0, "one-point rms");   // approximation error only
+        QVERIFY(f1.rms < 0.05);
         const QJsonObject two = g["fit_two"].toObject();
         const calib::FitOutput f2 = calib::fit(matchesFrom(two["matches"].toArray()));
         CHECK_MSG(comparePoly(f2.poly, two["poly"].toObject(), 1e-12));
@@ -199,6 +205,85 @@ private slots:
         } catch (const Error& e) {
             QCOMPARE(QString(e.what()), g["fit_error_one"].toString());
         }
+    }
+
+    // ---- correction model (hardware test round: CCl4 alone extrapolated to 27000 cm-1 at the last pixel)
+    void autoDegree() {
+        QCOMPARE(calib::autoDegree({300.0}), 0);
+        QCOMPARE(calib::autoDegree({257, 287, 333, 433, 441}), 0);              // CCl4: 9 % of the detector
+        QCOMPARE(calib::autoDegree({300, 900}), 1);
+        QCOMPARE(calib::autoDegree({300, 600, 900}), 1);
+        QCOMPARE(calib::autoDegree({325, 474, 533, 548, 680, 1297, 1321, 1343}), 2);   // ethanol: 50 %
+        QCOMPARE(calib::autoDegree({100, 400, 700, 1000, 1300, 1600}), 3);
+        QCOMPARE(calib::autoDegree({100, 120, 140, 160, 180, 1600}), 2);       // not spread out
+        QCOMPARE(calib::autoDegree({10, 30, 50, 70}, 256), 0);                 // 1064 nm detector: 23 %
+        QCOMPARE(calib::autoDegree({10, 50, 90}, 256), 1);                     // 31 %
+    }
+
+    void correctionExtrapolatesLinearly() {
+        const std::vector<calib::Match> m = {{300, 0, 3, 1}, {500, 0, 2, 1}, {700, 0, 3, 1}, {900, 0, 1, 1}};
+        const calib::ShiftFn zero = [](double) { return 0.0; };
+        std::vector<calib::Match> q = m;
+        for (auto& x : q) x.reference = 1e-4 * (x.pixel - 600) * (x.pixel - 600);   // a parabola
+        const calib::ShiftFn d2 = calib::correction(q, 2, zero);
+        QVERIFY(std::abs(d2(500) - 1.0) < 1e-9);
+        // outside 300..900: straight lines (second difference 0), continuous at the edges
+        QVERIFY(std::abs(d2(100) - 2 * d2(200) + d2(300)) < 1e-9);
+        QVERIFY(std::abs(d2(2047) - 2 * d2(1500) + d2(953)) < 1e-9);
+        QVERIFY(std::abs(d2(900.0001) - d2(900)) < 1e-3);
+        const calib::ShiftFn d0 = calib::correction(q, 0, zero);
+        QCOMPARE(d0(0), d0(2047));                                               // offset: constant
+    }
+
+    void ccl4AloneDoesNotExtrapolate() {
+        const calib::ShiftFn f = factory();
+        const calib::Result r = calib::calibrate({samples()[0]}, f);
+        QCOMPARE(r.degree, 0);                                                   // narrow coverage: offset
+        double worst = 0;
+        for (int p = 1000; p < 2048; ++p) worst = std::max(worst, std::abs(r.poly(p) - f(p)));
+        QVERIFY2(worst < 15.0, qPrintable(QString::number(worst)));
+        QVERIFY(r.rms < 2.0);
+        QVERIFY(calib::report(r).contains("the offset applies to the whole detector"));
+        // the old model (free polynomial, auto cubic) is what went wrong on the instrument
+        std::vector<calib::Match> all = r.matches[0].second;
+        const calib::FitOutput old = calib::fit(all, 3);
+        QVERIFY(std::abs(old.poly(2047.0) - f(2047.0)) > 1000.0);
+        // even a linear correction through these bands runs away by ~20 cm-1 (the GUI refuses that: rule c)
+        const calib::Result r1 = calib::calibrate({samples()[0]}, f, 1);
+        QVERIFY(std::abs(r1.poly(2047.0) - f(2047.0)) > 15.0);
+    }
+
+    void wideCoverageCalibratesWell() {
+        const calib::ShiftFn f = factory();
+        const calib::Result r = calib::calibrate({samples()[0], samples()[1]}, f);     // CCl4 + chloroform
+        QCOMPARE(r.degree, 2);
+        QVERIFY(r.rms < 1.5);
+        for (int p = 0; p < 2048; p += 7) QVERIFY(std::abs(r.poly(p) - f(p)) < 5.0);
+        const calib::Result e = calib::calibrate({samples()[2]}, f);                   // ethanol alone
+        QCOMPARE(e.degree, 2);
+        QVERIFY(e.rms < 1.5);
+        // the stored polynomial reproduces factory + correction (largest error, ~0.3 cm-1, at the kink where the
+        // quadratic correction turns into its linear continuation)
+        std::vector<calib::Match> all;
+        for (const auto& [n, m] : r.matches) all.insert(all.end(), m.begin(), m.end());
+        const calib::ShiftFn d = calib::correction(all, 2, f);
+        for (int p = 0; p < 2048; p += 3) QVERIFY(std::abs(r.poly(p) - f(p) - d(p)) < 0.5);
+    }
+
+    void matchingFromAWrongCalibration() {
+        // the calibration in use = the old CCl4-only cubic: only 2 of 8 ethanol bands are found; from the factory
+        // calibration all 8
+        const calib::ShiftFn f = factory();
+        const calib::Result r = calib::calibrate({samples()[0]}, f);
+        const calib::FitOutput bad = calib::fit(r.matches[0].second, 3);
+        const Poly bp = bad.poly;
+        const calib::ShiftFn wrong = [bp](double p) { return bp(p); };
+        const auto peaks = calib::findPeaks(spectrum("ethanol"));
+        QCOMPARE(calib::match(peaks, wrong, "ethanol").size(), size_t(2));
+        QCOMPARE(calib::match(peaks, f, "ethanol").size(), size_t(8));
+        // matched against the wrong calibration but fitted to the factory one: still a sane curve
+        const calib::Result e = calib::calibrate({samples()[2]}, f, std::nullopt, 12.0, f);
+        QCOMPARE(e.degree, 2);
     }
 
     void saveAndLoad() {
