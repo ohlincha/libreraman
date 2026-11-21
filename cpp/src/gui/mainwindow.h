@@ -67,7 +67,7 @@ public slots:
     void repairDrivers();                             // Windows: re-install the USB drivers, then reconnect
     void fitToScreen();
     // "Add to library…" from another page (Measure): the Library area stores it (Page::addToLibrary).
-    bool addToLibrary(const lr::Spectrum& sp);
+    Q_INVOKABLE bool addToLibrary(const lr::Spectrum& sp);   // invokable: DataPageHost calls it by name
     // Instrument > Shut down instrument…: confirms (dialogsEnabled), stops a running measurement, then the
     // vendor power-down (real instrument) or a plain disconnect (simulator). Logs "Instrument shut down".
     void shutDownInstrument();
