@@ -4,7 +4,7 @@ This covers the desktop application (version 0.2.1). For installation see the [R
 
 ## The window
 
-![The Calibration area after a fit](manual-calibration-fit.png)
+![The Measure area: an ethanol spectrum with picked peaks](manual-measure.png)
 
 **Status bar (top).** Always visible:
 

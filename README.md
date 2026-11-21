@@ -13,8 +13,8 @@ Product names are used only to describe compatibility.*
 time series with a laser watchdog), Data (overlay, waterfall, heat map, peak fitting, export to CSV, JCAMP-DX,
 SPC), Library (SQLite, matching), Analysis (PCA, EFA, MCR-ALS, peak trends with kinetics, computed spectra
 from Gaussian/ORCA/xtb/...), Calibration (standards wizard), a local API and an MCP server. Verified on the
-real instrument at 532 nm (C++: Windows 11; Python reference: Linux and Windows 11); 1064 nm is untested (faulty channel on the development
-unit). The Python package `libreramen` is the reference implementation. See [PROTOCOL.md](PROTOCOL.md).
+real instrument at 532 nm (Windows 11, macOS 12 and Linux); 1064 nm is untested (faulty channel on the development
+unit). See [PROTOCOL.md](PROTOCOL.md).
 
 ![LibreRamen measuring a time series (simulator)](docs/screenshot-measure.png)
 
@@ -24,7 +24,7 @@ See the **[quick manual](docs/MANUAL.md)** for how to measure, analyse and calib
 
 ## Install
 
-Installers of the **C++ version** (Qt 6, recommended) are attached to each
+Installers are attached to each
 [release](https://github.com/ohlincha/libreramen/releases) (and to every CI run of *Build installers*):
 
 | System | File | Notes |
@@ -34,17 +34,13 @@ Installers of the **C++ version** (Qt 6, recommended) are attached to each
 | Ubuntu 24.04+, Debian 13+ | `libreramen_<version>_amd64.deb` | `sudo apt install ./libreramen_<version>_amd64.deb` |
 | other Linux (Debian 12, Ubuntu 22.04, Fedora, …) | `LibreRamen-<version>-Linux-x86_64.AppImage` | `chmod +x` and run; udev rule see below |
 
-The older **Python version** is still built as well: `LibreRamen-Setup-<version>.exe`, `LibreRamen-Windows.zip`,
-`LibreRamenCLI-Windows.zip` (Windows) and `LibreRamen-macOS-Intel.dmg`. Both Windows installers install into the
-same place; installing one replaces the other.
-
 Every package contains the program `LibreRamen` and the command line `LibreRamenCLI`
 (Windows: both in the installation folder; macOS: `LibreRamen.app/Contents/MacOS/LibreRamenCLI`;
 Linux: `/usr/bin`). `LibreRamen --sim` starts with the simulator instead of the instrument.
 
 ### Windows
 
-Run `LibreRamen-<version>-Windows-x64-Setup.exe` (C++) or `LibreRamen-Setup-<version>.exe` (Python) and accept
+Run `LibreRamen-<version>-Windows-x64-Setup.exe` and accept
 the administrator prompt: it also installs the USB drivers. The instrument's USB devices need Microsoft's generic WinUSB
 driver; the installer binds it with [libwdi](https://github.com/pbatard/libwdi)'s `wdi-simple`
 (the library behind Zadig), so nothing has to be downloaded separately:
@@ -76,15 +72,9 @@ group (`sudo usermod -aG dialout $USER`, then log in again). With the AppImage, 
 The AppImage's command line program is in the image: `./LibreRamen-*.AppImage --appimage-extract`, then
 `squashfs-root/usr/bin/LibreRamenCLI`.
 
-### From source (Python version)
+### From source
 
-```
-python3 -m venv --system-site-packages .venv          # Debian/Ubuntu: don't pip into the system Python
-.venv/bin/pip install PySide6 pyqtgraph numpy scipy pyserial pyusb
-.venv/bin/python -m libreramen gui          # with the instrument
-.venv/bin/python -m libreramen gui --sim    # simulator: spectra recorded on a real Cora 5000
-```
-The C++ version is built with CMake, see [cpp/README.md](cpp/README.md).
+LibreRamen is built with CMake and Qt 6, see [cpp/README.md](cpp/README.md).
 
 The full feature plan is in [docs/SPECIFICATION.md](docs/SPECIFICATION.md).
 
@@ -95,48 +85,28 @@ A USB hub with: two BaySpec spectrometers (`ba8c:1688`, "BS2ACCD" for 532 nm and
 laser driver (1064 nm), and an MCP2200 that reports the state of the instrument's ARM button.
 No vendor drivers are needed on Linux.
 
-## Engine (Python package `libreramen`)
+## Command line
+
+`LibreRamenCLI` drives the instrument without the window (add `--json` for machine-readable output,
+`--sim` for the simulator):
 
 ```
-python3 -m libreramen status                       # armed? compartment? spectrometers?
-python3 -m libreramen init                         # vendor-style start-up (no laser)
-python3 -m libreramen dark -e 1                    # dark frame, laser off
-python3 -m libreramen acquire -e 1 -n 3            # 532 nm: 3 x 1 s, background-subtracted, CSV
-python3 -m libreramen acquire --channel 1064 --power 200 -e 5
-python3 -m libreramen series -e 1 --interval 10 --count 60 --background once
-python3 -m libreramen shutdown                     # like the vendor's Shutdown
+LibreRamenCLI status                       # armed? compartment? spectrometers?
+LibreRamenCLI init                         # vendor-style start-up (no laser)
+LibreRamenCLI dark -e 1                    # dark frame, laser off
+LibreRamenCLI acquire -e 1 -n 3 -o s.csv   # 532 nm: 3 x 1 s, background-subtracted
+LibreRamenCLI series -e 1 -n 1 --interval 10 --count 60 --background once
+LibreRamenCLI shutdown                     # like the vendor's Shutdown
+LibreRamenCLI --remote ...                 # talk to the running application
 ```
 
-`--ini BS_Device_Settings.ini` loads the calibration of your own instrument (copy the file
+`--ini BS_Device_Settings.ini` loads the factory calibration of your own instrument (copy the file
 from the vendor software's `BS_System` folder); without it, the development unit's values are used.
-
-```python
-from libreramen import Cora
-c = Cora().connect(); c.initialize()
-sp = c.acquire(exposure_s=1, averages=3)      # Spectrum: .shift, .intensity, .save_csv()
-c.close()
-```
-
-## Test scripts (Linux, in `tools/`)
-
-| Script | What it does | Laser |
-|---|---|---|
-| `probe.py` | Finds the devices and reads status | never |
-| `dark.py` | Powers the spectrometers and takes one dark frame | never |
-| `laser.py` | One 532 nm frame plus background (needs ARM pressed) | yes |
-| `series.py` | Exposure/timing series at 532 nm | yes |
-| `test1064.py` | One 1064 nm frame plus background | yes |
-
-Requirements: `python3-serial`, `python3-usb`, membership in the `dialout` group, and the udev rule:
-
-```
-sudo cp 70-cora.rules /etc/udev/rules.d/ && sudo udevadm control --reload && sudo udevadm trigger
-```
 
 ## Laser safety
 
-The scripts only switch the laser on when the instrument is **armed** (the ARM button on the
-instrument) and refuse to run without `--operator-present`. The instrument's own interlock cuts
+LibreRamen only switches the laser on when the instrument is **armed** (the ARM button on the
+instrument). The instrument's own interlock cuts
 the laser when the sample compartment is open. Always use your laboratory's laser precautions.
 
 ## Calibration
@@ -145,10 +115,10 @@ The program ships with a library of **reference standards**: the ASTM E1840 set 
 naphthalene, polystyrene, sulfur, paracetamol, benzonitrile, toluene/acetonitrile, indene), common
 solvents (CCl₄, CHCl₃, CH₂Cl₂, toluene, benzene, acetonitrile, acetone, ethanol, methanol, isopropanol,
 DMSO, ethylene glycol) and solids (silicon, diamond, calcite, anatase, rutile, PTFE, BaSO₄).
-`python3 -m libreramen standards` lists them. Measure one or more of whatever your lab has and fit:
+`LibreRamenCLI standards` lists them. Measure one or more of whatever your lab has and fit:
 
 ```
-python3 -m libreramen calibrate --standard chloroform --standard ethanol     # guided, live
+LibreRamenCLI calibrate --standard chloroform --standard ethanol     # guided, live
 ```
 
 The program finds the peaks, matches them to the reference bands, fits a new pixel → Raman shift
