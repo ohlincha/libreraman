@@ -30,4 +30,10 @@ struct Calibration {
 const Calibration& defaultCalibration();          // the development instrument (S/N 99002169)
 Calibration loadIni(const QString& path);         // vendor ini (latin-1)
 
+// Factory calibrations of other instruments: the vendor's BS_Device_Settings.ini, stored per serial number as
+// <config dir>/factory_<serial>.ini (config dir as for the user calibrations).
+QString factoryIniPath(const QString& serial);
+Calibration importFactoryIni(const QString& path);   // reads it (needs Sys_SN), stores the copy; returns it
+bool hasStoredFactory(const QString& serial);
+
 }  // namespace lr

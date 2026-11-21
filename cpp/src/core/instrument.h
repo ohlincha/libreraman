@@ -105,6 +105,10 @@ protected:
     explicit Instrument(Calibration cal, LogFn log) : cal_(std::move(cal)), log_(std::move(log)) {}
     void log(const QString& m) const { if (log_) log_(m); }
     void loadUserCalibration();                               // calib::load(ch, serial) for 532 and 1064
+    // On connect, with the serial read from the spectrometer: use the stored factory calibration of this
+    // instrument (factory_<serial>.ini); without one, keep the built-in values but file user calibrations under
+    // this serial, and say so. Then loads the user calibrations.
+    void selectFactoryCalibration(const QString& serial);
     // Builds the Spectrum (sorted by shift) from averaged signal/background frames in data order.
     Spectrum makeSpectrum(int ch, double exposure_s, int averages, const Vec& pixels, const Vec& sig,
                           const Vec& bg, double power_mw) const;

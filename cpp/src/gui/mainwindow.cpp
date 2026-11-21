@@ -1,3 +1,4 @@
+#include "core/calibration.h"
 #include "mainwindow.h"
 
 #include "apiserver.h"
@@ -22,6 +23,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QMenuBar>
+#include <QFileDialog>
 #include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QPushButton>
@@ -251,6 +253,9 @@ void MainWindow::buildMenus() {
     m = menuBar()->addMenu(QStringLiteral("&Instrument"));
     m->addAction(QStringLiteral("Use simulator"), this, [this] { connectInstrument(true); });
     m->addAction(QStringLiteral("Reconnect"), this, [this] { connectInstrument(false); });
+    QAction* fac = m->addAction(QStringLiteral("Load factory calibration…"), this, &MainWindow::loadFactoryCalibration);
+    fac->setToolTip(QStringLiteral("The instrument's BS_Device_Settings.ini from the vendor software (BS_System folder): "
+                                   "its wavelength calibration, stored per serial number"));
     m_shutDownAction = m->addAction(QStringLiteral("Shut down instrument…"), this, &MainWindow::shutDownInstrument);
     m_shutDownAction->setToolTip(QStringLiteral("Laser off, then switch the instrument off (vendor shutdown)"));
     m_shutDownAction->setEnabled(false);
@@ -439,6 +444,43 @@ void MainWindow::connectInstrument(bool simulate) {
     m_measure->setReady(false);
     m_info = {};
     m_ctl->connectInstrument(simulate);
+}
+
+void MainWindow::loadFactoryCalibration() {
+    if (m_ctl->isBusy()) {
+        if (dialogsEnabled())
+            QMessageBox::information(this, QStringLiteral("Factory calibration"),
+                                     QStringLiteral("Stop the measurement first."));
+        return;
+    }
+    const QString path = QFileDialog::getOpenFileName(
+        this, QStringLiteral("Factory calibration of the instrument (BS_Device_Settings.ini)"), QString(),
+        QStringLiteral("Vendor settings (BS_Device_Settings.ini *.ini);;All files (*)"));
+    if (path.isEmpty())
+        return;
+    try {
+        const Calibration cal = importFactoryIni(path);
+        addLog(QStringLiteral("Factory calibration of S/N %1 stored: %2").arg(cal.serial, cal.source));
+        const bool connected = !m_info.serial.isEmpty() && !m_ctl->simulated();
+        if (connected && m_info.serial != cal.serial) {
+            if (dialogsEnabled())
+                QMessageBox::warning(this, QStringLiteral("Factory calibration"),
+                                     QStringLiteral("The file is for S/N %1, but the connected instrument is S/N %2. "
+                                                    "It is stored and will be used when S/N %1 is connected.")
+                                         .arg(cal.serial, m_info.serial));
+            return;
+        }
+        if (connected)
+            connectInstrument(false);             // reconnect: the stored factory calibration is selected on connect
+        else if (dialogsEnabled())
+            QMessageBox::information(this, QStringLiteral("Factory calibration"),
+                                     QStringLiteral("Stored for S/N %1; it is used when that instrument is connected.")
+                                         .arg(cal.serial));
+    } catch (const std::exception& e) {
+        if (dialogsEnabled())
+            QMessageBox::warning(this, QStringLiteral("Factory calibration"), QString::fromUtf8(e.what()));
+        addLog(QStringLiteral("Factory calibration: ") + QString::fromUtf8(e.what()));
+    }
 }
 
 void MainWindow::repairDrivers() {

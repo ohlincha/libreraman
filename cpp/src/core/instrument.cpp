@@ -34,6 +34,35 @@ QString Instrument::calibrationLabel(int ch) const {
     return QString("factory (%1)").arg(cal_.source);
 }
 
+void Instrument::selectFactoryCalibration(const QString& serial) {
+    if (serial.isEmpty() || serial == QLatin1String("?")) {
+        loadUserCalibration();
+        return;
+    }
+    if (hasStoredFactory(serial)) {
+        try {
+            Calibration c = loadIni(factoryIniPath(serial));
+            if (!c.channels.empty()) {
+                c.serial = serial;
+                c.source = factoryIniPath(serial);
+                cal_ = std::move(c);
+                log(QString("Factory calibration of S/N %1 from %2").arg(serial, cal_.source));
+            }
+        } catch (const std::exception& e) {
+            log(QString("Could not read the factory calibration of S/N %1: %2").arg(serial, e.what()));
+        }
+    } else if (serial != cal_.serial) {
+        log(QString("No factory calibration for S/N %1: using the built-in values of S/N %2, which are only "
+                    "approximate for this instrument. Load its BS_Device_Settings.ini with Instrument > Load "
+                    "factory calibration (the file is in the vendor software's BS_System folder).")
+                .arg(serial, cal_.serial));
+        cal_.source = QString("built-in values of S/N %1, not this instrument").arg(cal_.serial);
+        cal_.serial = serial;                      // user calibrations belong to this instrument
+    }
+    userCal_.clear();
+    loadUserCalibration();
+}
+
 void Instrument::loadUserCalibration() {
     for (int ch : {532, 1064}) {
         const auto c = calib::load(ch, cal_.serial);

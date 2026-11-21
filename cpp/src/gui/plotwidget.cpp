@@ -244,7 +244,13 @@ QString formatTick(double v, const Ticks& t) {
 }
 
 Range autoYRange(double lo, double hi, double headroom, double padding) {
-    const double top = hi + headroom * ((hi - lo) != 0 ? (hi - lo) : 1.0);
+    // a single value (one point, or a flat line): a range around it of 5 % of its size, not ±1e-9
+    if (!(hi - lo > 1e-9 * std::max(std::abs(lo), std::abs(hi)))) {
+        const double h = std::max(std::abs(hi) * 0.05, 1.0);
+        lo -= h / 2;
+        hi += h / 2;
+    }
+    const double top = hi + headroom * (hi - lo);
     double span = top - lo;
     if (!(span > 0))
         span = 1;

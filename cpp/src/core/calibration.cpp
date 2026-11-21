@@ -5,7 +5,11 @@
 #include <QStringDecoder>
 #include <cmath>
 
+#include "calibrate.h"
 #include "errors.h"
+
+#include <QDir>
+#include <QFileInfo>
 
 namespace lr {
 
@@ -81,6 +85,31 @@ Calibration loadIni(const QString& path) {
         c.nist_range[1] = f("NIST_WL_Max", 3500);
         cal.channels[c.laser_nm < 800 ? 532 : 1064] = c;
     }
+    return cal;
+}
+
+QString factoryIniPath(const QString& serial) {
+    QString safe = serial;
+    safe.replace(QRegularExpression("[^A-Za-z0-9_-]"), "_");
+    return QDir(calib::configDir()).filePath(QString("factory_%1.ini").arg(safe));
+}
+
+bool hasStoredFactory(const QString& serial) { return !serial.isEmpty() && QFile::exists(factoryIniPath(serial)); }
+
+Calibration importFactoryIni(const QString& path) {
+    Calibration cal = loadIni(path);
+    if (cal.serial.isEmpty())
+        throw Error(("no serial number (Sys_SN) in " + path).toStdString());
+    if (cal.channels.empty())
+        throw Error(("no laser channels (LASER_0, LASER_1) in " + path).toStdString());
+    const QString dst = factoryIniPath(cal.serial);
+    QDir().mkpath(QFileInfo(dst).absolutePath());
+    if (QFileInfo(path).absoluteFilePath() != QFileInfo(dst).absoluteFilePath()) {
+        QFile::remove(dst);
+        if (!QFile::copy(path, dst))
+            throw Error(("cannot write " + dst).toStdString());
+    }
+    cal.source = dst;
     return cal;
 }
 

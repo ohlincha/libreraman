@@ -1052,7 +1052,13 @@ void MeasurePage::redrawTrend() {
             m_trendCurve = m_tplot->addCurve(QPen(pal.main, 1.5));
             m_trendCurve->setMarker(Marker::Circle, 5, QBrush(pal.main));
         }
+        const double t0 = t.front();
+        const bool single = t.size() == 1;
         m_trendCurve->setData(std::move(t), std::move(v));   // in place: no new plot items per spectrum
+        if (single)                                    // one point: time from 0, not -0.5..0.5
+            m_tplot->setXRange(0, std::max(1.0, 2 * t0));
+        else if (!m_tplot->autoX() && m_trend.size() == 2)
+            m_tplot->setAutoX(true);                   // from the second point on: follow the data
         return;
     }
     m_tplot->clear();

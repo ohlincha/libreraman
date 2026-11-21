@@ -129,8 +129,10 @@ With CCl₄, CHCl₃ and ethanol on the development unit: 19 of 19 bands matched
 ### Factory calibration
 
 The wavelength calibration is instrument-specific. It is read from the vendor software's
-`BS_System/BS_Device_Settings.ini` (copy it from the instrument PC); the values for the
-development instrument are listed in PROTOCOL.md.
+`BS_System/BS_Device_Settings.ini` (copy it from the instrument PC) with **Instrument → Load factory
+calibration…**; it is stored per serial number (`factory_<serial>.ini` next to the user calibrations) and used
+whenever that instrument is connected. Without it, the built-in values of the development instrument
+(S/N 99002169, listed in PROTOCOL.md) are used and the log says so.
 
 ## License
 

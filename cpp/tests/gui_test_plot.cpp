@@ -107,8 +107,12 @@ void GuiTestPlot::autoYRangeFunction() {
     Range r = plot::autoYRange(0, 100, 0.18);
     QVERIFY(qFuzzyCompare(r.lo, -0.02 * 118));
     QVERIFY(qFuzzyCompare(r.hi, 118 + 0.02 * 118));
-    r = plot::autoYRange(5, 5, 0.18);                   // flat: "or 1"
-    QVERIFY(qFuzzyCompare(r.hi, 5.18 + 0.02 * 0.18));
+    // flat (one point): ±2.5 % of the value, at least ±0.5 (not a range of 1e-9, which gave unreadable ticks)
+    r = plot::autoYRange(5, 5, 0.18);
+    QVERIFY(qFuzzyCompare(r.lo, 4.5 - 0.02 * 1.18));
+    QVERIFY(qFuzzyCompare(r.hi, 5.5 + 0.18 + 0.02 * 1.18));
+    r = plot::autoYRange(47853.9, 47853.9, 0.08);      // trend with one spectrum
+    QVERIFY(r.lo < 47853.9 - 1000 && r.hi > 47853.9 + 1000);
 }
 
 void GuiTestPlot::autoYOverVisibleRange() {

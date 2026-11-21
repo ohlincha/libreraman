@@ -68,7 +68,9 @@ comparison.
 
 ## Calibration
 
-The Raman shift axis comes from the instrument's **factory calibration**. A user calibration corrects it
+The Raman shift axis comes from the instrument's **factory calibration**. For an instrument other than the development unit, load its
+`BS_Device_Settings.ini` (vendor software, `BS_System` folder) once with **Instrument → Load factory
+calibration…**; it is stored per serial number and used whenever that instrument is connected. A user calibration corrects it
 using one or more reference standards. The header shows which calibration is in use; **Revert to factory
 calibration** returns to the factory one at any time.
 

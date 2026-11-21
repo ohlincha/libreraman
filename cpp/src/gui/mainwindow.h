@@ -64,7 +64,8 @@ public slots:
     void showArea(int k);
     void addLog(const QString& msg);
     void connectInstrument(bool simulate);
-    void repairDrivers();                             // Windows: re-install the USB drivers, then reconnect
+    void repairDrivers();
+    void loadFactoryCalibration();   // Instrument > Load factory calibration… (BS_Device_Settings.ini)                             // Windows: re-install the USB drivers, then reconnect
     void fitToScreen();
     // "Add to library…" from another page (Measure): the Library area stores it (Page::addToLibrary).
     Q_INVOKABLE bool addToLibrary(const lr::Spectrum& sp);   // invokable: DataPageHost calls it by name

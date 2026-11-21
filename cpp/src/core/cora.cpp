@@ -203,7 +203,15 @@ void Cora::connect() {
             spec_[ch] = std::move(s);
         }
     }
-    loadUserCalibration();
+    {
+        QString sn;
+        try {
+            sn = serial();                         // spectrometer EEPROM
+        } catch (const std::exception& e) {
+            log(QString("Could not read the serial number: %1").arg(e.what()));
+        }
+        selectFactoryCalibration(sn);              // factory_<serial>.ini, then the user calibrations
+    }
     std::vector<int> chans;
     {
         std::lock_guard<std::mutex> l(devMutex_);
