@@ -20,6 +20,8 @@ unit). The Python package `libreramen` is the reference implementation. See [PRO
 
 ![Peak trends: fitted band areas vs time with kinetic fits](docs/screenshot-trends.png)
 
+See the **[quick manual](docs/MANUAL.md)** for how to measure, analyse and calibrate.
+
 ## Install
 
 Installers of the **C++ version** (Qt 6, recommended) are attached to each
