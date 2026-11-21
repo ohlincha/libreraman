@@ -107,7 +107,7 @@ PlotPalette PlotPalette::light() {
     p.baseline = QColor("#c8892a");
     p.previous = QColor(31, 78, 121);
     p.reference = QColor("#999999");
-    p.region = QColor(31, 111, 104, 38);
+    p.region = QColor(31, 111, 104, 56);
     p.accent = QColor("#1f6f68");
     p.legendBackground = QColor(255, 255, 255, 225);
     p.series = {QColor("#1f4e79"), QColor("#b5543c"), QColor("#3c8d6e"), QColor("#c8892a"), QColor("#6a4c93"),
@@ -127,7 +127,7 @@ PlotPalette PlotPalette::dark() {
     p.baseline = QColor("#e2a447");
     p.previous = QColor(127, 178, 229);
     p.reference = QColor("#7d8798");
-    p.region = QColor(47, 179, 162, 46);
+    p.region = QColor(47, 179, 162, 60);
     p.accent = QColor("#3cc0ad");
     p.legendBackground = QColor(20, 26, 36, 225);
     p.series = {QColor("#7fb2e5"), QColor("#e9805f"), QColor("#5fc495"), QColor("#e2a447"), QColor("#ad92de"),
@@ -1646,13 +1646,25 @@ void PlotWidget::render(QPainter& p, const QRectF& target) {
         p.drawText(QRectF(target.left(), y - lh / 2, A.left() - kTickLen - 4 - target.left(), lh),
                    Qt::AlignRight | Qt::AlignVCenter, s);
     }
-    if (!m_xLabel.isEmpty())
-        p.drawText(QRectF(A.left(), A.bottom() + kTickLen + 3 + lh + 3, A.width(), lh), Qt::AlignCenter, m_xLabel);
+    // Axis labels: centred on the plot area but allowed to use the whole widget length (small plots on
+    // small screens); elided rather than clipped if they are still too long.
+    if (!m_xLabel.isEmpty()) {
+        const double room = std::min(A.width(), 2 * std::min(A.center().x() - target.left(),
+                                                             target.right() - A.center().x()));
+        const double len = std::max(room, std::min(double(fm.horizontalAdvance(m_xLabel)) + 4, target.width()));
+        p.drawText(QRectF(A.center().x() - len / 2, A.bottom() + kTickLen + 3 + lh + 3, len, lh), Qt::AlignCenter,
+                   fm.elidedText(m_xLabel, Qt::ElideRight, int(target.width())));
+    }
     if (!m_yLabel.isEmpty()) {
+        const double full = target.height();
+        const double need = fm.horizontalAdvance(m_yLabel) + 4;
+        // centre on the plot area if the label fits there, otherwise on the widget
+        const double cy = need <= A.height() ? A.center().y() : target.center().y();
         p.save();
-        p.translate(target.left() + 5, A.center().y());
+        p.translate(target.left() + 5, cy);
         p.rotate(-90);
-        p.drawText(QRectF(-A.height() / 2, 0, A.height(), lh), Qt::AlignCenter, m_yLabel);
+        p.drawText(QRectF(-full / 2, 0, full, lh), Qt::AlignCenter,
+                   fm.elidedText(m_yLabel, Qt::ElideRight, int(full)));
         p.restore();
     }
 
@@ -1886,7 +1898,9 @@ void PlotWidget::paintEvent(QPaintEvent*) {
     if (m_readout && m_hover && m_drag == Drag::None && t.area.contains(m_hoverPos)) {
         const QString s = readoutText(t.unmap(m_hoverPos));
         const QFontMetricsF fm(font(), this);
-        const QRectF box(t.area.left() + 8, t.area.top() + 6, fm.horizontalAdvance(s) + 12, fm.height() + 4);
+        QRectF box(t.area.left() + 8, t.area.top() + 6, fm.horizontalAdvance(s) + 12, fm.height() + 4);
+        if (m_legend && box.intersects(legendRect()))   // the legend sits top-left: move the readout below the curves
+            box.moveBottom(t.area.bottom() - 6);
         p.setPen(QPen(withAlpha(m_pal.axis, 110), 1));
         p.setBrush(m_pal.legendBackground);
         p.drawRoundedRect(box, 3, 3);

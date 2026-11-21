@@ -36,6 +36,7 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include <QScrollArea>
+#include <QStyle>
 #include <QSettings>
 #include <QSpinBox>
 #include <QSplitter>
@@ -316,10 +317,8 @@ QWidget* CalibrationPage::buildWizard() {
                                            "in use, match against the factory calibration automatically.</p>"));
     connect(m_autoRetry, &QCheckBox::toggled, this, [this] { rematchAll(); });
     g->addWidget(new QLabel(QStringLiteral("Match against")), 4, 0);
-    auto* sr = new QHBoxLayout;
-    sr->addWidget(m_start, 1);
-    sr->addWidget(m_autoRetry);
-    g->addLayout(sr, 4, 1, 1, 3);
+    g->addWidget(m_start, 4, 1, 1, 3);
+    g->addWidget(m_autoRetry, 5, 1, 1, 3);
     m_samplesTable = table({QStringLiteral("Standard"), QStringLiteral("Spectrum"), QStringLiteral("Bands")});
     m_samplesTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     m_samplesTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
@@ -412,15 +411,18 @@ QWidget* CalibrationPage::buildWizard() {
         if (m_fit)
             fit();
     });
-    m_btnFit = new QPushButton(QStringLiteral("Fit"));
+    m_btnFit = new QPushButton(QStringLiteral("Fit calibration"));
+    m_btnFit->setToolTip(QStringLiteral("<p>Fits the selected kind of calibration (polynomial correction or one-point "
+                                        "offset) to the bands found in the measured standards, then shows the "
+                                        "deviations, the whole-detector check and the acceptance checklist.</p>"));
     connect(m_btnFit, &QPushButton::clicked, this, &CalibrationPage::fit);
     g->addWidget(m_modePoly, 0, 0, 1, 2);
     g->addWidget(new QLabel(QStringLiteral("degree")), 0, 2);
     g->addWidget(m_degree, 0, 3);
     g->addWidget(polyHelp, 1, 0, 1, 4);
-    g->addWidget(m_modeOffset, 2, 0, 1, 3);
-    g->addWidget(m_btnFit, 2, 3);
+    g->addWidget(m_modeOffset, 2, 0, 1, 4);
     g->addWidget(offsetHelp, 3, 0, 1, 4);
+    g->addWidget(m_btnFit, 4, 0, 1, 4);
     g->setColumnStretch(1, 1);
     v->addWidget(b);
     v->addStretch();
@@ -464,7 +466,9 @@ QWidget* CalibrationPage::buildWizard() {
     al->addWidget(m_btnReject, 1);
     g->addLayout(al, 7, 0, 1, 4);
     auto* left = new QWidget;
-    left->setFixedWidth(410);
+    // wide enough for the steps in this style and font (macOS widgets are wider): no horizontal clipping
+    left->setFixedWidth(std::max(410, inner->minimumSizeHint().width() +
+                                          scroll->style()->pixelMetric(QStyle::PM_ScrollBarExtent) + 12));
     auto* lv = new QVBoxLayout(left);
     lv->setContentsMargins(0, 0, 0, 0);
     lv->setSpacing(6);
@@ -889,6 +893,18 @@ void CalibrationPage::updateEnabled() {
         if (const Sample* s = sample(n))
             bands += int(s->matches.size());
     m_btnFit->setEnabled(idle && bands >= 1);
+    {
+        const QStringList ticked = selectedStandards();
+        int measuredStd = 0;
+        for (const QString& n : ticked)
+            measuredStd += sample(n) ? 1 : 0;
+        if (bands < 1)
+            m_btnFit->setText(QStringLiteral("Fit calibration (measure a standard first)"));
+        else if (ticked.size() > 1)
+            m_btnFit->setText(QStringLiteral("Fit calibration with %1 of %2 standards").arg(measuredStd).arg(ticked.size()));
+        else
+            m_btnFit->setText(QStringLiteral("Fit calibration"));
+    }
     m_degree->setEnabled(m_modePoly->isChecked());
     m_btnAccept->setEnabled(idle && acceptable());
     m_btnReject->setEnabled(m_fit.has_value());
@@ -921,6 +937,9 @@ void CalibrationPage::updateEnabled() {
                     .arg(name.toHtmlEscaped());
         if (sample(name))
             instr += QStringLiteral(" (measuring again replaces its spectrum)");
+        if (m_samplesTable->rowCount() > 1)
+            instr += QStringLiteral("<br>Measure all ticked standards, then Fit: their bands are fitted together "
+                                    "in one calibration.");
     }
     else
         instr = QStringLiteral("Tick at least one standard above.");

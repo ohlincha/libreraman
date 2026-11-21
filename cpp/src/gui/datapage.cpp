@@ -368,7 +368,8 @@ void DataPage::build() {
     auto* fit = new QPushButton(tr("Fit peaks in view"));
     fit->setToolTip(tr("<p>Fits the peaks of the current spectrum inside the visible x range (at most “max.” "
                        "components, the strongest). Click the plot to add a component, right-click near one to "
-                       "remove it. Drag the shaded fit window or its edges to fit another range.</p>"));
+                       "remove it. After a fit, the fit window is shaded (it spans the view you fitted, so zoom out to see its "
+                       "edges); drag it or its edges to fit another range.</p>"));
     connect(fit, &QPushButton::clicked, this, [this] { fitView(); });
     prow->addWidget(fit);
     auto* clr = new QPushButton(tr("Clear fit"));
@@ -1214,9 +1215,7 @@ bool DataPage::fitRange(double lo, double hi, QString* error) {
     if (!m_fitRegion) {
         m_fitRegion = m_plot->addRegion(lo + dx, hi + dx);
         m_fitRegion->setAutoScale(false);
-        QColor shade = pal.region;
-        shade.setAlphaF(shade.alphaF() * 0.6);
-        m_fitRegion->setBrush(shade);
+        m_fitRegion->setBrush(pal.region);
         connect(m_fitRegion, &RegionItem::regionChangeFinished, this,
                 [this](double a, double b) {
                     const double s = drawnShift(currentRow());

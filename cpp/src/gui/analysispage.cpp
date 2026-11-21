@@ -22,6 +22,7 @@
 #include <QSaveFile>
 #include <QSlider>
 #include <QSpinBox>
+#include <QScrollArea>
 #include <QSplitter>
 #include <QTabWidget>
 #include <QTableView>
@@ -147,7 +148,15 @@ AnalysisPage::AnalysisPage(QWidget* parent) : QWidget(parent) {
     connect(m_timer, &QTimer::timeout, this, &AnalysisPage::runVisible);
 
     auto* split = new QSplitter(Qt::Horizontal, this);
-    split->addWidget(buildDataPanel());
+    {   // the data panel scrolls instead of squashing its widgets on small screens
+        auto* scroll = new QScrollArea;
+        scroll->setWidget(buildDataPanel());
+        scroll->setWidgetResizable(true);
+        scroll->setFrameShape(QFrame::NoFrame);
+        scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        scroll->setMinimumWidth(scroll->widget()->minimumSizeHint().width() + 16);
+        split->addWidget(scroll);
+    }
     m_tabs = new QTabWidget;
     m_tabs->addTab(buildPcaTab(), QStringLiteral("PCA"));
     m_tabs->addTab(buildEfaTab(), QStringLiteral("EFA"));
@@ -208,8 +217,9 @@ QWidget* AnalysisPage::titled(const QString& name, const QString& title, PlotWid
 
 QToolButton* AnalysisPage::exportButton(Method m) {
     auto* b = new QToolButton;
-    b->setText(QStringLiteral("Export"));
+    b->setText(QStringLiteral("Export ▾"));
     b->setPopupMode(QToolButton::InstantPopup);
+    b->setStyleSheet(QStringLiteral("QToolButton::menu-indicator { image: none; width: 0px; }"));
     auto* menu = new QMenu(b);
     struct Item {
         QString label, kind;
@@ -281,7 +291,7 @@ QWidget* AnalysisPage::buildDataPanel() {
     m_list = new QListWidget;
     m_list->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_list->setToolTip(QStringLiteral("Checked spectra are analysed (resampled onto their common range if needed)"));
-    m_list->setMinimumHeight(110);
+    m_list->setMinimumHeight(80);
     connect(m_list, &QListWidget::itemChanged, this, [this](QListWidgetItem* it) {
         if (m_updating) return;
         const int i = m_list->row(it);
@@ -324,9 +334,11 @@ QWidget* AnalysisPage::buildDataPanel() {
     });
     row->addWidget(open);
     row->addWidget(remove);
-    row->addWidget(clear);
-    row->addWidget(all);
     dv->addLayout(row);
+    auto* row2 = new QHBoxLayout;
+    row2->addWidget(clear);
+    row2->addWidget(all);
+    dv->addLayout(row2);
     m_dataInfo = new QLabel;
     m_dataInfo->setWordWrap(true);
     dv->addWidget(m_dataInfo);

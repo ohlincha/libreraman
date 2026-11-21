@@ -1004,9 +1004,9 @@ void MeasurePage::redraw() {
     const Vec& peaks = m_lastPeaks;
     QStringList txt;
     for (double p : peaks)
-        txt << QString::number(p, 'f', 0);
+        txt << QString::number(p, 'f', 1);
     m_lblPeaks->setText(txt.isEmpty() ? QStringLiteral("—") : txt.join(QStringLiteral("  ")));
-    m_peakLabels->setPeaks(peaks, x, shown);
+    m_peakLabels->setPeaks(peaks, x, shown, 1);   // one decimal: calibration changes are often < 1 cm⁻¹
     if (m_viewPending) {                               // first spectrum (after connecting, Clear): default view
         m_viewPending = false;
         m_plot->setXRange(150, 3500);
