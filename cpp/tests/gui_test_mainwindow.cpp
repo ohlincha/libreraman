@@ -16,9 +16,16 @@
 #include <QApplication>
 #include <QComboBox>
 #include <QDir>
+#include <QDirIterator>
 #include <QDoubleSpinBox>
 #include <QFileInfo>
 #include <QLineEdit>
+#include <QMenu>
+#include <QScrollArea>
+#include <QScrollBar>
+#include <QLabel>
+#include <QAction>
+#include <QToolButton>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSettings>
@@ -26,6 +33,9 @@
 #include <QSpinBox>
 #include <QTemporaryDir>
 #include <QTest>
+
+#include <cmath>
+#include <random>
 
 using namespace lr::gui;
 
@@ -37,8 +47,13 @@ public:
     explicit RecordingPage(const PageContext& c) : ctx(c) {}
     void addSpectrum(const lr::Spectrum& sp) override { names << spectrumDisplayName(sp); }
     void activated() override { ++activations; }
+    bool addToLibrary(const lr::Spectrum& sp) override {
+        libraryAdds << spectrumDisplayName(sp);
+        return true;
+    }
     PageContext ctx;
     QStringList names;
+    QStringList libraryAdds;
     int activations = 0;
 };
 
@@ -59,7 +74,11 @@ private slots:
     void series();
     void pauseAndResume();
     void stopSwitchesLaserOff();
+    void addToLibraryAndClear();
+    void peaksOnlyInUsefulRange();
+    void settingsFitWithoutScrolling();
     void closePolicySetting();
+    void shutDownInstrument();
     void closeWhileSeriesRunning();
 
 private:
@@ -297,6 +316,140 @@ void GuiTestMainWindow::stopSwitchesLaserOff() {
     QTRY_VERIFY(!m_win->windowTitle().contains(QStringLiteral("LASER ON")));
     m_ctl->setSimulatorSpeed(50);
     m->exposureBox()->setValue(0.1);
+}
+
+namespace {
+QAction* menuAction(QMenu* menu, const QString& text) {
+    emit menu->aboutToShow();                       // (filled when opened)
+    for (QAction* a : menu->actions())
+        if (a->text() == text)
+            return a;
+    return nullptr;
+}
+}  // namespace
+
+void GuiTestMainWindow::addToLibraryAndClear() {
+    MeasurePage* m = m_win->measurePage();
+    QVERIFY(!m->history().empty());
+    auto countFiles = [this] {
+        int n = 0;
+        for (QDirIterator it(m_tmp.path(), QDir::Files, QDirIterator::Subdirectories); it.hasNext(); it.next())
+            ++n;
+        return n;
+    };
+    const int files = countFiles();
+    QVERIFY(files > 0);
+    const int passed = int(g_recorder->names.size());
+    // "Add to library…" in the Last spectrum ⋯ menu -> MainWindow -> Library area (Page::addToLibrary)
+    QAction* add = menuAction(m->moreMenu(), QStringLiteral("Add to library…"));
+    QVERIFY(add);
+    QVERIFY(add->isEnabled());
+    add->trigger();
+    QCOMPARE(g_recorder->libraryAdds.size(), 1);
+    QCOMPARE(g_recorder->libraryAdds.at(0), spectrumDisplayName(m->history().back()));
+    QVERIFY(m_win->addToLibrary(m->history().back()));
+    QCOMPARE(g_recorder->libraryAdds.size(), 2);
+    // Clear: plot, earlier traces, trend and panels; files and the other pages are not touched
+    m->flushRedraw();
+    QAction* clr = menuAction(m->moreMenu(), QStringLiteral("Clear"));
+    QVERIFY(clr && clr->isEnabled());
+    m->spectrumPlot()->setXRange(1000, 1200);
+    clr->trigger();
+    QVERIFY(m->history().empty());
+    QVERIFY(m->trend().empty());
+    QVERIFY(m->lastPeaks().empty());
+    for (lr::gui::PlotItem* it : m->spectrumPlot()->items())
+        if (auto* c = dynamic_cast<Curve*>(it))
+            QCOMPARE(int(c->size()), 0);
+    QCOMPARE(m->seriesText(), QStringLiteral("—"));
+    QCOMPARE(m->signalLabel()->text(), QStringLiteral("—"));
+    QCOMPARE(countFiles(), files);                  // saved spectra are kept
+    QCOMPARE(int(g_recorder->names.size()), passed);
+    QVERIFY(!menuAction(m->moreMenu(), QStringLiteral("Add to library…"))->isEnabled());
+    // the next spectrum opens the default view (150-3500 cm-1) with automatic intensity
+    QSignalSpy spectra(m_ctl, &Controller::spectrum);
+    QVERIFY(m_ctl->measureOnce(m->measureSettings()));
+    QVERIFY(spectra.wait(10000));
+    QTRY_VERIFY(!m_ctl->isBusy());
+    m->flushRedraw();
+    QCOMPARE(m->spectrumPlot()->xRange().lo, 150.0);
+    QCOMPARE(m->spectrumPlot()->xRange().hi, 3500.0);
+    QVERIFY(m->spectrumPlot()->autoY());
+    QVERIFY(m->signalLabel()->text().endsWith(QStringLiteral(" %")));
+}
+
+// Junk far beyond the detector range (6000-9000 cm-1, taller than the real bands) and below 100 cm-1
+// (laser line) must not become peaks or the automatic trend band.
+void GuiTestMainWindow::peaksOnlyInUsefulRange() {
+    MeasurePage* m = m_win->measurePage();
+    m->clearAll();
+    lr::Spectrum sp;
+    sp.setMeta(QStringLiteral("sample"), QStringLiteral("junk test"));
+    std::mt19937 rng(7);
+    std::normal_distribution<double> noise(0, 3);
+    auto band = [](double s, double pos, double h, double w) { return h / (1 + std::pow((s - pos) / w, 2)); };
+    for (double s = -50; s <= 12000; s += 3) {
+        sp.shift.push_back(s);
+        sp.intensity.push_back(200 + band(s, 20, 60000, 15) + band(s, 890, 5000, 6) + band(s, 1450, 2000, 8) +
+                               band(s, 6000, 40000, 10) + band(s, 9000, 30000, 12) + noise(rng));
+    }
+    m->addSpectrum(sp);
+    m->flushRedraw();
+    QVERIFY(!m->lastPeaks().empty());
+    bool has890 = false;
+    for (double p : m->lastPeaks()) {
+        QVERIFY2(p >= MeasurePage::kPeakMin && p <= MeasurePage::kUsefulMax, qPrintable(QString::number(p)));
+        has890 = has890 || std::abs(p - 890) < 3;
+    }
+    QVERIFY(has890);
+    QVERIFY2(std::abs(m->bandBox()->value() - 890) <= 3, qPrintable(QString::number(m->bandBox()->value())));
+    // also directly on the raw spectrum (junk peaks are taller than everything in the useful range)
+    QVERIFY(!MeasurePage::pickPeaks(sp.shift, sp.intensity).empty());
+    for (double p : MeasurePage::pickPeaks(sp.shift, sp.intensity))
+        QVERIFY(p >= MeasurePage::kPeakMin && p <= MeasurePage::kUsefulMax);
+    m->clearAll();
+}
+
+void GuiTestMainWindow::settingsFitWithoutScrolling() {
+    MeasurePage* m = m_win->measurePage();
+    QVERIFY(!m->processingToggle()->isChecked());   // Processing collapsed by default
+    QVERIFY(!m->processingBody()->isVisible());
+    m->processingToggle()->click();
+    QVERIFY(m->processingBody()->isVisible());
+    m->processingToggle()->click();
+    QVERIFY(!m->processingBody()->isVisible());
+    const QSize old = m_win->size();
+    m_win->resize(1920, 1050);                      // 1080p at 100 % (minus the task bar)
+    QTRY_COMPARE(m_win->size(), QSize(1920, 1050));
+    QApplication::processEvents();
+    QVERIFY(!m->settingsScrollArea()->verticalScrollBar()->isVisible());
+    m_win->resize(old);
+}
+
+void GuiTestMainWindow::shutDownInstrument() {
+    QVERIFY(m_win->shutDownAction());
+    QTRY_VERIFY(m_win->shutDownAction()->isEnabled());   // connected (simulator)
+    QVERIFY(m_win->statusStrip()->instrumentTile()->actions().contains(m_win->shutDownAction()));
+    MeasurePage* m = m_win->measurePage();
+    // a running series is stopped first
+    m->countBox()->setValue(100);
+    m->intervalBox()->setValue(10);
+    m->startSeries();
+    QVERIFY(m_ctl->isSeriesRunning());
+    m_win->shutDownAction()->trigger();             // no question (dialogs off)
+    QTRY_VERIFY_WITH_TIMEOUT(log().contains(QStringLiteral("Instrument shut down")), 10000);
+    QVERIFY(!m_ctl->isBusy());
+    QVERIFY(!m_ctl->instrument());
+    QCOMPARE(m_ctl->connection(), Controller::Connection::NotFound);
+    QTRY_VERIFY(!m_win->statusStrip()->instrumentTile()->mainText().contains(QStringLiteral("SIMULATOR")));
+    QVERIFY(!m->measureButton()->isEnabled());
+    QVERIFY(!m_win->shutDownAction()->isEnabled());
+    // reconnect for the following test
+    QSignalSpy connected(m_ctl, &Controller::connected);
+    m_win->connectInstrument(true);
+    QVERIFY(connected.wait(10000));
+    m_ctl->simControls()->pressArm();
+    QTRY_VERIFY(m_win->shutDownAction()->isEnabled());
 }
 
 void GuiTestMainWindow::closePolicySetting() {

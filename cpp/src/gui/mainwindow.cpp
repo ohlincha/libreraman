@@ -95,7 +95,10 @@ MainWindow::MainWindow(Controller* ctl, QWidget* parent) : QMainWindow(parent), 
 
     m_log = new QPlainTextEdit;
     m_log->setReadOnly(true);
-    m_log->setMaximumHeight(70);
+    // compact on low screens (1080p at 125 %, laptops): the Measure page needs the height
+    const QScreen* scr0 = QGuiApplication::primaryScreen();
+    const bool low = scr0 && scr0->availableGeometry().height() < 1000;
+    m_log->setMaximumHeight(low ? 46 : 64);
     m_log->setMaximumBlockCount(5000);
     QFont mono = QFontDatabase::systemFont(QFontDatabase::FixedFont);
     mono.setPointSize(9);
@@ -121,6 +124,86 @@ MainWindow::MainWindow(Controller* ctl, QWidget* parent) : QMainWindow(parent), 
     connect(ctl, &Controller::spectrum, this, &MainWindow::onSpectrum);
     connect(ctl, &Controller::connected, this, &MainWindow::onConnected);
     connect(ctl, &Controller::connectFailed, this, &MainWindow::onConnectFailed);
+    connect(m_measure, &MeasurePage::addToLibraryRequested, this, &MainWindow::addToLibrary);
+    // the instrument tile's context menu: Reconnect, Shut down
+    Tile* inst = m_strip->instrumentTile();
+    inst->setContextMenuPolicy(Qt::ActionsContextMenu);
+    auto* reconnect = new QAction(QStringLiteral("Reconnect"), inst);
+    connect(reconnect, &QAction::triggered, this, [this] { connectInstrument(false); });
+    inst->addAction(reconnect);
+    inst->addAction(m_shutDownAction);
+}
+
+bool MainWindow::addToLibrary(const lr::Spectrum& sp) {
+    Page* lib = page(QStringLiteral("Library"));
+    if (!lib) {
+        addLog(QStringLiteral("Add to library: no Library area"));
+        return false;
+    }
+    const bool ok = lib->addToLibrary(sp);
+    if (ok)
+        addLog(QStringLiteral("Added %1 to the library").arg(spectrumDisplayName(sp)));
+    return ok;
+}
+
+void MainWindow::raiseWindow() {
+    if (isMinimized())
+        showNormal();
+    else
+        show();
+    raise();
+    activateWindow();
+}
+
+void MainWindow::shutDownInstrument() {
+    if (m_ctl->connection() != Controller::Connection::Connected || !m_ctl->instrument())
+        return;
+    const bool sim = m_ctl->simulated();
+    if (dialogsEnabled()) {
+        const QString text =
+            m_ctl->isBusy()
+                ? QStringLiteral("<b>A measurement is running.</b><p>Stop it and switch the Raman spectrometer off?</p>")
+                : QStringLiteral("<b>Switch the Raman spectrometer off?</b>");
+        QMessageBox q(this);
+        q.setWindowTitle(QStringLiteral("Shut down instrument"));
+        q.setIcon(QMessageBox::Question);
+        q.setText(text);
+        q.setInformativeText(sim ? QStringLiteral("The simulator is disconnected.")
+                                 : QStringLiteral("The laser goes off and the instrument switches off (as its Off "
+                                                  "button). To measure again it must be switched on and initialised "
+                                                  "(about a minute)."));
+        QPushButton* down = q.addButton(QStringLiteral("Shut down"), QMessageBox::AcceptRole);
+        q.addButton(QMessageBox::Cancel);
+        q.setDefaultButton(QMessageBox::Cancel);
+        q.exec();
+        if (q.clickedButton() != down)
+            return;
+    }
+    if (!m_ctl->isBusy()) {
+        finishShutDown();
+        return;
+    }
+    addLog(QStringLiteral("Stopping the measurement…"));
+    auto conn = std::make_shared<QMetaObject::Connection>();
+    *conn = connect(m_ctl, &Controller::busyChanged, this, [this, conn](bool busy) {
+        if (busy)
+            return;
+        disconnect(*conn);
+        finishShutDown();
+    });
+    m_ctl->stop();
+}
+
+void MainWindow::finishShutDown() {
+    if (!m_ctl->instrument())
+        return;
+    const bool sim = m_ctl->simulated();
+    m_measure->setReady(false);
+    m_info = {};
+    m_ctl->disconnectInstrument(!sim);                // real instrument: vendor power-down sequence
+    addLog(sim ? QStringLiteral("Instrument shut down (simulator disconnected)") : QStringLiteral("Instrument shut down"));
+    if (m_shutDownAction)
+        m_shutDownAction->setEnabled(false);
 }
 
 QWidget* MainWindow::buildSimulatorBar() {
@@ -168,6 +251,9 @@ void MainWindow::buildMenus() {
     m = menuBar()->addMenu(QStringLiteral("&Instrument"));
     m->addAction(QStringLiteral("Use simulator"), this, [this] { connectInstrument(true); });
     m->addAction(QStringLiteral("Reconnect"), this, [this] { connectInstrument(false); });
+    m_shutDownAction = m->addAction(QStringLiteral("Shut down instrument…"), this, &MainWindow::shutDownInstrument);
+    m_shutDownAction->setToolTip(QStringLiteral("Laser off, then switch the instrument off (vendor shutdown)"));
+    m_shutDownAction->setEnabled(false);
     m->addSeparator();
     QMenu* onClose = m->addMenu(QStringLiteral("When closing LibreRamen"));
     auto* grp = new QActionGroup(onClose);
@@ -219,7 +305,8 @@ void MainWindow::fitToScreen() {
         return;
     }
     const QRect a = scr->availableGeometry();
-    const int w = std::min(1440, int(a.width() * 0.92)), h = std::min(900, int(a.height() * 0.92));
+    // large enough for the Measure page without scrolling (1080p at 100 % and 125 %, 1920×1200, Mac laptops)
+    const int w = std::min(1680, int(a.width() * 0.94)), h = std::min(1000, int(a.height() * 0.94));
     resize(w, h);
     move(a.x() + (a.width() - w) / 2, a.y() + (a.height() - h) / 2);
 }
@@ -249,28 +336,39 @@ bool MainWindow::startApi(int port, const QString& apiFile) {
     const int p = port >= 0 ? port : QSettings().value(QLatin1String(kApiPortKey), int(lr::api::kDefaultPort)).toInt();
     QString err;
     const bool ok = m_api->start(quint16(p), apiFile.isEmpty() ? lr::api::defaultApiFile() : apiFile, &err);
+    m_apiError = ok ? QString() : err;
     if (!ok)
         addLog(QStringLiteral("Local API not started (port %1): %2").arg(p).arg(err));
+    updateRemoteTile();
     if (m_apiAction)
         m_apiAction->setChecked(ok);
     return ok;
 }
 
 void MainWindow::stopApi() {
+    m_apiError.clear();
     if (m_api->isRunning()) {
         m_api->stop();
         addLog(QStringLiteral("Local API stopped"));
     }
     if (m_apiAction)
         m_apiAction->setChecked(false);
+    updateRemoteTile();
 }
 
 void MainWindow::updateRemoteTile() {
-    if (!m_api->isRunning())
+    if (!m_api->isRunning() && !m_apiError.isEmpty()) {     // e.g. another LibreRamen owns the port
+        m_strip->setRemote(StatusStrip::Remote::Off, QStringLiteral("not started"));
+        m_strip->remoteTile()->setToolTip(QStringLiteral("Local API not started: ") + m_apiError);
+    } else if (!m_api->isRunning()) {
         m_strip->setRemote(StatusStrip::Remote::Off, QStringLiteral("local API off"));
-    else
+        m_strip->remoteTile()->setToolTip({});
+    }
+    if (m_api->isRunning()) {
+        m_strip->remoteTile()->setToolTip({});
         m_strip->setRemote(m_api->remoteControl() ? StatusStrip::Remote::Control : StatusStrip::Remote::ReadOnly,
                            QStringLiteral("127.0.0.1:%1").arg(m_api->port()));
+    }
     if (m_remoteAction && m_remoteAction->isChecked() != m_api->remoteControl())
         m_remoteAction->setChecked(m_api->remoteControl());
 }
@@ -294,6 +392,8 @@ void MainWindow::onStatus(const StatusView& st) {
         m_measure->setReady(false);
     updateTitle(st.laserOn);
     m_simBar->setVisible(st.simulated);
+    if (m_shutDownAction)
+        m_shutDownAction->setEnabled(st.connection == QLatin1String("connected") && m_ctl->instrument());
 }
 
 void MainWindow::onConnected(const InstrumentInfo& info) {

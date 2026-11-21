@@ -27,6 +27,7 @@ class QMenu;
 class QProgressBar;
 class QPushButton;
 class QRadioButton;
+class QScrollArea;
 class QSlider;
 class QSpinBox;
 class QTimeEdit;
@@ -46,6 +47,13 @@ public:
     explicit MeasurePage(Controller* ctl, QWidget* parent = nullptr);
     static constexpr int kMinRedrawMs = 150;          // plots redrawn at most ~7 times per second
     static constexpr int kFaded = 4;                  // previous spectra drawn faded behind the newest
+    // Useful range of a spectrum for peak picking, the peaks menu and the automatic trend band: the
+    // region below kUsefulMin (laser line, edge filter) and above kUsefulMax (end of the detector range;
+    // calibration extrapolation produces junk there) is ignored.
+    static constexpr double kUsefulMin = 100, kUsefulMax = 4000;
+    static constexpr double kPeakMin = 150;           // peaks are listed from here (Python pick(xmin=150))
+    // Peak positions (at most 12, ascending) of a processed spectrum inside the useful range.
+    static lr::Vec pickPeaks(const lr::Vec& x, const lr::Vec& y);
 
     // ---- settings as entered
     MeasureSettings measureSettings() const;          // single spectrum ("once" background -> "each")
@@ -75,6 +83,12 @@ public:
     PlotWidget* spectrumPlot() const { return m_plot; }
     PlotWidget* trendPlot() const { return m_tplot; }
     QSpinBox* bandBox() const { return m_band; }
+    QToolButton* moreButton() const { return m_moreBtn; }   // "⋯" menu of the Last spectrum panel
+    QMenu* moreMenu() const { return m_moreMenu; }
+    QLabel* signalLabel() const { return m_fillPct; }         // "37 %" next to the Signal bar
+    QToolButton* processingToggle() const { return m_procToggle; }
+    QWidget* processingBody() const { return m_procBody; }
+    QScrollArea* settingsScrollArea() const { return m_settingsScroll; }
     QComboBox* trendModeBox() const { return m_trendMode; }
     const std::deque<lr::Spectrum>& history() const { return m_history; }
     const std::vector<std::pair<double, double>>& trend() const { return m_trend; }
@@ -82,6 +96,10 @@ public:
     QString seriesText() const;                       // "Spectrum" row of the Series box
 
     void addSpectrum(const lr::Spectrum& sp) override;   // Python add_spectrum
+
+signals:
+    // "Add to library…" (Last spectrum ⋯ menu, plot menu): handled by MainWindow::addToLibrary.
+    void addToLibraryRequested(const lr::Spectrum& sp);
 
 public slots:
     void measureOnce();
@@ -94,6 +112,10 @@ public slots:
     void redrawTrend();
     void recomputeTrend();
     void flushRedraw();                               // a pending (throttled) redraw now
+    // "Clear": plot, earlier traces, trend, Series and Last spectrum panels (files and other pages are not
+    // touched). The next spectrum opens the default view again.
+    void clearAll();
+    void addLastToLibrary();                          // emits addToLibraryRequested(newest spectrum)
     int redrawCount() const { return m_redraws; }     // tests: plot updates so far
 
 private:
@@ -104,6 +126,7 @@ private:
     void browse();
     void fillPeakMenu();
     void spectrumMenu(const QPointF& data, const QPoint& globalPos);
+    void fillMoreMenu(QMenu* m);                      // Clear, Add to library… (⋯ and plot menus)
     double bandValue(const lr::Vec& x, const lr::Vec& y) const;
     double trendTime(const lr::Spectrum& sp) const;
     void resizeEvent(QResizeEvent* e) override;
@@ -128,6 +151,7 @@ private:
     std::vector<std::pair<double, double>> m_trend;   // (elapsed s, band value)
     lr::Vec m_lastPeaks;
     bool m_bandAuto = true;
+    bool m_viewPending = true;                        // next spectrum: default view 150-3500 cm-1, auto y
     bool m_ready = false, m_busy = false;
     bool m_sync = false;
     QString m_folder;
@@ -147,6 +171,12 @@ private:
     QComboBox* m_trendMode;
     PlotWidget* m_tplot;
     QProgressBar* m_fill;
+    QLabel* m_fillPct;
+    QToolButton* m_moreBtn;
+    QMenu* m_moreMenu;
+    QToolButton* m_procToggle;
+    QWidget* m_procBody;
+    QScrollArea* m_settingsScroll;
     QLabel *m_lblDark, *m_lblSat, *m_lblTime, *m_lblSet, *m_lblPeaks;
 
     QPushButton *m_btnOnce, *m_btnSeries, *m_btnStop, *m_btnPause;

@@ -91,19 +91,6 @@ std::size_t nearestIndex(const Vec& x, double v) {    // np.argmin(np.abs(x - v)
     return best;
 }
 
-Vec pickPositions(const Vec& x, const Vec& y) {       // [p.position for p in pick(x, y, snr=8, xmin=150)][:12]
-    Vec out;
-    try {
-        for (const auto& p : lr::peaks::pick(x, y, 8.0, 2.0, false, 150.0)) {
-            if (out.size() >= 12)
-                break;
-            out.push_back(p.position);
-        }
-    } catch (const std::exception&) {
-    }
-    return out;
-}
-
 std::pair<Vec, Vec> processSafe(const Vec& x, const Vec& y, const lr::processing::Settings& s) {
     try {
         return lr::processing::process(x, y, s);
@@ -116,13 +103,37 @@ QString cm1(double v) { return QStringLiteral("%1 cm⁻¹").arg(v, 0, 'f', 0); }
 
 }  // namespace
 
+// [p.position for p in pick(x, y, snr=8, xmin=150)][:12], on the useful range only (the noise level is then
+// also estimated there, not on the junk beyond the detector range).
+Vec MeasurePage::pickPeaks(const Vec& x, const Vec& y) {
+    Vec xs, ys;
+    const std::size_t n = std::min(x.size(), y.size());
+    for (std::size_t i = 0; i < n; ++i)
+        if (x[i] >= kUsefulMin && x[i] <= kUsefulMax && std::isfinite(y[i])) {
+            xs.push_back(x[i]);
+            ys.push_back(y[i]);
+        }
+    Vec out;
+    if (xs.size() < 16)
+        return out;
+    try {
+        for (const auto& p : lr::peaks::pick(xs, ys, 8.0, 2.0, false, kPeakMin, kUsefulMax)) {
+            if (out.size() >= 12)
+                break;
+            out.push_back(p.position);
+        }
+    } catch (const std::exception&) {
+    }
+    return out;
+}
+
 // ============================================================================================ construction
 MeasurePage::MeasurePage(Controller* ctl, QWidget* parent) : Page(parent), m_ctl(ctl) {
     setController(ctl);
     auto* grid = new QGridLayout(this);
-    grid->setContentsMargins(8, 4, 8, 8);
-    grid->setHorizontalSpacing(14);
-    grid->setVerticalSpacing(8);
+    grid->setContentsMargins(6, 2, 6, 4);
+    grid->setHorizontalSpacing(10);
+    grid->setVerticalSpacing(4);
 
     // live spectrum
     m_plot = new PlotWidget;
@@ -209,11 +220,19 @@ MeasurePage::MeasurePage(Controller* ctl, QWidget* parent) : Page(parent), m_ctl
     auto* db = box(QStringLiteral("Detector"));
     f = form(db);
     m_fill = new QProgressBar;
-    m_fill->setFormat(QStringLiteral("%p % of maximum"));
+    m_fill->setTextVisible(false);                    // (not drawn by every style, e.g. macOS: own label)
     m_fill->setValue(0);
+    m_fill->setMaximumHeight(16);
+    m_fillPct = new QLabel(QStringLiteral("—"));
+    m_fillPct->setMinimumWidth(QFontMetrics(m_fillPct->font()).horizontalAdvance(QStringLiteral("100 %  ")));
+    m_fillPct->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    m_fillPct->setToolTip(QStringLiteral("Highest raw signal in % of the detector maximum (65535 counts)"));
+    auto* fillRow = new QHBoxLayout;
+    fillRow->addWidget(m_fill, 1);
+    fillRow->addWidget(m_fillPct);
     m_lblDark = new QLabel(QStringLiteral("—"));
     m_lblSat = new QLabel(QStringLiteral("—"));
-    f->addRow(QStringLiteral("Signal"), m_fill);
+    f->addRow(QStringLiteral("Signal"), fillRow);
     f->addRow(QStringLiteral("Dark level"), m_lblDark);
     f->addRow(QStringLiteral("Saturation"), m_lblSat);
     grid->addWidget(db, 2, 0);
@@ -223,7 +242,25 @@ MeasurePage::MeasurePage(Controller* ctl, QWidget* parent) : Page(parent), m_ctl
     m_lblSet = new QLabel(QStringLiteral("—"));
     m_lblPeaks = new QLabel(QStringLiteral("—"));
     m_lblPeaks->setWordWrap(true);
-    f->addRow(QStringLiteral("Time"), m_lblTime);
+    m_moreBtn = new QToolButton;
+    m_moreBtn->setText(QStringLiteral("⋯"));
+    m_moreBtn->setToolTip(QStringLiteral("Add to library…, Clear (also in the plot's right-click menu)"));
+    m_moreBtn->setPopupMode(QToolButton::InstantPopup);
+    m_moreBtn->setAutoRaise(true);
+    m_moreBtn->setStyleSheet(QStringLiteral("QToolButton { font-size: 13pt; font-weight: bold; padding: 0 6px; }"
+                                            " QToolButton::menu-indicator { image: none; width: 0px; }"));
+    m_moreMenu = new QMenu(m_moreBtn);
+    m_moreBtn->setMenu(m_moreMenu);
+    connect(m_moreMenu, &QMenu::aboutToShow, this, [this] {
+        m_moreMenu->clear();
+        fillMoreMenu(m_moreMenu);
+    });
+    fillMoreMenu(m_moreMenu);
+    auto* timeRow = new QHBoxLayout;
+    timeRow->setContentsMargins(0, 0, 0, 0);
+    timeRow->addWidget(m_lblTime, 1);
+    timeRow->addWidget(m_moreBtn);
+    f->addRow(QStringLiteral("Time"), timeRow);
     f->addRow(QStringLiteral("Settings"), m_lblSet);
     f->addRow(QStringLiteral("Peaks (cm⁻¹)"), m_lblPeaks);
     grid->addWidget(lb, 2, 1, 1, 2);
@@ -256,6 +293,7 @@ QWidget* MeasurePage::buildSettingsPanel() {
     outer->setFixedWidth(380);
     auto* ov = new QVBoxLayout(outer);
     ov->setContentsMargins(0, 0, 0, 0);
+    ov->setSpacing(4);
     m_btnOnce = new QPushButton(QStringLiteral("▶  MEASURE"));
     m_btnSeries = new QPushButton(QStringLiteral("⟳  START SERIES"));
     m_btnStop = new QPushButton(QStringLiteral("■  Stop"));
@@ -263,9 +301,9 @@ QWidget* MeasurePage::buildSettingsPanel() {
     m_btnOnce->setStyleSheet(theme::bigButtonStyle(theme::Action::Measure));
     m_btnSeries->setStyleSheet(theme::bigButtonStyle(theme::Action::Series));
     for (QPushButton* b : {m_btnOnce, m_btnSeries})
-        b->setMinimumHeight(54);
+        b->setMinimumHeight(46);
     for (QPushButton* b : {m_btnStop, m_btnPause})
-        b->setMinimumHeight(30);
+        b->setMinimumHeight(28);
     m_btnOnce->setToolTip(QStringLiteral("<p>Take one spectrum with the settings below (laser on only while "
                                          "measuring)</p>"));
     m_btnSeries->setToolTip(QStringLiteral("Start the time series set up below"));
@@ -291,7 +329,7 @@ QWidget* MeasurePage::buildSettingsPanel() {
     stopRow->addWidget(m_btnPause, 1);
     ov->addLayout(stopRow);
 
-    auto* scroll = new QScrollArea;
+    auto* scroll = m_settingsScroll = new QScrollArea;
     scroll->setWidgetResizable(true);
     scroll->setFrameShape(QFrame::NoFrame);
     scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -300,6 +338,7 @@ QWidget* MeasurePage::buildSettingsPanel() {
     ov->addWidget(scroll, 1);
     auto* v = new QVBoxLayout(w);
     v->setContentsMargins(0, 0, 8, 0);
+    v->setSpacing(2);
 
     // ---- sample
     QGroupBox* s = box(QStringLiteral("Sample"));
@@ -425,8 +464,25 @@ QWidget* MeasurePage::buildSettingsPanel() {
     connect(m_start, &QComboBox::currentIndexChanged, this, &MeasurePage::updateEnabled);
     v->addWidget(s);
 
-    // ---- processing
-    s = box(QStringLiteral("Processing"));
+    // ---- processing (collapsed by default: the defaults suit most measurements, and the column must fit
+    // low screens without scrolling)
+    m_procToggle = new QToolButton;
+    m_procToggle->setText(QStringLiteral("Processing"));
+    m_procToggle->setCheckable(true);
+    m_procToggle->setChecked(false);
+    m_procToggle->setArrowType(Qt::RightArrow);
+    m_procToggle->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    m_procToggle->setAutoRaise(true);
+    m_procToggle->setStyleSheet(QStringLiteral("QToolButton { font-weight: bold; border: none; }"));
+    m_procToggle->setToolTip(QStringLiteral("Baseline, cosmic rays, smoothing, normalisation, what is shown"));
+    v->addWidget(m_procToggle);
+    s = box(QString());
+    m_procBody = s;
+    s->setVisible(false);
+    connect(m_procToggle, &QToolButton::toggled, this, [this](bool on) {
+        m_procToggle->setArrowType(on ? Qt::DownArrow : Qt::RightArrow);
+        m_procBody->setVisible(on);
+    });
     fl = form(s);
     m_baseline = new QComboBox;
     int snip = 0;
@@ -479,6 +535,12 @@ QWidget* MeasurePage::buildSettingsPanel() {
     fl->addRow(QStringLiteral("Show"), shrow);
     v->addWidget(s);
 
+    for (QGroupBox* gb : w->findChildren<QGroupBox*>()) {   // compact boxes
+        if (QLayout* l = gb->layout()) {
+            l->setContentsMargins(8, 4, 8, 6);
+            l->setSpacing(4);
+        }
+    }
     v->addStretch();
     for (QComboBox* cb : w->findChildren<QComboBox*>()) {   // long entries must not force the panel wider
         cb->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
@@ -701,7 +763,7 @@ void MeasurePage::addSpectrum(const lr::Spectrum& sp) {
         m_processed.pop_front();
     }
     const Vec& y = m_processed.back().y;
-    m_lastPeaks = pickPositions(x, y);
+    m_lastPeaks = pickPeaks(x, y);
     if (first && m_bandAuto && !m_lastPeaks.empty()) {   // follow the tallest band by default
         double tall = m_lastPeaks.front(), best = -std::numeric_limits<double>::infinity();
         for (double p : m_lastPeaks) {
@@ -717,7 +779,9 @@ void MeasurePage::addSpectrum(const lr::Spectrum& sp) {
     }
     const Vec& raw = sp.signal.empty() ? sp.intensity : sp.signal;
     const double rawMax = raw.empty() ? 0.0 : *std::max_element(raw.begin(), raw.end());
-    m_fill->setValue(std::clamp(int(100 * rawMax / 65535), 0, 100));
+    const int pct = std::clamp(int(100 * rawMax / 65535), 0, 100);
+    m_fill->setValue(pct);
+    m_fillPct->setText(QStringLiteral("%1 %").arg(pct));
     double bgMean = 0;
     bool bgAny = false;
     for (double b : sp.background) {
@@ -824,7 +888,56 @@ void MeasurePage::spectrumMenu(const QPointF& data, const QPoint& globalPos) {
     m.addAction(QStringLiteral("Use %1 for the trend").arg(cm1(x)), this, [this, x] { setBand(x); });
     m.addSeparator();
     m.addAction(QStringLiteral("Full view"), m_plot, &PlotWidget::autoRange);
+    m.addSeparator();
+    fillMoreMenu(&m);
     m.exec(globalPos);
+}
+
+void MeasurePage::fillMoreMenu(QMenu* m) {
+    QAction* lib = m->addAction(QStringLiteral("Add to library…"), this, &MeasurePage::addLastToLibrary);
+    lib->setEnabled(!m_history.empty());
+    lib->setToolTip(QStringLiteral("Store the last spectrum in your spectral library (Library area)"));
+    QAction* clr = m->addAction(QStringLiteral("Clear"), this, &MeasurePage::clearAll);
+    clr->setEnabled(!m_history.empty() || !m_trend.empty());
+    clr->setToolTip(QStringLiteral("Clear the plot, the trend and the panels below (saved files are kept)"));
+}
+
+void MeasurePage::addLastToLibrary() {
+    if (!m_history.empty())
+        emit addToLibraryRequested(m_history.back());
+}
+
+void MeasurePage::clearAll() {
+    m_history.clear();
+    m_processed.clear();
+    m_trend.clear();
+    m_lastPeaks.clear();
+    m_bandAuto = true;                                 // the next spectrum picks its tallest band again
+    m_viewPending = true;
+    m_redrawPending = false;
+    m_redrawTimer->stop();
+    m_curve->clearData();
+    m_curve->setName({});
+    m_baseCurve->clearData();
+    m_baseCurve->setName({});
+    for (Curve* c : m_oldCurves) {
+        c->clearData();
+        c->setName({});
+    }
+    m_peakLabels->setLabels({});
+    for (QLabel* l : {m_lblN, m_lblNext, m_lblElapsed, m_lblEnd, m_lblDark, m_lblSat, m_lblTime, m_lblSet,
+                      m_lblPeaks, m_fillPct})
+        l->setText(QStringLiteral("—"));
+    m_bar->setValue(0);
+    m_fill->setValue(0);
+    m_plot->setXRange(150, 3500);
+    m_plot->setAutoY(true);
+    m_tplot->setAutoX(true);
+    m_tplot->setAutoY(true);
+    m_trendCurve = nullptr;
+    m_tplot->clear();
+    redrawTrend();
+    m_plot->update();
 }
 
 void MeasurePage::redraw() {
@@ -887,13 +1000,18 @@ void MeasurePage::redraw() {
         m_oldCurves[std::size_t(kFaded) - 1]->setName(
             tr("earlier %1 (%2)").arg(sample.isEmpty() ? tr("spectra") : sample).arg(same));
     if (!fresh)
-        m_lastPeaks = pickPositions(x, y);
+        m_lastPeaks = pickPeaks(x, y);
     const Vec& peaks = m_lastPeaks;
     QStringList txt;
     for (double p : peaks)
         txt << QString::number(p, 'f', 0);
     m_lblPeaks->setText(txt.isEmpty() ? QStringLiteral("—") : txt.join(QStringLiteral("  ")));
     m_peakLabels->setPeaks(peaks, x, shown);
+    if (m_viewPending) {                               // first spectrum (after connecting, Clear): default view
+        m_viewPending = false;
+        m_plot->setXRange(150, 3500);
+        m_plot->setAutoY(true);
+    }
     m_plot->rescaleY();
 }
 

@@ -54,6 +54,7 @@ private slots:
     void rubberBand();
     void draggableLineAndRegion();
     void labelStaggering();
+    void legendPlacement();
     void exportPngSvg();
     void heatMap();
     void decimationKeepsMinMax();
@@ -340,6 +341,49 @@ void GuiTestPlot::draggableLineAndRegion() {
     QTest::mouseRelease(&w, Qt::LeftButton, Qt::NoModifier, m1);
     QVERIFY(std::abs(r->region().lo - 120) < 3);
     QVERIFY(std::abs(r->region().span() - 150) < 3);
+}
+
+// Automatic legend corner: where it hides the fewest curve segments and peak labels.
+void GuiTestPlot::legendPlacement() {
+    auto make = [](double peakAt, PlotWidget& w) {
+        Vec x, y;
+        for (int i = 0; i < 2048; ++i) {
+            const double s = 100 + i * 3400.0 / 2047;
+            x.push_back(s);
+            y.push_back(50 + 10000 * std::exp(-std::pow((s - peakAt) / 15, 2)) + 3000 * std::exp(-std::pow((s - 1800) / 20, 2)));
+        }
+        w.resize(640, 400);
+        w.setHeadroom(0.18);
+        w.addCurve(x, y, QPen(Qt::blue), QStringLiteral("a rather long sample name  12:34:56"));
+        w.addPeakLabels()->setPeaks({peakAt, 1800}, x, y);
+        w.setLegendVisible(true);
+    };
+    {   // tall peak at the right: the legend moves to the top left
+        PlotWidget w;
+        make(3300, w);
+        const QRectF r = w.legendRect();
+        QVERIFY(!r.isNull());
+        QVERIFY(r.center().x() < w.plotArea().center().x());
+        QVERIFY(r.center().y() < w.plotArea().center().y());
+        // and does not cover the peak's label
+        const QPointF peak = w.mapFromData({3300, 10050});
+        QVERIFY(!r.contains(QPointF(peak.x(), peak.y() - 8)));
+    }
+    {   // tall peak at the left: top right (the default corner)
+        PlotWidget w;
+        make(300, w);
+        const QRectF r = w.legendRect();
+        QVERIFY(r.center().x() > w.plotArea().center().x());
+        QVERIFY(r.center().y() < w.plotArea().center().y());
+        // a fixed corner is respected
+        w.setLegendPosition(LegendPosition::BottomLeft);
+        QCOMPARE(w.legendPosition(), LegendPosition::BottomLeft);
+        const QRectF b = w.legendRect();
+        QVERIFY(b.center().x() < w.plotArea().center().x());
+        QVERIFY(b.center().y() > w.plotArea().center().y());
+        w.setLegendVisible(false);
+        QVERIFY(w.legendRect().isNull());
+    }
 }
 
 void GuiTestPlot::labelStaggering() {

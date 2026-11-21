@@ -433,6 +433,9 @@ private:
 // --------------------------------------------------------------------------------------------- widget
 enum class Axis { Bottom, Left };
 enum class WheelMode { Spectrum, ZoomX };
+// Legend corner; Auto (default): the corner where the legend covers the fewest curve segments and peak
+// labels (re-chosen on every paint, with a little hysteresis so that it does not jump on small changes).
+enum class LegendPosition { Auto, TopRight, TopLeft, BottomRight, BottomLeft };
 
 class PlotWidget : public QWidget {
     Q_OBJECT
@@ -467,6 +470,10 @@ public:
     void setXInverted(bool on);
     bool xInverted() const { return m_invertX; }
     void setLegendVisible(bool on);
+    void setLegendPosition(LegendPosition pos);
+    LegendPosition legendPosition() const { return m_legendPos; }
+    // Where the legend is drawn for the current geometry (widget coordinates); null if there is none.
+    QRectF legendRect() const;
     void setHoverReadout(bool on);                  // "x, y" of the cursor in the plot corner
     void setReadoutFormatter(std::function<QString(const QPointF&)> f);
     static QString navigationHelp(WheelMode mode = WheelMode::Spectrum);   // tooltip text
@@ -541,7 +548,10 @@ private:
     Bounds dataXBounds() const;
     std::vector<PlotItem*> sortedItems() const;
     HeatMapItem* colorBarItem() const;
-    void drawLegend(QPainter& p, const QRectF& area);
+    struct LegendLayout;
+    LegendLayout legendLayout(const QFontMetricsF& fm, const PlotTransform& t) const;
+    double legendOverlap(const QRectF& box, const PlotTransform& t, const QFontMetricsF& fm) const;
+    void drawLegend(QPainter& p, const PlotTransform& t);
     void drawColorBar(QPainter& p, const Layout& L, HeatMapItem* hm);
     QString readoutText(const QPointF& d) const;
     friend class PlotItem;
@@ -553,6 +563,8 @@ private:
     bool m_gridX = true, m_gridY = true;
     bool m_invertX = false;
     bool m_legend = false;
+    LegendPosition m_legendPos = LegendPosition::Auto;
+    mutable LegendPosition m_autoCorner = LegendPosition::TopRight;   // last automatic choice
     bool m_readout = true;
     std::function<QString(const QPointF&)> m_readoutFmt;
     WheelMode m_wheelMode = WheelMode::ZoomX;          // wheel: x zoom (y follows); Ctrl: y

@@ -5,7 +5,11 @@
 //   LibreRamen --selftest        GUI + simulator self-test (offscreen unless QT_QPA_PLATFORM is set); exit 0 = OK
 //   LibreRamen --watchdog --port P --parent PID     laser watchdog process (started by the program itself)
 // --screenshot saves the window after 15 s and quits (with --sim a spectrum of CCl4 is measured first and
-// saved in <temp>/libreramen-screenshot; --demo series: a series instead).
+// saved in <temp>/libreramen-screenshot; --demo series: a series instead; --window-size WxH: window size).
+//
+// Single instance: a second LibreRamen of the same user asks the running one to come to the front and exits
+// (per-user QLocalServer "libreramen-gui-<user>"). Not for --sim, --screenshot and --selftest, which may run
+// next to the real program (they do not get the local API port then; the REMOTE tile says why).
 #include "controller.h"
 #include "decimalpoint.h"
 #include "icon.h"
@@ -23,8 +27,11 @@
 #include <QDoubleSpinBox>
 #include <QFileInfo>
 #include <QLineEdit>
+#include <QLocalServer>
+#include <QLocalSocket>
 #include <QSettings>
 #include <QSpinBox>
+#include <QRegularExpression>
 #include <QTimer>
 
 #include <cmath>
@@ -92,6 +99,27 @@ int selftest(QApplication& app) {
     return ok ? 0 : 1;
 }
 
+QString instanceKey() {
+    QString user = qEnvironmentVariable("USER");
+    if (user.isEmpty())
+        user = qEnvironmentVariable("USERNAME");
+    user.replace(QRegularExpression(QStringLiteral("[^A-Za-z0-9_.-]")), QStringLiteral("_"));
+    return QStringLiteral("libreramen-gui-") + (user.isEmpty() ? QStringLiteral("user") : user);
+}
+
+// True if another instance was found (and asked to show its window).
+bool raiseRunningInstance(const QString& key) {
+    QLocalSocket s;
+    s.connectToServer(key);
+    if (!s.waitForConnected(1000))
+        return false;
+    s.write("raise\n");
+    s.waitForBytesWritten(1000);
+    s.waitForReadyRead(1000);                               // "ok" (the first instance answers)
+    s.disconnectFromServer();
+    return true;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -129,12 +157,42 @@ int main(int argc, char** argv) {
     if (!shot.isEmpty())
         setDialogsEnabled(false);
 
+    QLocalServer instanceServer;
+    if (!simulate && shot.isEmpty()) {
+        const QString key = instanceKey();
+        if (raiseRunningInstance(key)) {
+            printLine(QStringLiteral("LibreRamen is already running; its window was brought to the front."));
+            return 0;
+        }
+        QLocalServer::removeServer(key);                    // stale (Unix: after a crash)
+        instanceServer.setSocketOptions(QLocalServer::UserAccessOption);
+        instanceServer.listen(key);
+    }
+
     Splash splash;
     splash.show();
     splash.message(QStringLiteral("Starting…"));
     QApplication::processEvents();
     Controller ctl;
     MainWindow win(&ctl);
+    QObject::connect(&instanceServer, &QLocalServer::newConnection, &win, [&] {
+        while (QLocalSocket* c = instanceServer.nextPendingConnection()) {
+            QObject::connect(c, &QLocalSocket::readyRead, c, [c, &win] {
+                if (c->readAll().contains("raise")) {
+                    win.raiseWindow();
+                    c->write("ok\n");
+                    c->flush();
+                }
+            });
+            QObject::connect(c, &QLocalSocket::disconnected, c, &QObject::deleteLater);
+        }
+    });
+    const QString winSize = argValue(args, QStringLiteral("--window-size"));
+    if (!winSize.isEmpty()) {
+        const QStringList wh = winSize.split(QLatin1Char('x'));
+        if (wh.size() == 2 && wh[0].toInt() > 0 && wh[1].toInt() > 0)
+            win.resize(wh[0].toInt(), wh[1].toInt());
+    }
 
     QObject::connect(&ctl, &Controller::initProgress, &splash, [&](double f) {
         splash.setProgress(f);

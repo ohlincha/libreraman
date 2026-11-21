@@ -201,7 +201,7 @@ void Controller::connectInstrument(bool simulate) {
     });
 }
 
-void Controller::disconnectInstrument() {
+void Controller::disconnectInstrument(bool powerDown) {
     if (m_busy) {
         emit error(QStringLiteral("Busy: stop the current measurement first."));
         return;
@@ -209,7 +209,7 @@ void Controller::disconnectInstrument() {
     stopWatchdog();
     if (m_inst) {
         try {
-            m_inst->close();                           // release the USB devices
+            m_inst->close(powerDown);                  // release the USB devices
         } catch (const std::exception& e) {
             emit log(QStringLiteral("Closing the connection: ") + what(e));
         }

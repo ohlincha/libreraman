@@ -13,6 +13,7 @@ public:
     explicit LibraryPageHost(const PageContext& ctx, QWidget* parent = nullptr);
     void addSpectrum(const lr::Spectrum& sp) override;
     void activated() override;
+    bool addToLibrary(const lr::Spectrum& sp) override;   // asks for name etc. if dialogsEnabled()
     LibraryPage* libraryPage() const { return m_page; }
 
 private:
