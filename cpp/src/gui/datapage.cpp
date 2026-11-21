@@ -217,30 +217,36 @@ void DataPage::build() {
     m_diff->setToolTip(tr("<p>First ticked spectrum minus the second, both processed as shown</p>"));
     connect(m_diff, &QCheckBox::toggled, this, &DataPage::redraw);
     bar->addWidget(m_diff);
-    bar->addSpacing(6);
-    auto* offLabel = new QLabel(tr("offset"));
-    bar->addWidget(offLabel);
+    // stack controls on a second row (the first one is full on narrow windows / macOS)
+    auto* bar2 = new QHBoxLayout;
+    auto* offLabel = new QLabel(tr("Stacked:  offset"));
+    bar2->addWidget(offLabel);
     m_offset = new QSlider(Qt::Horizontal);
     m_offset->setRange(0, 100);
     m_offset->setValue(40);
-    m_offset->setMaximumWidth(100);
+    m_offset->setMinimumWidth(120);
+    m_offset->setMaximumWidth(220);
     m_offset->setToolTip(tr("<p>Vertical offset between stacked spectra</p>"));
     connect(m_offset, &QSlider::valueChanged, this, &DataPage::redraw);
-    bar->addWidget(m_offset);
-    bar->addWidget(new QLabel(tr("angle")));
+    bar2->addWidget(m_offset);
+    bar2->addSpacing(8);
+    bar2->addWidget(new QLabel(tr("angle")));
     m_angle = new QSlider(Qt::Horizontal);
     m_angle->setRange(-60, 60);
     m_angle->setValue(0);
-    m_angle->setMaximumWidth(100);
+    m_angle->setMinimumWidth(120);
+    m_angle->setMaximumWidth(220);
     m_angle->setToolTip(tr("<p>Stacked view: shifts each spectrum sideways for a 3D (waterfall) look; the "
                            "shift follows the zoomed range, so narrow regions can be compared. Double-click "
                            "the slider for 0.</p>"));
     connect(m_angle, &QSlider::valueChanged, this, &DataPage::redraw);
-    bar->addWidget(m_angle);
+    bar2->addWidget(m_angle);
+    bar2->addSpacing(8);
     m_mono = new QCheckBox(tr("one colour"));
     m_mono->setToolTip(tr("<p>Stacked view: draw all spectra in one colour</p>"));
     connect(m_mono, &QCheckBox::toggled, this, &DataPage::redraw);
-    bar->addWidget(m_mono);
+    bar2->addWidget(m_mono);
+    bar2->addStretch();
     bar->addStretch();
     auto* calc = new QPushButton(tr("Calculator…"));
     calc->setToolTip(tr("<p>New spectrum = a·A + b·B + c (scaling, offset, weighted difference)</p>"));
@@ -261,9 +267,11 @@ void DataPage::build() {
     exp->setMenu(m);
     bar->addWidget(exp);
     rv->addLayout(bar);
+    rv->addLayout(bar2);
 
     m_stack = new QStackedWidget;
     m_plot = new PlotWidget;
+    m_plot->setHomeXRange(150, 3500);                   // as the Measure page (zoom out for the full range)
     {   // waterfall: the sideways shift follows the zoomed x range (debounced while the wheel turns)
         auto* t = new QTimer(this);
         t->setSingleShot(true);
@@ -715,7 +723,8 @@ void DataPage::redraw() {
                 const Vec& x0 = data[0].first;
                 range = x0.empty() ? 1.0 : x0.back() - x0.front();
             }
-            dx = std::tan(ang * M_PI / 180.0) * 0.5 * range / double(data.size() - 1);
+            const double total = std::tan(ang * M_PI / 180.0) / std::tan(60.0 * M_PI / 180.0) * 0.25 * range;
+            dx = total / double(data.size() - 1);       // back spectrum moves by at most ¼ of the range
         }
         double base = std::numeric_limits<double>::infinity();
         for (const auto& d : data) {

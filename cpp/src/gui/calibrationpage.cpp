@@ -53,6 +53,16 @@ namespace lr::gui {
 
 namespace {
 
+// Standards in alphabetical order (case-insensitive) for the lists of this page.
+std::vector<standards::Standard> sortedStandards() {
+    std::vector<standards::Standard> v(standards::all().begin(), standards::all().end());
+    std::stable_sort(v.begin(), v.end(), [](const standards::Standard& a, const standards::Standard& b) {
+        return QString::compare(a.name, b.name, Qt::CaseInsensitive) < 0;
+    });
+    return v;
+}
+
+
 const char* const kReminderKey = "calibration/reminderDays";
 const char* const kToleranceKey = "calibration/checkTolerance";
 const QString kCalTag = QStringLiteral("calibration:");
@@ -224,7 +234,7 @@ QWidget* CalibrationPage::buildWizard() {
     m_stdList = new QListWidget;
     m_stdList->setToolTip(QStringLiteral("<p>Tick one or more standards. Several standards are combined into one "
                                          "fit (more bands over a wider range). Silicon alone: one-point offset.</p>"));
-    for (const standards::Standard& s : standards::all()) {
+    for (const standards::Standard& s : sortedStandards()) {
         auto* it = new QListWidgetItem(QStringLiteral("%1   ·  %2, %3").arg(s.name, s.kind, s.source == QLatin1String("ASTM")
                                                                                          ? QStringLiteral("ASTM E1840")
                                                                                          : QStringLiteral("literature")));
@@ -425,7 +435,7 @@ QWidget* CalibrationPage::buildCheck() {
                                        "calibration is not changed."));
     f->addRow(intro);
     m_checkStd = new QComboBox;
-    for (const standards::Standard& s : standards::all())
+    for (const standards::Standard& s : sortedStandards())
         m_checkStd->addItem(s.name);
     m_checkStd->setCurrentText(QStringLiteral("chloroform"));
     connect(m_checkStd, &QComboBox::currentTextChanged, this, [this](const QString& name) {
