@@ -2,6 +2,10 @@
 # MCP2200 HID interface (ARM button, compartment) and the BaySpec spectrometers.
 # Installed by the .deb to /usr/lib/udev/rules.d; for other installs copy it to /etc/udev/rules.d and run
 #   sudo udevadm control --reload && sudo udevadm trigger
-# (The I/O board's serial port is accessible to the 'dialout' group.) Same rules as ../../../70-cora.rules.
+# The serial ports (I/O board: Prolific PL2303; 1064 nm laser driver: Silicon Labs CP210x) get uaccess too, so
+# the logged-in user needs no 'dialout' membership. uaccess only grants the person at the desktop; other
+# PL2303/CP210x cables gain the same harmless access. ModemManager is told to leave them alone. Same rules as ../../../70-cora.rules.
 SUBSYSTEM=="hidraw", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="00df", MODE="0660", GROUP="plugdev", TAG+="uaccess"
 SUBSYSTEM=="usb", ATTR{idVendor}=="ba8c", ATTR{idProduct}=="1688", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="067b", ATTRS{idProduct}=="2303", TAG+="uaccess", ENV{ID_MM_DEVICE_IGNORE}="1"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", TAG+="uaccess", ENV{ID_MM_DEVICE_IGNORE}="1"

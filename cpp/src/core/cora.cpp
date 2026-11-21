@@ -147,6 +147,7 @@ void Cora::connect() {
 #endif
     std::shared_ptr<hw::IOBoard> board;
     bool serialName = false;
+    QString denied;                           // a port we found but may not open (Linux: missing udev rule)
     for (auto& c : cands) {                   // several Prolific adapters (e.g. a Titrino cable): ask each politely
         std::unique_ptr<hw::IOBoard> b;
         try {
@@ -156,13 +157,20 @@ void Cora::connect() {
             board = std::move(b);
             serialName = !isUsb;
             break;
-        } catch (const std::exception&) {
+        } catch (const std::exception& e) {
+            const QString what = QString::fromUtf8(e.what());
+            if (what.contains(QLatin1String("ermission")) || what.contains(QLatin1String("ccess denied")))
+                denied = c.port;
             if (b) try {
                     b->close();
                 } catch (...) {
                 }
         }
     }
+    if (!board && !denied.isEmpty())
+        throw Error(("The instrument's I/O board was found at " + denied + ", but this user may not open it. "
+                     "Reinstall LibreRamen (the package installs a udev rule granting access), or install "
+                     "70-libreramen.rules to /etc/udev/rules.d and replug the instrument.").toStdString());
     if (!board) {
         QString hint;
 #if defined(Q_OS_WIN)
