@@ -8,6 +8,9 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFormLayout>
+#include <QFrame>
+#include <QScrollArea>
+#include <QScrollBar>
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -71,7 +74,8 @@ void ComputedPanel::build() {
     // ---------------------------------------------------------------- left: structures and settings
     auto* left = new QWidget;
     auto* lv = new QVBoxLayout(left);
-    lv->setContentsMargins(0, 0, 0, 0);
+    lv->setContentsMargins(0, 0, 4, 0);
+    lv->setSpacing(4);
     auto* title = new QLabel(tr("<b>Structures</b> (tick to show)"));
     title->setToolTip(tr("<p>Every frequency calculation in the opened files. The current (selected) structure "
                          "gets the stick spectrum, its own scaling factor and the assignment table.</p>"));
@@ -198,7 +202,19 @@ void ComputedPanel::build() {
     m_eta->setEnabled(false);
     connect(m_sticks, &QCheckBox::toggled, this, &ComputedPanel::redraw);
     connect(m_baseline, &QCheckBox::toggled, this, [this](bool on) { setBaselineCorrection(on); });
-    split->addWidget(left);
+    for (QFormLayout* f : {sf, scf, bf}) {
+        f->setVerticalSpacing(3);
+        f->setContentsMargins(6, 4, 6, 4);
+    }
+    // The settings column scrolls when the window is not tall enough (instead of squeezing the widgets).
+    auto* scroll = new QScrollArea;
+    scroll->setObjectName(QStringLiteral("computedSettingsScroll"));
+    scroll->setWidget(left);
+    scroll->setWidgetResizable(true);
+    scroll->setFrameShape(QFrame::NoFrame);
+    scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    scroll->setMinimumWidth(left->minimumSizeHint().width() + scroll->verticalScrollBar()->sizeHint().width() + 4);
+    split->addWidget(scroll);
 
     // ------------------------------------------------------------------- right: plot and assignment
     auto* right = new QWidget;

@@ -11,6 +11,8 @@
 #include <QCheckBox>
 #include <QFileInfo>
 #include <QListWidget>
+#include <QScrollArea>
+#include <QScrollBar>
 #include <QSignalSpy>
 #include <QTableWidget>
 #include <QTemporaryDir>
@@ -65,6 +67,31 @@ template <class T> int itemCount(PlotWidget* w) {
 class GuiTestComputedPanel : public QObject {
     Q_OBJECT
 private slots:
+    void settingsScroll() {
+        // the settings column scrolls instead of squeezing its widgets when the window is not tall
+        ComputedPanel p;
+        p.setMessagesEnabled(false);
+        auto* scroll = p.findChild<QScrollArea*>(QStringLiteral("computedSettingsScroll"));
+        QVERIFY(scroll);
+        QVERIFY(scroll->widgetResizable());
+        QVERIFY(scroll->widget()->findChild<QListWidget*>() == p.list());
+        QVERIFY2(p.minimumSizeHint().height() < 360, qPrintable(QString::number(p.minimumSizeHint().height())));
+        p.resize(1200, 420);
+        p.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&p));
+        QVERIFY(scroll->widget()->height() >= scroll->widget()->minimumSizeHint().height());
+        QVERIFY(scroll->verticalScrollBar()->maximum() > 0);   // content taller than the window: scrolls
+        const QString dir = qEnvironmentVariable("LIBRERAMEN_PREVIEW_DIR");
+        if (!dir.isEmpty()) {
+            QVERIFY(p.loadFile(DIR + "gaussian_ccl4.log"));
+            QApplication::processEvents();
+            QVERIFY(p.grab().save(dir + "/datafix-computed-short.png"));
+        }
+        p.resize(1200, 1400);
+        QApplication::processEvents();
+        QCOMPARE(scroll->verticalScrollBar()->maximum(), 0);
+    }
+
     void loadAndShow() {
         ComputedPanel p;
         p.setMessagesEnabled(false);

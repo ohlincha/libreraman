@@ -159,8 +159,12 @@ private slots:
         QVERIFY(page.setLibraryPath(path, true));
         QVERIFY(page.library().readOnly());
         QCOMPARE(page.addSpectrum(sp, false), qint64(0));
-        for (QPushButton* b : page.findChildren<QPushButton*>())
-            if (b->text() == "Delete" || b->text() == "Import") QVERIFY(!b->isEnabled());
+        int fromFile = 0;
+        for (QPushButton* b : page.findChildren<QPushButton*>()) {
+            if (b->text() == "Delete" || b->text() == "Import" || b->text() == "From file…") QVERIFY(!b->isEnabled());
+            if (b->text() == "From file…") ++fromFile;
+        }
+        QCOMPARE(fromFile, 1);                         // "Add spectrum from file" next to Add…
         QCOMPARE(page.visibleEntries(), all + 1);
         savePreview(page, "library-readonly.png");
 

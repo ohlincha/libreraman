@@ -1,6 +1,7 @@
 #include "datapagehost.h"
 
 #include <QMessageBox>
+#include <QMetaMethod>
 #include <QVBoxLayout>
 
 #include "datapage.h"
@@ -20,6 +21,61 @@ DataPageHost::DataPageHost(const PageContext& ctx, QWidget* parent) : Page(paren
         emit logMessage(title + ": " + text);
         if (dialogsEnabled()) QMessageBox::warning(window ? window : this, title, text);
     });
+    connect(m_page, &DataPage::addToLibraryRequested, this, [this, window](const fileio::DataSpectrum& d) {
+        QString err;
+        if (!routeToLibrary(window ? window : this->window(), toSpectrum(d), &err)) {
+            emit logMessage(tr("Add to library: %1").arg(err));
+            m_page->showNote(tr("“%1” not added to the library: %2").arg(d.name, err));
+        }
+    });
+}
+
+lr::Spectrum DataPageHost::toSpectrum(const fileio::DataSpectrum& d) {
+    lr::Spectrum sp;
+    sp.shift = d.x;
+    sp.intensity = d.y;
+    if (d.signal.size() == d.x.size()) sp.signal = d.signal;
+    if (d.background.size() == d.x.size()) sp.background = d.background;
+    sp.meta = d.meta;
+    if (sp.metaValue(QStringLiteral("sample")).isEmpty()) sp.setMeta(QStringLiteral("sample"), d.name);
+    const double laser = d.metaValue(QStringLiteral("laser_nm")).toDouble();
+    if (laser > 900) sp.channel = 1064;
+    bool ok = false;
+    const double exposure = d.metaValue(QStringLiteral("exposure_s")).toDouble(&ok);
+    if (ok && exposure > 0) sp.exposure_s = exposure;
+    const int averages = d.metaValue(QStringLiteral("averages")).toInt(&ok);
+    if (ok && averages > 0) sp.averages = averages;
+    const QDateTime t = QDateTime::fromString(d.metaValue(QStringLiteral("time")), Qt::ISODate);
+    if (t.isValid()) sp.t = t;
+    return sp;
+}
+
+bool DataPageHost::routeToLibrary(QObject* window, const lr::Spectrum& sp, QString* error) {
+    // The main window's `bool addToLibrary(const lr::Spectrum&)` (a slot or Q_INVOKABLE) passes it to the
+    // Library page. It is looked up by name so that the Data page needs no reference to the window or the
+    // Library page.
+    if (!window) {
+        if (error) *error = tr("no main window");
+        return false;
+    }
+    const QMetaObject* mo = window->metaObject();
+    for (int i = 0; i < mo->methodCount(); ++i) {
+        const QMetaMethod m = mo->method(i);
+        if (m.name() != "addToLibrary" || m.parameterCount() != 1) continue;
+        bool added = false;
+        const bool invoked = m.returnType() == QMetaType::Bool
+                                 ? m.invoke(window, Qt::DirectConnection, Q_RETURN_ARG(bool, added),
+                                            Q_ARG(lr::Spectrum, sp))
+                                 : (added = m.invoke(window, Qt::DirectConnection, Q_ARG(lr::Spectrum, sp)));
+        if (!invoked) {
+            if (error) *error = tr("the main window could not take the spectrum");
+            return false;
+        }
+        if (!added && error) *error = tr("not added (no writable library, or cancelled)");
+        return added;
+    }
+    if (error) *error = tr("the Library page is not available");
+    return false;
 }
 
 void DataPageHost::addSpectrum(const lr::Spectrum& sp) { m_batcher->add(sp); }
