@@ -1,4 +1,4 @@
-# LibreRamen: Raman group frequencies and characteristic bands
+# LibreRamen: Raman group frequencies and characteristic bands (functional groups and ion classes; specific compounds are identified with the Library)
 # category: organic | inorganic | both ; lo/hi in cm-1 (lo = hi for a sharp characteristic band, shown as a line)
 # raman: typical Raman intensity vs = very strong, s = strong, m = medium, w = weak, var = variable
 # Ranges compiled from standard group-frequency tables (Socrates, "Infrared and Raman Characteristic Group
@@ -16,15 +16,15 @@ organic,N–H (amide),ν(N–H),3150,3350,w,
 organic,≡C–H (alkyne),ν(≡C–H),3260,3340,m,
 organic,=C–H (aromatic),ν(=C–H),3000,3100,s,usually near 3060
 organic,=C–H (alkene),ν(=C–H),3010,3095,m,
-organic,=CH2 (vinyl/vinylidene),ν(=CH2) asym,3075,3095,m,
+organic,=CH₂ (vinyl/vinylidene),ν(=CH₂) asym,3075,3095,m,
 organic,C–H (cyclopropane/epoxide),ν(C–H),3000,3060,m,
-organic,CH3,ν(CH3) asym,2950,2975,s,
-organic,CH2,ν(CH2) asym,2915,2940,vs,
-organic,CH3,ν(CH3) sym,2860,2885,s,
-organic,CH2,ν(CH2) sym,2840,2870,vs,
+organic,CH₃,ν(CH₃) asym,2950,2975,s,
+organic,CH₂,ν(CH₂) asym,2915,2940,vs,
+organic,CH₃,ν(CH₃) sym,2860,2885,s,
+organic,CH₂,ν(CH₂) sym,2840,2870,vs,
 organic,C–H (methine),ν(C–H),2880,2900,w,
-organic,O–CH3 (methoxy),ν(CH3) sym,2815,2850,m,
-organic,N–CH3,ν(CH3) sym,2780,2820,m,
+organic,O–CH₃ (methoxy),ν(CH₃) sym,2815,2850,m,
+organic,N–CH₃,ν(CH₃) sym,2780,2820,m,
 organic,C–H (aldehyde),ν(C–H) Fermi doublet,2700,2850,m,two bands near 2720 and 2820
 organic,S–H (thiol),ν(S–H),2550,2600,s,strong in Raman; weak in IR
 organic,P–H,ν(P–H),2270,2440,s,
@@ -36,7 +36,7 @@ organic,C≡C (internal alkyne),ν(C≡C),2190,2260,vs,may be IR-inactive when s
 organic,C≡C (terminal alkyne),ν(C≡C),2100,2140,s,
 organic,N=C=O (isocyanate),νas(NCO),2250,2275,w,
 organic,N=C=S (isothiocyanate),νas(NCS),2040,2150,m,
-organic,N=N=N (azide),νas(N3),2080,2170,m,
+organic,N=N=N (azide),νas(N₃),2080,2170,m,
 organic,C=C=C (allene),νas(C=C=C),1940,1960,w,
 organic,–S–C≡N (thiocyanate),ν(C≡N),2140,2175,s,
 organic,C=O (anhydride),ν(C=O) asym/sym,1740,1850,m,two bands
@@ -69,21 +69,21 @@ organic,C=C (aromatic ring),ν(C=C) ring,1430,1470,w,
 organic,C=N (imine/oxime),ν(C=N),1620,1690,s,
 organic,C=N (aromatic heterocycle),ν ring,1550,1600,s,pyridine ring ~1580
 organic,N=N (azo),ν(N=N),1400,1450,vs,trans-azobenzene ~1440; IR-inactive when symmetric
-organic,NO2 (nitro; aliphatic),νas(NO2),1540,1560,m,
-organic,NO2 (nitro; aliphatic),νs(NO2),1370,1380,vs,
-organic,NO2 (nitro; aromatic),νas(NO2),1500,1550,m,
-organic,NO2 (nitro; aromatic),νs(NO2),1330,1360,vs,
+organic,NO₂ (nitro; aliphatic),νas(NO₂),1540,1560,m,
+organic,NO₂ (nitro; aliphatic),νs(NO₂),1370,1380,vs,
+organic,NO₂ (nitro; aromatic),νas(NO₂),1500,1550,m,
+organic,NO₂ (nitro; aromatic),νs(NO₂),1330,1360,vs,
 organic,N=O (nitroso),ν(N=O),1490,1620,s,
-organic,O–NO2 (nitrate ester),νas(NO2),1620,1660,m,
-organic,O–NO2 (nitrate ester),νs(NO2),1270,1285,s,
-organic,NH2 (primary amine),δ(NH2) scissoring,1590,1650,w,
-organic,H2O (in organics/biology),δ(HOH),1630,1650,w,
-organic,CH2,δ(CH2) scissoring,1440,1475,s,lipids/proteins ~1445
-organic,CH3,δas(CH3),1440,1465,m,
-organic,CH3,δs(CH3) umbrella,1370,1385,m,
-organic,C(CH3)2 (gem-dimethyl),δs(CH3) doublet,1365,1385,m,
-organic,C(CH3)3 (tert-butyl),δs(CH3),1365,1395,m,
-organic,CH2,τ/ω(CH2) twist/wag,1170,1350,m,lipids/polyethylene ~1295-1305
+organic,O–NO₂ (nitrate ester),νas(NO₂),1620,1660,m,
+organic,O–NO₂ (nitrate ester),νs(NO₂),1270,1285,s,
+organic,NH₂ (primary amine),δ(NH₂) scissoring,1590,1650,w,
+organic,H₂O (in organics/biology),δ(HOH),1630,1650,w,
+organic,CH₂,δ(CH₂) scissoring,1440,1475,s,lipids/proteins ~1445
+organic,CH₃,δas(CH₃),1440,1465,m,
+organic,CH₃,δs(CH₃) umbrella,1370,1385,m,
+organic,C(CH₃)₂ (gem-dimethyl),δs(CH₃) doublet,1365,1385,m,
+organic,C(CH₃)₃ (tert-butyl),δs(CH₃),1365,1395,m,
+organic,CH₂,τ/ω(CH₂) twist/wag,1170,1350,m,lipids/polyethylene ~1295-1305
 organic,O–H (alcohol/acid),δ(O–H) in-plane,1330,1440,w,
 organic,C–O (ester),νas(C–O–C),1150,1300,w,
 organic,C–O (ether; aliphatic),νas(C–O–C),1060,1150,w,
@@ -95,34 +95,31 @@ organic,C–O (tertiary alcohol),ν(C–O),1100,1210,m,
 organic,C–O (phenol),ν(C–O),1180,1260,m,
 organic,C–O–C (epoxide),ring breathing,1240,1280,s,
 organic,C–O–C (epoxide),ring deformation,810,950,m,
-organic,C–C–O (ethanol),νs(C–C–O),870,890,vs,ethanol 882
 organic,C–N (aliphatic amine),ν(C–N),1020,1250,m,
 organic,C–N (aromatic amine),ν(C–N),1250,1360,s,
 organic,C–C (aliphatic chain),ν(C–C) skeletal,1050,1150,m,trans chains ~1060 and ~1130; gauche ~1080
 organic,C–C (aliphatic),ν(C–C),800,1000,m,
 organic,C–F,ν(C–F),1000,1400,w,PTFE 1216 and 1300 (CF2)
-organic,CF2 (PTFE),νs(CF2),730,740,vs,PTFE 733
-organic,CF3,νs(CF3),1100,1200,w,
+organic,CF₃,νs(CF₃),1100,1200,w,
 organic,C–Cl (aliphatic),ν(C–Cl),550,800,vs,
 organic,C–Cl (aromatic),ν(C–Cl),1030,1100,m,
 organic,C–Br,ν(C–Br),500,700,vs,
 organic,C–I,ν(C–I),480,610,vs,
-organic,CCl4 / CCl3,ν(C–Cl) sym,450,470,vs,CCl4 459
 organic,C–S (thioether/thiol),ν(C–S),570,750,vs,strong in Raman
 organic,S–S (disulfide),ν(S–S),500,550,vs,protein disulfides; gauche-gauche-gauche ~510
 organic,S=O (sulfoxide),ν(S=O),1030,1070,s,DMSO ~1045
-organic,SO2 (sulfone),νas(SO2),1290,1350,m,
-organic,SO2 (sulfone),νs(SO2),1120,1160,vs,
-organic,SO2 (sulfonamide),νs(SO2),1140,1180,s,
-organic,SO3⁻ (sulfonate),νs(SO3),1030,1070,vs,
+organic,SO₂ (sulfone),νas(SO₂),1290,1350,m,
+organic,SO₂ (sulfone),νs(SO₂),1120,1160,vs,
+organic,SO₂ (sulfonamide),νs(SO₂),1140,1180,s,
+organic,SO₃⁻ (sulfonate),νs(SO₃),1030,1070,vs,
 organic,C=S (thiocarbonyl),ν(C=S),1020,1250,s,
 organic,P=O,ν(P=O),1100,1350,m,
 organic,P–O–C,ν(P–O–C),950,1050,m,
-organic,PO2⁻ (phosphodiester),νs(PO2⁻),1080,1100,s,nucleic acid backbone ~1095
+organic,PO₂⁻ (phosphodiester),νs(PO₂⁻),1080,1100,s,nucleic acid backbone ~1095
 organic,O–P–O (phosphodiester),ν(O–P–O) backbone,780,830,m,B-DNA ~790
 organic,Si–O–Si (siloxane),νas(Si–O–Si),1000,1100,w,
 organic,Si–O–Si (siloxane),νs(Si–O–Si),480,520,s,PDMS 488
-organic,Si–CH3,δs(CH3),1250,1270,m,PDMS 1262
+organic,Si–CH₃,δs(CH₃),1250,1270,m,PDMS 1262
 organic,Si–C,ν(Si–C),600,800,s,PDMS 708
 organic,Benzene (monosubstituted),ring breathing (trigonal),995,1010,vs,~1000; polystyrene 1001
 organic,Benzene (monosubstituted),δ(C–H) in-plane,1025,1035,s,polystyrene 1031
@@ -131,167 +128,83 @@ organic,Benzene (meta-disubstituted),ring breathing,995,1010,vs,
 organic,Benzene (1;3;5-trisubstituted),ring breathing,990,1010,vs,
 organic,Benzene (para-disubstituted),ring breathing,780,860,s,also 1180-1210 and ~640
 organic,Benzene (ortho-disubstituted),ring breathing,1020,1060,s,also ~740
-organic,Benzene (unsubstituted),ring breathing,990,995,vs,benzene 992
 organic,Benzene (any),δ(C–H) in-plane,1150,1200,m,
-organic,Toluene,ring breathing,785,790,vs,toluene 787 and 1003
-organic,Phenylalanine,ring breathing,1000,1006,vs,protein marker 1003
-organic,Tyrosine,Fermi doublet,825,860,m,~830/850; ratio reports H-bonding
-organic,Tryptophan,indole ring,755,760,s,also 1340-1360 and 1550
-organic,Naphthalene,ring breathing,760,765,vs,naphthalene 764 and 1382
-organic,Polycyclic aromatics / graphitic carbon,D band,1330,1360,vs,disorder; laser-dependent
-organic,Graphitic carbon,G band,1575,1600,vs,graphite 1580
-organic,Graphitic carbon,2D band,2650,2750,s,graphene/graphite overtone
-organic,Pyridine,ring breathing,990,1035,vs,pyridine 991 and 1030
 organic,Furan/thiophene,ring breathing,1030,1080,s,
-organic,Cyclohexane,ring breathing,800,805,vs,cyclohexane 801
-organic,Cyclopentane,ring breathing,885,890,vs,
-organic,Cyclopropane,ring breathing,1185,1200,vs,
 organic,Saccharides,C–O–C glycosidic,880,940,m,also 1080-1130
 organic,Saccharides,skeletal / C–O stretch,1000,1150,m,
-organic,Cellulose,ν(C–O–C) glycosidic,1090,1100,vs,cellulose 1095
-organic,Starch,skeletal,475,485,vs,starch 478
 organic,Lipids,ν(C=C) cis,1650,1660,s,
 organic,Lipids,ν(C=O) ester,1735,1750,m,
 organic,Nucleic acids,adenine/guanine ring,1570,1585,s,
 organic,Nucleic acids,cytosine/uracil ring,780,790,s,
-organic,Polyethylene,ν(C–C) trans,1060,1130,s,1063 and 1130
-organic,Polyethylene,τ(CH2),1295,1300,s,
-organic,Polypropylene,ν(C–C)+ρ(CH3),805,845,s,PP 809 and 841
-organic,PET,ν(C=O)/ring,1610,1730,s,PET 1615 and 1726
-organic,PMMA,ν(O–CH3)/ν(C–C),810,815,vs,PMMA 812
-organic,PVC,ν(C–Cl),630,700,vs,PVC 637 and 695
-organic,Nylon/polyamide,amide I,1630,1640,m,
 organic,Skeletal (chains),δ(C–C–C) deformations,250,500,m,
 organic,Ring torsions,τ ring / out-of-plane,100,450,w,
-inorganic,H2O (liquid),ν(O–H) stretch,3000,3700,m,broad; maxima ~3230 and ~3400
-inorganic,H2O (liquid),δ(HOH) bend,1630,1650,w,
-inorganic,H2O (liquid),librations,400,800,w,very broad
+inorganic,H₂O (liquid),ν(O–H) stretch,3000,3700,m,broad; maxima ~3230 and ~3400
+inorganic,H₂O (liquid),δ(HOH) bend,1630,1650,w,
+inorganic,H₂O (liquid),librations,400,800,w,very broad
 inorganic,OH (hydroxide; free),ν(O–H),3550,3700,s,sharp; brucite 3652; portlandite 3620
-inorganic,OH (clay minerals),ν(O–H),3600,3700,s,kaolinite 3620-3695
-inorganic,H2O (crystal water),ν(O–H),3200,3550,m,gypsum 3400/3494
-inorganic,NH4⁺ (ammonium),ν(N–H),3000,3300,m,
-inorganic,NH4⁺ (ammonium),δ(N–H),1400,1450,w,
-inorganic,CO3²⁻ (carbonate),ν1 sym,1050,1100,vs,
-inorganic,CO3²⁻ (calcite),ν1,1085,1087,vs,calcite 1086; also 712 and 282
-inorganic,CO3²⁻ (aragonite),ν1,1084,1086,vs,aragonite 1085; ν4 701/705 doublet
-inorganic,CO3²⁻ (dolomite),ν1,1096,1100,vs,dolomite 1098; also 725 and 300
-inorganic,CO3²⁻ (magnesite),ν1,1092,1096,vs,magnesite 1094
-inorganic,CO3²⁻ (siderite),ν1,1085,1090,vs,siderite 1088
-inorganic,CO3²⁻ (cerussite),ν1,1050,1055,vs,cerussite 1053
-inorganic,CO3²⁻ (Na2CO3),ν1,1065,1080,vs,
-inorganic,CO3²⁻ (carbonate),ν4 in-plane bend,680,760,m,
-inorganic,CO3²⁻ (carbonate),ν3 asym,1400,1550,w,
-inorganic,CO3²⁻ (carbonate),lattice modes,100,350,m,
-inorganic,HCO3⁻ (bicarbonate),ν(C–OH),1010,1020,s,
-inorganic,SO4²⁻ (sulfate),ν1 sym,960,1020,vs,
-inorganic,SO4²⁻ (gypsum),ν1,1006,1009,vs,gypsum 1008; also 415/494 and 1135
-inorganic,SO4²⁻ (anhydrite),ν1,1015,1018,vs,anhydrite 1017
-inorganic,SO4²⁻ (barite),ν1,986,990,vs,barite 988
-inorganic,SO4²⁻ (aqueous),ν1,980,982,vs,
-inorganic,SO4²⁻ (sulfate),ν3 asym,1080,1200,m,
-inorganic,SO4²⁻ (sulfate),ν4 bend,600,680,m,
-inorganic,SO4²⁻ (sulfate),ν2 bend,400,500,m,
-inorganic,HSO4⁻ (bisulfate),ν(S–OH),1040,1052,s,
-inorganic,SO3²⁻ (sulfite),ν1,960,990,s,
-inorganic,S2O3²⁻ (thiosulfate),ν(S–S),430,450,s,
-inorganic,NO3⁻ (nitrate),ν1 sym,1040,1070,vs,
-inorganic,NO3⁻ (aqueous),ν1,1047,1050,vs,
-inorganic,NO3⁻ (NaNO3),ν1,1066,1070,vs,
-inorganic,NO3⁻ (KNO3),ν1,1048,1052,vs,
-inorganic,NO3⁻ (nitrate),ν4 bend,710,730,m,
-inorganic,NO3⁻ (nitrate),ν3 asym,1340,1420,w,
-inorganic,NO2⁻ (nitrite),ν1,1320,1340,vs,
-inorganic,PO4³⁻ (phosphate),ν1 sym,930,990,vs,
-inorganic,PO4³⁻ (hydroxyapatite),ν1,958,964,vs,bone/teeth 960
-inorganic,PO4³⁻ (phosphate),ν3 asym,1000,1100,m,
-inorganic,PO4³⁻ (phosphate),ν4 bend,560,620,m,
-inorganic,PO4³⁻ (phosphate),ν2 bend,400,480,m,
-inorganic,HPO4²⁻,ν(P–OH),870,890,m,
-inorganic,H2PO4⁻,ν(P–OH),870,920,m,
-inorganic,ClO4⁻ (perchlorate),ν1,930,950,vs,perchlorate ~935
-inorganic,ClO3⁻ (chlorate),ν1,930,980,vs,
-inorganic,BrO3⁻ (bromate),ν1,790,810,vs,
-inorganic,IO3⁻ (iodate),ν1,750,800,vs,
-inorganic,CrO4²⁻ (chromate),ν1,840,870,vs,
-inorganic,Cr2O7²⁻ (dichromate),ν(Cr–O) terminal,890,910,vs,
-inorganic,MoO4²⁻ (molybdate),ν1,880,900,vs,
-inorganic,WO4²⁻ (tungstate),ν1,910,935,vs,
-inorganic,VO4³⁻ (vanadate),ν1,820,880,vs,
-inorganic,AsO4³⁻ (arsenate),ν1,810,880,vs,
-inorganic,MnO4⁻ (permanganate),ν1,830,850,vs,
-inorganic,SiO4 (silicate; isolated),ν(Si–O),800,900,vs,olivine doublet ~820/855
-inorganic,SiO4 (silicate; chain),ν(Si–O),950,1100,s,pyroxenes ~1000-1010 and ~670
+inorganic,H₂O (crystal water),ν(O–H),3200,3550,m,gypsum 3400/3494
+inorganic,NH₄⁺ (ammonium),ν(N–H),3000,3300,m,
+inorganic,NH₄⁺ (ammonium),δ(N–H),1400,1450,w,
+inorganic,CO₃²⁻ (carbonate),ν1 sym,1050,1100,vs,
+inorganic,CO₃²⁻ (carbonate),ν4 in-plane bend,680,760,m,
+inorganic,CO₃²⁻ (carbonate),ν3 asym,1400,1550,w,
+inorganic,CO₃²⁻ (carbonate),lattice modes,100,350,m,
+inorganic,HCO₃⁻ (bicarbonate),ν(C–OH),1010,1020,s,
+inorganic,SO₄²⁻ (sulfate),ν1 sym,960,1020,vs,
+inorganic,SO₄²⁻ (aqueous),ν1,980,982,vs,
+inorganic,SO₄²⁻ (sulfate),ν3 asym,1080,1200,m,
+inorganic,SO₄²⁻ (sulfate),ν4 bend,600,680,m,
+inorganic,SO₄²⁻ (sulfate),ν2 bend,400,500,m,
+inorganic,HSO₄⁻ (bisulfate),ν(S–OH),1040,1052,s,
+inorganic,SO₃²⁻ (sulfite),ν1,960,990,s,
+inorganic,S₂O₃²⁻ (thiosulfate),ν(S–S),430,450,s,
+inorganic,NO₃⁻ (nitrate),ν1 sym,1040,1070,vs,
+inorganic,NO₃⁻ (aqueous),ν1,1047,1050,vs,
+inorganic,NO₃⁻ (nitrate),ν4 bend,710,730,m,
+inorganic,NO₃⁻ (nitrate),ν3 asym,1340,1420,w,
+inorganic,NO₂⁻ (nitrite),ν1,1320,1340,vs,
+inorganic,PO₄³⁻ (phosphate),ν1 sym,930,990,vs,
+inorganic,PO₄³⁻ (phosphate),ν3 asym,1000,1100,m,
+inorganic,PO₄³⁻ (phosphate),ν4 bend,560,620,m,
+inorganic,PO₄³⁻ (phosphate),ν2 bend,400,480,m,
+inorganic,HPO₄²⁻,ν(P–OH),870,890,m,
+inorganic,H₂PO₄⁻,ν(P–OH),870,920,m,
+inorganic,ClO₄⁻ (perchlorate),ν1,930,950,vs,perchlorate ~935
+inorganic,ClO₃⁻ (chlorate),ν1,930,980,vs,
+inorganic,BrO₃⁻ (bromate),ν1,790,810,vs,
+inorganic,IO₃⁻ (iodate),ν1,750,800,vs,
+inorganic,CrO₄²⁻ (chromate),ν1,840,870,vs,
+inorganic,Cr₂O₇²⁻ (dichromate),ν(Cr–O) terminal,890,910,vs,
+inorganic,MoO₄²⁻ (molybdate),ν1,880,900,vs,
+inorganic,WO₄²⁻ (tungstate),ν1,910,935,vs,
+inorganic,VO₄³⁻ (vanadate),ν1,820,880,vs,
+inorganic,AsO₄³⁻ (arsenate),ν1,810,880,vs,
+inorganic,MnO₄⁻ (permanganate),ν1,830,850,vs,
+inorganic,SiO₄ (silicate; isolated),ν(Si–O),800,900,vs,olivine doublet ~820/855
+inorganic,SiO₄ (silicate; chain),ν(Si–O),950,1100,s,pyroxenes ~1000-1010 and ~670
 inorganic,Si–O–Si (silicate; framework),δ(Si–O–Si),400,520,vs,
-inorganic,Quartz,δ(Si–O–Si),464,466,vs,quartz 465; also 128 207 355 1085
-inorganic,Feldspar,δ(Si–O–Si),505,515,vs,K-feldspar/plagioclase 505-515
-inorganic,Silica glass,D1/D2 rings,490,610,m,fused silica 490 and 606; broad ~440
-inorganic,Silicon,optical phonon,519,521,vs,crystalline Si 520.5; amorphous Si ~480 broad
-inorganic,SiC,TO/LO,780,975,vs,4H/6H-SiC 776-797 and 965
-inorganic,Diamond,sp3 C–C,1331,1333,vs,diamond 1332
-inorganic,Graphite,G band,1578,1582,vs,graphite 1580
 inorganic,Amorphous carbon / soot,D + G,1300,1620,s,broad D ~1350 and G ~1590
-inorganic,TiO2 (anatase),Eg,142,146,vs,anatase 144; also 197 399 516 639
-inorganic,TiO2 (rutile),A1g/Eg,440,612,vs,rutile 447 and 612; also ~240
-inorganic,TiO2 (brookite),A1g,152,155,vs,
-inorganic,ZnO,E2(high),436,440,vs,ZnO 437
-inorganic,ZrO2 (monoclinic),Ag,175,480,s,~178 190 333 382 476
-inorganic,Al2O3 (corundum),A1g,415,420,s,corundum 418; ruby fluorescence 694 nm
-inorganic,Fe2O3 (hematite),A1g/Eg,220,615,vs,hematite 225 245 292 411 498 612; 2LO ~1320
-inorganic,Fe3O4 (magnetite),A1g,665,670,s,magnetite ~668; weak
-inorganic,FeOOH (goethite),Fe–O,240,555,s,goethite 245 300 385 480 550
-inorganic,FeOOH (lepidocrocite),Fe–O,250,380,s,lepidocrocite 250 and 380
-inorganic,Cr2O3,A1g,550,555,vs,eskolaite 551
-inorganic,MnO2,Mn–O,550,650,m,pyrolusite ~530/660
-inorganic,Mn3O4 (hausmannite),A1g,655,660,vs,
-inorganic,Co3O4,A1g,685,695,vs,
-inorganic,NiO,2-phonon,1090,1100,m,NiO ~500 and ~1090
-inorganic,CuO,Ag,290,300,s,tenorite 296 and 340 and 625
-inorganic,Cu2O,multi-phonon,215,220,s,cuprite 218 and 150 and 645
-inorganic,SnO2 (cassiterite),A1g,630,640,vs,cassiterite 634
-inorganic,CeO2,F2g,463,467,vs,ceria 465
-inorganic,PbO (litharge),A1g,140,145,vs,
-inorganic,Pb3O4 (minium),Pb–O,120,550,vs,minium 122 and 548
-inorganic,MgO / CaO,(Raman-inactive),0,0,,first-order inactive (rock salt)
-inorganic,Mg(OH)2 (brucite),A1g,440,445,s,also OH 3652
-inorganic,Ca(OH)2 (portlandite),A1g,355,360,s,also OH 3620
-inorganic,Al(OH)3 (gibbsite),OH/Al–O,3360,3620,s,gibbsite 3365-3620; ~538 and 568
-inorganic,Clay (kaolinite),Si–O–Al,140,145,vs,kaolinite 143; OH 3620-3695
-inorganic,Talc,Si–O–Si,193,680,s,talc 195 365 678; OH 3677
-inorganic,Mica (muscovite),Si–O–Si,260,705,s,muscovite 263 and 703
-inorganic,Serpentine,Si–O–Si,680,690,s,also OH 3685-3700
-inorganic,Zeolite,T–O–T ring,380,520,s,ring size dependent
-inorganic,Garnet,Si–O,900,930,vs,
-inorganic,Zircon,ν3(SiO4),1005,1010,vs,zircon 1008 and 975 and 356
-inorganic,Sulfides (pyrite),S–S,340,380,vs,pyrite 343 and 379
-inorganic,Sulfides (marcasite),S–S,320,390,vs,marcasite 323 and 386
-inorganic,Sulfides (sphalerite),Zn–S,345,352,s,sphalerite 350
-inorganic,Sulfides (galena),Pb–S,150,460,w,weak; laser-sensitive
-inorganic,Sulfides (cinnabar),Hg–S,250,256,vs,cinnabar 253
-inorganic,Sulfides (realgar/orpiment),As–S,180,380,vs,realgar 355 orpiment 310
-inorganic,Sulfides (molybdenite),Mo–S,380,410,vs,MoS2 383 and 408
-inorganic,Sulfides (chalcopyrite),Cu/Fe–S,290,295,s,
-inorganic,Elemental sulfur (α-S8),S–S,150,475,vs,sulfur 153 219 473
-inorganic,Selenium (trigonal),Se–Se,233,237,vs,
 inorganic,Polysulfides,S–S,400,500,s,
 inorganic,Metal halides,M–X,50,350,var,M–Cl 200-350; M–Br 150-250; M–I 100-200
-inorganic,Alkali halides (NaCl/KCl),(Raman-inactive),0,0,,first-order inactive; second-order weak
-inorganic,CaF2 (fluorite),T2g,320,323,vs,fluorite 322
-inorganic,BaSO4 (barite),ν1,986,990,vs,
-inorganic,BaTiO3,Ti–O,300,720,s,~305 515 720
-inorganic,SrTiO3,second-order,250,1100,w,
 inorganic,Cyanide (metal complex),ν(C≡N),2050,2160,vs,Prussian blue ~2150
 inorganic,Thiocyanate (ionic),ν(C≡N),2050,2070,vs,
 inorganic,Carbonyl (metal),ν(C≡O),1850,2125,s,terminal 1950-2125; bridging 1700-1860
 inorganic,Metal–N (amine complex),ν(M–N),300,500,m,
 inorganic,Metal–O (oxides; general),ν(M–O),200,800,var,
 inorganic,Metal=O (oxo; terminal),ν(M=O),900,1050,s,vanadyl ~990; molybdenyl ~950
-inorganic,O2²⁻ (peroxide),ν(O–O),740,880,vs,H2O2 ~875
-inorganic,O2⁻ (superoxide),ν(O–O),1100,1150,s,
-inorganic,N2 (gas),ν(N≡N),2329,2331,s,atmospheric N2 2331
-inorganic,O2 (gas),ν(O=O),1554,1556,s,atmospheric O2 1555
-inorganic,CO2 (gas/inclusion),Fermi dyad,1280,1390,vs,1285 and 1388
-inorganic,CH4 (gas/inclusion),ν1,2915,2918,vs,methane 2917
-inorganic,H2 (gas),Q-branch,4155,4161,s,
-inorganic,H2S (gas/inclusion),ν1,2610,2612,vs,
-inorganic,SO2 (gas/inclusion),ν1,1150,1152,vs,
+inorganic,O₂²⁻ (peroxide),ν(O–O),740,880,vs,H2O2 ~875
+inorganic,O₂⁻ (superoxide),ν(O–O),1100,1150,s,
+inorganic,N₂ (gas),ν(N≡N),2329,2331,s,atmospheric N2 2331
+inorganic,O₂ (gas),ν(O=O),1554,1556,s,atmospheric O2 1555
+inorganic,CO₂ (gas/inclusion),Fermi dyad,1280,1390,vs,1285 and 1388
+inorganic,CH₄ (gas/inclusion),ν1,2915,2918,vs,methane 2917
+inorganic,H₂ (gas),Q-branch,4155,4161,s,
+inorganic,H₂S (gas/inclusion),ν1,2610,2612,vs,
+inorganic,SO₂ (gas/inclusion),ν1,1150,1152,vs,
 inorganic,Lattice modes (crystals),external modes,50,300,var,phase/polymorph fingerprint
+both,Carbon (graphitic/amorphous),D band (disorder),1330,1360,vs,laser-wavelength dependent
+both,Carbon (graphitic),G band,1575,1600,vs,
+both,Carbon (graphitic),2D band,2650,2750,s,overtone
+both,Carbon (sp³),ν(C–C),1330,1335,vs,diamond-like
+inorganic,Metal sulfides,ν(M–S),250,450,var,
+inorganic,Metal oxides (spinels),A₁g,650,700,s,

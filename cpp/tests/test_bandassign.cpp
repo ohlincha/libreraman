@@ -10,7 +10,7 @@ class TestBandAssign : public QObject {
 private slots:
     void tableLoads() {
         const auto& all = bands::all();
-        QVERIFY(all.size() > 250);
+        QVERIFY(all.size() > 180);
         int org = 0, inorg = 0;
         for (const bands::Band& b : all) {
             QVERIFY(!b.group.isEmpty());
@@ -21,23 +21,29 @@ private slots:
             inorg += b.category == "inorganic";
         }
         QVERIFY(org > 100);
-        QVERIFY(inorg > 100);
+        QVERIFY(inorg > 50);
     }
     void candidates() {
         auto has = [](const std::vector<const bands::Band*>& v, const QString& group) {
             return std::any_of(v.begin(), v.end(), [&](const bands::Band* b) { return b->group.contains(group); });
         };
-        // calcite only with the inorganic table; C=O only with the organic one
-        QVERIFY(has(bands::candidates(1086, false, true), "calcite"));
-        QVERIFY(!has(bands::candidates(1086, true, false), "calcite"));
+        // carbonate only with the inorganic table; C=O only with the organic one
+        QVERIFY(has(bands::candidates(1086, false, true), "carbonate"));
+        QVERIFY(!has(bands::candidates(1086, true, false), "carbonate"));
         QVERIFY(has(bands::candidates(1715, true, false), "ketone"));
         QVERIFY(!has(bands::candidates(1715, false, true), "ketone"));
         // both: a mixed sample
         const auto both = bands::candidates(1003, true, true);
-        QVERIFY(has(both, "Phenylalanine"));
-        QVERIFY(has(both, "gypsum"));
-        // ranges containing the position first, then narrowest: phenylalanine (1000-1006) before gypsum (1006-1009)
-        QVERIFY(both.front()->group.contains("Phenylalanine"));
+        QVERIFY(has(both, "Benzene"));
+        QVERIFY(has(both, "sulfate"));
+        // functional groups and ion classes only: compounds are identified with the Library
+        {
+            std::vector<const bands::Band*> allp;
+            for (const bands::Band& b : bands::all()) allp.push_back(&b);
+            QVERIFY(!has(allp, "gypsum") && !has(allp, "calcite") && !has(allp, "Toluene"));
+            QVERIFY(has(allp, "N₂ (gas)") && has(allp, "CH₃"));   // subscripts
+        }
+        // ranges containing the position first, then the narrowest
         auto inside = [](const bands::Band* b) { return 1003 >= b->lo && 1003 <= b->hi; };
         for (std::size_t i = 1; i < both.size(); ++i)
             if (inside(both[i - 1]) == inside(both[i]))
