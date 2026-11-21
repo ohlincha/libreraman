@@ -9,7 +9,7 @@ vendor software lacks: scheduled scans, time series and calibration against comm
 *LibreRamen is an independent project, not affiliated with or endorsed by Anton Paar or BaySpec.
 Product names are used only to describe compatibility.*
 
-**Status: 0.2.0.** The C++/Qt 6 application (`cpp/`) is the main program: measurement (single spectra and
+**Status: 0.2.2.** The C++/Qt 6 application (`cpp/`) is the main program: measurement (single spectra and
 time series with a laser watchdog), Data (overlay, waterfall, heat map, peak fitting, export to CSV, JCAMP-DX,
 SPC), Library (SQLite, matching), Analysis (PCA, EFA, MCR-ALS, peak trends with kinetics, computed spectra
 from Gaussian/ORCA/xtb/...), Calibration (standards wizard), a local API and an MCP server. Verified on the
