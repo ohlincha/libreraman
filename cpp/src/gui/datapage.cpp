@@ -7,6 +7,7 @@
 #include "core/pyformat.h"
 
 #include <QAbstractItemView>
+#include <QApplication>
 #include <QCheckBox>
 #include <QColorDialog>
 #include <QComboBox>
@@ -30,6 +31,8 @@
 #include <QPixmap>
 #include <QPushButton>
 #include <QSlider>
+#include <QSpinBox>
+#include <QSaveFile>
 #include <QTimer>
 #include <QElapsedTimer>
 #include <QSplitter>
@@ -164,14 +167,18 @@ void DataPage::build() {
     auto* lv = new QVBoxLayout(left);
     lv->setContentsMargins(0, 0, 0, 0);
     auto* title = new QLabel(tr("<b>Spectra</b> (tick to show; drop files here)"));
-    title->setToolTip(tr("<p>Double-click a name to rename it; right-click for colour and removal.</p>"));
+    title->setToolTip(tr("<p>Double-click a name to rename it; right-click for colour, “Add to library…” and "
+                         "removal.</p>"));
     lv->addWidget(title);
     auto* list = new SpectrumList;
     list->onDrop = [this](const QStringList& p) { openFiles(p); };
     m_list = list;
     connect(m_list, &QListWidget::itemChanged, this, &DataPage::onItemChanged);
     connect(m_list, &QListWidget::currentRowChanged, this, [this] {
-        if (!m_batch) updatePeaks();
+        if (m_batch) return;
+        clearFit();
+        setNote({});
+        updatePeaks();
     });
     connect(m_list, &QWidget::customContextMenuRequested, this, &DataPage::listContextMenu);
     lv->addWidget(m_list, 1);
@@ -259,6 +266,7 @@ void DataPage::build() {
     m->addAction(tr("Ticked spectra as CSV…"), this, [this] { exportDialog("csv"); });
     m->addAction(tr("Ticked spectra as JCAMP-DX…"), this, [this] { exportDialog("jdx"); });
     m->addAction(tr("Ticked spectra as one table (common axis)…"), this, [this] { exportDialog("table"); });
+    m->addAction(tr("Peak table (CSV)…"), this, [this] { exportDialog("peaks"); });
     m->addAction(tr("Ticked spectra as one JCAMP-DX file (multi-block)…"), this, [this] { exportDialog("onejdx"); });
     m->addAction(tr("Ticked spectra as one SPC file (multi-file)…"), this, [this] { exportDialog("onespc"); });
     m->addSeparator();
@@ -288,8 +296,18 @@ void DataPage::build() {
     m_plot->setGrid(true, true);
     m_plot->setLegendVisible(true);
     m_plot->setHeadroom(0.08);              // Python rescale_y(0.08)
-    m_plot->setToolTip(PlotWidget::navigationHelp());
+    m_plot->setToolTip(PlotWidget::navigationHelp() +
+                       tr("<p>Click: add a peak to the current spectrum. Right-click: add/remove a peak, fit.</p>"));
     m_stack->addWidget(m_plot);
+    // A click adds a peak once it is clear it was not the first half of a double-click (zoom out).
+    m_clickTimer = new QTimer(this);
+    m_clickTimer->setSingleShot(true);
+    m_clickTimer->setInterval(QApplication::doubleClickInterval());
+    connect(m_clickTimer, &QTimer::timeout, this, [this] { addPeakAt(m_clickX); });
+    connect(m_plot, &PlotWidget::clicked, this,
+            [this](const QPointF& d, Qt::MouseButton b, Qt::KeyboardModifiers) { plotClicked(d, b); });
+    connect(m_plot, &PlotWidget::autoRangeRequested, m_clickTimer, &QTimer::stop);
+    connect(m_plot, &PlotWidget::rightClicked, this, &DataPage::plotMenu);
     m_heat = new PlotWidget;
     m_heat->setLabel(Axis::Bottom, QStringLiteral("Raman shift (cm⁻¹)"));
     m_heat->setLabel(Axis::Left, tr("spectrum #"));
@@ -299,23 +317,64 @@ void DataPage::build() {
     rv->addWidget(m_stack, 3);
 
     auto* prow = new QHBoxLayout;
-    prow->addWidget(new QLabel(tr("<b>Peaks</b> of the current spectrum")));
+    auto* ptitle = new QLabel(tr("<b>Peaks</b>"));
+    ptitle->setToolTip(tr("<p>Peaks of the current spectrum (≥ 100 cm⁻¹). <b>Click</b> the plot to add a peak, "
+                          "<b>right-click</b> near a peak to remove it (or to add one there). The peaks inside the "
+                          "fit window are the start values of the fit; editing them refits.</p>"));
+    prow->addWidget(ptitle);
+    prow->addSpacing(6);
+    prow->addWidget(new QLabel(tr("S/N ≥")));
+    m_snr = new QDoubleSpinBox;
+    m_snr->setRange(1.0, 10000.0);
+    m_snr->setDecimals(1);
+    m_snr->setSingleStep(1.0);
+    m_snr->setValue(8.0);
+    m_snr->setToolTip(tr("<p>Sensitivity of the peak picking: minimum peak height (prominence) over the noise</p>"));
+    connect(m_snr, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &DataPage::peaksChanged);
+    prow->addWidget(m_snr);
+    prow->addWidget(new QLabel(tr("on")));
+    m_pickOn = new QComboBox;
+    m_pickOn->addItems({tr("processed"), tr("raw")});
+    m_pickOn->setToolTip(tr("<p>Pick the peaks on the spectrum as shown (processed) or on the unprocessed data</p>"));
+    connect(m_pickOn, qOverload<int>(&QComboBox::currentIndexChanged), this, &DataPage::peaksChanged);
+    prow->addWidget(m_pickOn);
+    prow->addSpacing(6);
+    prow->addWidget(new QLabel(tr("labels")));
+    m_labels = new QComboBox;
+    m_labels->addItems({tr("off"), tr("current"), tr("all ticked")});
+    m_labels->setCurrentIndex(int(Labels::Current));
+    m_labels->setToolTip(tr("<p>Peak labels on the plot: none, the current spectrum, or every ticked spectrum "
+                            "(also the spectra written by Export ▸ Peak table)</p>"));
+    connect(m_labels, qOverload<int>(&QComboBox::currentIndexChanged), this, &DataPage::updatePeakOverlay);
+    prow->addWidget(m_labels);
     prow->addStretch();
-    prow->addWidget(new QLabel(tr("fit profile")));
+    prow->addWidget(new QLabel(tr("fit")));
     m_profile = new QComboBox;
     m_profile->addItems({"pvoigt", "voigt", "lorentz", "gauss"});   // Python order (default pvoigt)
-    prow->addWidget(m_profile);
-    auto* fit = new QPushButton(tr("Fit peaks in view"));
-    fit->setToolTip(tr("<p>Fits the peaks of the current spectrum inside the visible x range (zoom in first). "
-                       "Drag the shaded fit window or its edges to fit another range.</p>"));
-    connect(fit, &QPushButton::clicked, this, [this] {
-        QString err;
-        if (!fitView(&err) && !err.isEmpty()) info(tr("Fit"), err);
+    connect(m_profile, qOverload<int>(&QComboBox::currentIndexChanged), this, [this] {
+        if (hasFit()) refit();
     });
+    prow->addWidget(m_profile);
+    prow->addWidget(new QLabel(tr("max.")));
+    m_maxComp = new QSpinBox;
+    m_maxComp->setRange(1, 40);
+    m_maxComp->setValue(12);
+    m_maxComp->setToolTip(tr("<p>Maximum number of fit components: if the fit window holds more peaks, the "
+                             "strongest are fitted</p>"));
+    connect(m_maxComp, qOverload<int>(&QSpinBox::valueChanged), this, [this] {
+        if (hasFit()) refit();
+    });
+    prow->addWidget(m_maxComp);
+    auto* fit = new QPushButton(tr("Fit peaks in view"));
+    fit->setToolTip(tr("<p>Fits the peaks of the current spectrum inside the visible x range (at most “max.” "
+                       "components, the strongest). Click the plot to add a component, right-click near one to "
+                       "remove it. Drag the shaded fit window or its edges to fit another range.</p>"));
+    connect(fit, &QPushButton::clicked, this, [this] { fitView(); });
     prow->addWidget(fit);
     auto* clr = new QPushButton(tr("Clear fit"));
     connect(clr, &QPushButton::clicked, this, [this] {
         clearFit();
+        setNote({});
         updatePeaks();
     });
     prow->addWidget(clr);
@@ -370,7 +429,7 @@ void DataPage::addSpectrum(const fileio::DataSpectrum& sp, bool checked) {
 }
 
 void DataPage::addEntry(const fileio::DataSpectrum& sp, bool checked) {
-    m_entries.push_back({sp, QColor(), {}, {}, {}});
+    m_entries.push_back({sp, QColor(), {}, {}, {}, {}, {}});
     auto* it = new QListWidgetItem(sp.name);
     it->setFlags(it->flags() | Qt::ItemIsUserCheckable | Qt::ItemIsEditable);
     it->setCheckState(checked ? Qt::Checked : Qt::Unchecked);
@@ -440,8 +499,14 @@ void DataPage::onItemChanged(QListWidgetItem* it) {
 void DataPage::listContextMenu(const QPoint& pos) {
     QListWidgetItem* it = m_list->itemAt(pos);
     if (!it) return;
-    const int r = m_list->row(it);
     QMenu menu(this);
+    fillListMenu(menu, m_list->row(it));
+    menu.exec(m_list->viewport()->mapToGlobal(pos));
+}
+
+void DataPage::fillListMenu(QMenu& menu, int r) {
+    QListWidgetItem* it = m_list->item(r);
+    if (!it || r >= count()) return;
     menu.addAction(tr("Rename"), this, [this, it] { m_list->editItem(it); });
     menu.addAction(tr("Colour…"), this, [this, r] {
         const QColor c = QColorDialog::getColor(colorOf(r), this, tr("Spectrum colour"));
@@ -450,13 +515,16 @@ void DataPage::listContextMenu(const QPoint& pos) {
     QAction* autoColor = menu.addAction(tr("Automatic colour"), this, [this, r] { setColor(r, QColor()); });
     autoColor->setEnabled(m_entries[size_t(r)].color.isValid());
     menu.addSeparator();
+    menu.addAction(tr("Add to library…"), this, [this, r] {
+        if (r >= 0 && r < count()) emit addToLibraryRequested(m_entries[size_t(r)].sp);
+    });
+    menu.addSeparator();
     menu.addAction(tr("Remove"), this, [this, r] {
         std::vector<int> rows;
         for (const QModelIndex& i : m_list->selectionModel()->selectedRows()) rows.push_back(i.row());
         if (std::find(rows.begin(), rows.end(), r) == rows.end()) rows = {r};
         removeRows(rows);
     });
-    menu.exec(m_list->viewport()->mapToGlobal(pos));
 }
 
 bool DataPage::isTicked(int row) const {
@@ -597,10 +665,16 @@ void DataPage::redraw() {
     }
     m_dirty = false;
     clearFit();
+    m_labelItems.clear();                       // deleted by clear()
+    m_labelRows.clear();
+    m_peakMarks = nullptr;
+    m_drawn.clear();
     m_plot->clear();
     m_heat->clear();
     m_heatItem = nullptr;
+    m_baseNote.clear();
     m_note->clear();
+    m_note->setToolTip({});
     std::vector<int> rows = tickedRows();
     const View mode = view();
     const bool diff = m_diff->isChecked() && rows.size() >= 2;
@@ -657,10 +731,10 @@ void DataPage::redraw() {
         });
     }
     if (!problems.isEmpty()) {
-        m_note->setText(tr("processing failed, shown unprocessed: %1").arg(problems.join("; ")));
+        m_baseNote = tr("processing failed, shown unprocessed: %1").arg(problems.join("; "));
         m_note->setToolTip(problems.join('\n'));
     } else if (!thinned.isEmpty()) {
-        m_note->setText(thinned);
+        m_baseNote = thinned;
     }
     const PlotPalette& pal = m_plot->plotPalette();
     auto nameOf = [&](int k) { return m_entries[size_t(rows[size_t(k)])].sp.name; };
@@ -698,7 +772,7 @@ void DataPage::redraw() {
             m_heatItem->setColorBarVisible(true);
             m_heatItem->setColorBarLabel(tr("intensity"));
         } else {
-            m_note->setText(tr("heat map: the ticked spectra have no common x range"));
+            m_baseNote = tr("heat map: the ticked spectra have no common x range");
         }
     } else {
         double span = 0;
@@ -750,8 +824,10 @@ void DataPage::redraw() {
                 c->setFill(QBrush(bg), base + double(k) * step);
                 c->setZValue(-double(k));                // front (first) spectrum on top
             }
+            m_drawn.push_back({rows[k], double(k) * step, double(k) * dx});
         }
     }
+    setNote({});
     updatePeaks();
 }
 
@@ -776,89 +852,380 @@ void DataPage::changeEvent(QEvent* e) {
     if (e->type() == QEvent::PaletteChange && m_plot) redraw();      // theme switch: new series colours
 }
 
-void DataPage::updatePeaks() {
-    m_table->setRowCount(0);
-    const int r = currentRow();
-    if (r < 0 || r >= count()) return;
-    const auto [x, y] = processed(m_entries[size_t(r)].sp);
+// ------------------------------------------------------------------------------------------- peak list
+void DataPage::setPeakSnr(double snr) { m_snr->setValue(snr); }
+double DataPage::peakSnr() const { return m_snr->value(); }
+void DataPage::setPickOnRaw(bool raw) { m_pickOn->setCurrentIndex(raw ? 1 : 0); }
+bool DataPage::pickOnRaw() const { return m_pickOn->currentIndex() == 1; }
+void DataPage::setPeakLabels(Labels l) { m_labels->setCurrentIndex(int(l)); }
+DataPage::Labels DataPage::peakLabels() const { return Labels(m_labels->currentIndex()); }
+void DataPage::setMaxComponents(int n) { m_maxComp->setValue(n); }
+int DataPage::maxComponents() const { return m_maxComp->value(); }
+QString DataPage::note() const { return m_note->text(); }
+
+void DataPage::setNote(const QString& text) { m_note->setText(text.isEmpty() ? m_baseNote : text); }
+
+Vec DataPage::shownY(int row) const {
+    const Entry& e = m_entries[size_t(row)];
+    if (e.key == settingsKey() && e.procY.size() == e.sp.x.size()) return e.procY;
+    return processed(e.sp).second;
+}
+
+std::pair<Vec, Vec> DataPage::pickData(int row) const {
+    const fileio::DataSpectrum& sp = m_entries[size_t(row)].sp;
+    if (pickOnRaw()) return {sp.x, sp.y};
+    return {sp.x, shownY(row)};
+}
+
+namespace {
+
+constexpr double kSameTol = 3.0;                // cm⁻¹: a removed/added peak matches a picked one
+
+// A peak added by hand at x (already snapped to a data point): height there, width/area/S/N from a local
+// pick at low threshold if one lies close (else FWHM 10 cm⁻¹, the fit's default start width).
+peaks::Peak manualPeak(const Vec& x, const Vec& y, double pos) {
+    peaks::Peak p;
+    p.position = pos;
+    p.height = interp1(pos, x, y);
+    p.fwhm = 10.0;
+    p.area = NaN;
     try {
-        const int dh = heightDecimals();
-        for (const peaks::Peak& p : peaks::pick(x, y, 8.0, 2.0, false, 150.0))
-            fillPeakRow({{p.position, 1}, {NaN, 2}, {p.height, dh}, {p.fwhm, 1}, {p.area, dh}, {p.snr, 2}});
+        const double noise = peaks::noiseLevel(y);
+        if (noise > 0) p.snr = p.height / noise;
+        for (const peaks::Peak& q : peaks::pick(x, y, 1.0, 2.0, false, pos - 30.0, pos + 30.0))
+            if (std::abs(q.position - pos) <= kSameTol) {
+                p.fwhm = q.fwhm;
+                p.area = q.area;
+                break;
+            }
     } catch (const std::exception&) {
-        // too few points etc.: no peak table
+    }
+    return p;
+}
+
+}  // namespace
+
+std::vector<peaks::Peak> DataPage::peaksOf(int row) const {
+    std::vector<peaks::Peak> out;
+    if (row < 0 || row >= count()) return out;
+    const Entry& e = m_entries[size_t(row)];
+    const auto [x, y] = pickData(row);
+    try {
+        for (const peaks::Peak& p : peaks::pick(x, y, peakSnr(), 2.0, false, kMinPeakShift)) {
+            const bool removed = std::any_of(e.removedPeaks.begin(), e.removedPeaks.end(),
+                                             [&](double r) { return std::abs(r - p.position) <= kSameTol; });
+            if (!removed) out.push_back(p);
+        }
+    } catch (const std::exception&) {
+        // too few points etc.: only the added peaks
+    }
+    for (double a : e.addedPeaks) out.push_back(manualPeak(x, y, a));
+    std::sort(out.begin(), out.end(), [](const peaks::Peak& a, const peaks::Peak& b) { return a.position < b.position; });
+    return out;
+}
+
+double DataPage::pixelTolerance(double px) const {
+    const double w = m_plot->plotArea().width();
+    const double span = m_plot->xRange().span();
+    return w > 50 ? px * span / w : 0.01 * span;
+}
+
+double DataPage::drawnShift(int row) const {
+    for (const Drawn& d : m_drawn)
+        if (d.row == row) return d.dx;
+    return 0.0;
+}
+
+bool DataPage::findPeakNear(double x, double tol, double* pos) const {
+    const int row = currentRow();
+    if (row < 0 || row >= count()) return false;
+    double best = tol, found = NaN;
+    for (const peaks::Peak& p : peaksOf(row))
+        if (std::abs(p.position - x) <= best) {
+            best = std::abs(p.position - x);
+            found = p.position;
+        }
+    for (std::size_t k = 0; k < m_fitResultPositions.size() && k < m_fitPositions.size(); ++k)
+        if (std::abs(m_fitResultPositions[k] - x) <= best) {   // a component: remove its start peak
+            best = std::abs(m_fitResultPositions[k] - x);
+            found = m_fitPositions[k];
+        }
+    if (std::isnan(found)) return false;
+    if (pos) *pos = found;
+    return true;
+}
+
+bool DataPage::addPeakAt(double x) {
+    const int row = currentRow();
+    if (row < 0 || row >= count()) return false;
+    const auto [xs, ys] = pickData(row);
+    if (xs.size() < 2 || x < xs.front() || x > xs.back()) return false;
+    if (x < kMinPeakShift) {
+        setNote(tr("no peaks below %1 cm⁻¹").arg(int(kMinPeakShift)));
+        return false;
+    }
+    // snap to the highest point within ±3 cm⁻¹ (a click is rarely exactly on the top)
+    std::size_t best = xs.size();
+    for (std::size_t i = 0; i < xs.size(); ++i)
+        if (std::abs(xs[i] - x) <= kSameTol && xs[i] >= kMinPeakShift && (best == xs.size() || ys[i] > ys[best]))
+            best = i;
+    const double pos = best < xs.size() ? xs[best] : x;
+    Entry& e = m_entries[size_t(row)];
+    for (const peaks::Peak& p : peaksOf(row))
+        if (std::abs(p.position - pos) <= 1.5) {
+            setNote(tr("there is a peak at %1 cm⁻¹ already").arg(py::fixed(p.position, 1)));
+            return false;
+        }
+    const auto rem = std::find_if(e.removedPeaks.begin(), e.removedPeaks.end(),
+                                  [&](double r) { return std::abs(r - pos) <= kSameTol; });
+    if (rem != e.removedPeaks.end()) e.removedPeaks.erase(rem);     // a removed pick comes back
+    else e.addedPeaks.push_back(pos);
+    setNote({});
+    peaksChanged();
+    return true;
+}
+
+bool DataPage::removePeakNear(double x, double tolerance) {
+    const int row = currentRow();
+    if (row < 0 || row >= count()) return false;
+    double pos = 0;
+    if (!findPeakNear(x, tolerance < 0 ? pixelTolerance(12) : tolerance, &pos)) return false;
+    Entry& e = m_entries[size_t(row)];
+    const auto add = std::find_if(e.addedPeaks.begin(), e.addedPeaks.end(),
+                                  [&](double a) { return std::abs(a - pos) < 1e-9; });
+    if (add != e.addedPeaks.end()) e.addedPeaks.erase(add);
+    else e.removedPeaks.push_back(pos);
+    setNote({});
+    peaksChanged();
+    return true;
+}
+
+void DataPage::resetPeaks(int row) {
+    if (row < 0 || row >= count()) return;
+    m_entries[size_t(row)].addedPeaks.clear();
+    m_entries[size_t(row)].removedPeaks.clear();
+    if (row == currentRow()) peaksChanged();
+}
+
+void DataPage::peaksChanged() {
+    if (hasFit() && m_fitRegion) {
+        refit();
+        updatePeakOverlay();
+    } else {
+        updatePeaks();
     }
 }
 
+PeakLabels* DataPage::peakLabelItem(int row) const {
+    for (std::size_t k = 0; k < m_labelRows.size(); ++k)
+        if (m_labelRows[k] == row) return m_labelItems[k];
+    return nullptr;
+}
+
+void DataPage::updatePeaks() {
+    if (!hasFit()) {
+        m_table->setRowCount(0);
+        const int r = currentRow();
+        if (r >= 0 && r < count()) {
+            const int dh = heightDecimals();
+            for (const peaks::Peak& p : peaksOf(r))
+                fillPeakRow({{p.position, 1}, {NaN, 2}, {p.height, dh}, {p.fwhm, 1}, {p.area, dh}, {p.snr, 2}});
+        }
+    }
+    updatePeakOverlay();
+}
+
+void DataPage::updatePeakOverlay() {
+    for (PeakLabels* l : m_labelItems) m_plot->removeItem(l);
+    m_labelItems.clear();
+    m_labelRows.clear();
+    if (m_peakMarks) m_plot->removeItem(m_peakMarks);
+    m_peakMarks = nullptr;
+    const Labels mode = peakLabels();
+    if (mode == Labels::Off || m_drawn.empty()) return;
+    const int cur = currentRow();
+    const PlotPalette& pal = m_plot->plotPalette();
+    for (const Drawn& d : m_drawn) {
+        if (mode == Labels::Current && d.row != cur) continue;
+        const fileio::DataSpectrum& sp = m_entries[size_t(d.row)].sp;
+        Vec x = sp.x, y = shownY(d.row);            // labels sit on the curve as drawn
+        for (double& v : x) v += d.dx;
+        for (double& v : y) v += d.dy;
+        Vec pos;
+        for (const peaks::Peak& p : peaksOf(d.row)) pos.push_back(p.position + d.dx);
+        PeakLabels* l = m_plot->addPeakLabels();
+        l->setAutoScale(false);
+        l->setPeaks(pos, x, y, 0);
+        if (mode == Labels::AllTicked && m_drawn.size() > 1) l->setColor(colorOf(d.row));
+        m_labelItems.push_back(l);
+        m_labelRows.push_back(d.row);
+        if (d.row == cur && !pos.empty()) {         // markers on the tops of the current spectrum's peaks
+            Vec my;
+            for (double p : pos) my.push_back(interp1(p, x, y));
+            m_peakMarks = m_plot->addScatter(pos, std::move(my), pal.accent, 5, Marker::Diamond);
+            m_peakMarks->setAutoScale(false);
+            m_peakMarks->setZValue(6);
+        }
+    }
+}
+
+void DataPage::plotClicked(const QPointF& data, Qt::MouseButton button) {
+    if (button != Qt::LeftButton) return;
+    const int row = currentRow();
+    if (row < 0 || !m_plot->plotArea().contains(m_plot->mapFromData(data))) return;
+    if (std::none_of(m_drawn.begin(), m_drawn.end(), [row](const Drawn& d) { return d.row == row; })) return;
+    m_clickX = data.x() - drawnShift(row);
+    m_clickTimer->start();
+}
+
+void DataPage::fillPlotMenu(QMenu& menu, double x) {
+    const int row = currentRow();
+    const bool shown = std::any_of(m_drawn.begin(), m_drawn.end(), [row](const Drawn& d) { return d.row == row; });
+    if (row >= 0 && shown) {
+        if (x >= kMinPeakShift)
+            menu.addAction(tr("Add peak here (%1 cm⁻¹)").arg(py::fixed(x, 1)), this, [this, x] { addPeakAt(x); });
+        double pos = 0;
+        if (findPeakNear(x, pixelTolerance(12), &pos))
+            menu.addAction(tr("Remove peak at %1 cm⁻¹").arg(py::fixed(pos, 1)), this,
+                           [this, pos] { removePeakNear(pos, 1e-6); });
+        const Entry& e = m_entries[size_t(row)];
+        if (!e.addedPeaks.empty() || !e.removedPeaks.empty())
+            menu.addAction(tr("Reset the peaks of this spectrum"), this, [this, row] { resetPeaks(row); });
+        menu.addSeparator();
+        menu.addAction(tr("Fit peaks in view"), this, [this] { fitView(); });
+        if (hasFit()) {
+            menu.addAction(tr("Refit"), this, [this] { refit(); });
+            menu.addAction(tr("Clear fit"), this, [this] {
+                clearFit();
+                setNote({});
+                updatePeaks();
+            });
+        }
+    }
+}
+
+void DataPage::plotMenu(const QPointF& data, const QPoint& global) {
+    m_clickTimer->stop();
+    if (!m_plot->plotArea().contains(m_plot->mapFromData(data))) return;
+    QMenu menu(this);
+    fillPlotMenu(menu, data.x() - drawnShift(currentRow()));
+    if (!menu.actions().isEmpty()) menu.exec(global);
+}
+
+// ---------------------------------------------------------------------------------------------- fitting
 void DataPage::clearFit() {
     for (PlotItem* it : m_fitItems) m_plot->removeItem(it);
     m_fitItems.clear();
     if (m_fitRegion) m_plot->removeItem(m_fitRegion);
     m_fitRegion = nullptr;
+    m_fitPositions.clear();
+    m_fitResultPositions.clear();
+    m_fitPeaks.clear();
     m_fitLabel->clear();
 }
 
 bool DataPage::fitView(QString* error) {
     if (currentRow() < 0) return false;
     const Range v = m_plot->xRange();
-    if (v.hi - v.lo > 1200) {
-        if (error) *error = tr("Zoom in on the band(s) to fit first (visible range < 1200 cm⁻¹).");
-        return false;
-    }
     return fitRange(v.lo, v.hi, error);
+}
+
+bool DataPage::refit(QString* error) {
+    if (!m_fitRegion) return fitView(error);
+    const Range r = m_fitRegion->region();
+    return fitRange(r.lo, r.hi, error);
 }
 
 bool DataPage::fitRange(double lo, double hi, QString* error) {
     const int row = currentRow();
     if (row < 0 || row >= count()) return false;
     if (lo > hi) std::swap(lo, hi);
-    const auto [x, y] = processed(m_entries[size_t(row)].sp);
-    peaks::FitResult res;
-    try {
-        res = peaks::fit(x, y, {lo, hi}, std::nullopt, m_profile->currentText());
-    } catch (const std::exception& e) {
-        if (error) *error = QString::fromUtf8(e.what());
-        if (m_fitRegion) {                      // a dragged fit window: say why there is no fit now
+    const fileio::DataSpectrum& sp = m_entries[size_t(row)].sp;
+    const Vec y = shownY(row);
+    // start values: the peaks of the spectrum in the window (picked + added − removed), at most
+    // maxComponents() of them (the strongest)
+    std::vector<peaks::Peak> guesses;
+    for (const peaks::Peak& p : peaksOf(row))
+        if (p.position >= lo && p.position <= hi) guesses.push_back(p);
+    const std::size_t inWindow = guesses.size();
+    const std::size_t cap = std::size_t(maxComponents());
+    if (guesses.size() > cap) {
+        std::sort(guesses.begin(), guesses.end(),
+                  [](const peaks::Peak& a, const peaks::Peak& b) { return a.height > b.height; });
+        guesses.resize(cap);
+        std::sort(guesses.begin(), guesses.end(),
+                  [](const peaks::Peak& a, const peaks::Peak& b) { return a.position < b.position; });
+    }
+    auto fail = [&](const QString& why) {
+        const QString msg = tr("no fit in %1–%2 cm⁻¹: %3").arg(py::fixed(lo, 0), py::fixed(hi, 0), why);
+        if (error) *error = msg;
+        if (m_fitRegion) {                      // a dragged fit window: no fit there now
             for (PlotItem* it : m_fitItems) m_plot->removeItem(it);
             m_fitItems.clear();
-            m_fitLabel->setText(tr("no fit in %1–%2 cm⁻¹: %3")
-                                    .arg(py::fixed(lo, 0), py::fixed(hi, 0), QString::fromUtf8(e.what())));
+            m_fitPositions.clear();
+            m_fitResultPositions.clear();
+            m_fitPeaks.clear();
+            m_fitLabel->clear();
+            updatePeaks();                      // the table shows the picked peaks again
         }
+        setNote(msg);
         return false;
+    };
+    if (guesses.empty())
+        return fail(tr("no peaks (lower S/N, or click the plot to add one)"));
+    peaks::FitResult res;
+    try {
+        res = peaks::fit(sp.x, y, {lo, hi}, guesses, m_profile->currentText());
+    } catch (const std::exception& e) {
+        return fail(QString::fromUtf8(e.what()));
     }
     for (PlotItem* it : m_fitItems) m_plot->removeItem(it);
     m_fitItems.clear();
+    m_fitPositions.clear();
+    for (const peaks::Peak& g : guesses) m_fitPositions.push_back(g.position);
+    m_fitResultPositions.clear();
+    for (const peaks::FitPeak& p : res.peaks) m_fitResultPositions.push_back(p.position);
+    m_fitPeaks = res.peaks;
+    // stacked waterfall: draw the fit where the current spectrum is drawn
+    double dx = 0, dy = 0;
+    for (const Drawn& d : m_drawn)
+        if (d.row == row) dx = d.dx, dy = d.dy;
+    Vec fx = res.x;
+    for (double& v : fx) v += dx;
+    Vec model = res.model;
+    for (double& v : model) v += dy;
     const PlotPalette& pal = m_plot->plotPalette();
-    Curve* model = m_plot->addCurve(res.x, res.model, QPen(pal.label, 1.2, Qt::DashLine));
-    model->setAutoScale(false);
-    model->setZValue(5);
-    m_fitItems.push_back(model);
+    Curve* mc = m_plot->addCurve(fx, std::move(model), QPen(pal.label, 1.2, Qt::DashLine));
+    mc->setAutoScale(false);
+    mc->setZValue(5);
+    m_fitItems.push_back(mc);
     double xm = 0;
     for (double v : res.x) xm += v;
     xm /= double(std::max<std::size_t>(1, res.x.size()));
     for (std::size_t k = 0; k < res.components.size(); ++k) {
         Vec yc = res.components[k];
         for (std::size_t i = 0; i < yc.size() && i < res.x.size(); ++i)
-            yc[i] += res.baseline.first + res.baseline.second * (res.x[i] - xm);
-        Curve* c = m_plot->addCurve(res.x, std::move(yc), QPen(pal.seriesColor(int(k) + 3), 1));
+            yc[i] += res.baseline.first + res.baseline.second * (res.x[i] - xm) + dy;
+        Curve* c = m_plot->addCurve(fx, std::move(yc), QPen(pal.seriesColor(int(k) + 3), 1));
         c->setAutoScale(false);
         c->setZValue(4);
         m_fitItems.push_back(c);
     }
     if (!m_fitRegion) {
-        m_fitRegion = m_plot->addRegion(lo, hi);
+        m_fitRegion = m_plot->addRegion(lo + dx, hi + dx);
         m_fitRegion->setAutoScale(false);
         QColor shade = pal.region;
         shade.setAlphaF(shade.alphaF() * 0.6);
         m_fitRegion->setBrush(shade);
         connect(m_fitRegion, &RegionItem::regionChangeFinished, this,
                 [this](double a, double b) {
-                    QString err;
-                    fitRange(a, b, &err);
+                    const double s = drawnShift(currentRow());
+                    fitRange(a - s, b - s);
                 },
                 Qt::QueuedConnection);
     } else {
-        m_fitRegion->setRegion(lo, hi);
+        const QSignalBlocker block(m_fitRegion);
+        m_fitRegion->setRegion(lo + dx, hi + dx);
     }
     m_table->setRowCount(0);
     const int dh = heightDecimals();
@@ -869,6 +1236,12 @@ bool DataPage::fitRange(double lo, double hi, QString* error) {
                             .arg(res.shape)
                             .arg(res.peaks.size())
                             .arg(py::fixed(lo, 0), py::fixed(hi, 0), py::fixed(res.r2, 5), py::fixed(res.rms, 1)));
+    if (inWindow > cap)
+        setNote(tr("fitted the %1 strongest of %2 peaks in the window (raise “max.” or zoom in for more)")
+                    .arg(cap)
+                    .arg(inWindow));
+    else
+        setNote({});
     return true;
 }
 
@@ -972,6 +1345,50 @@ bool DataPage::exportTable(const QString& path) {
     return true;
 }
 
+bool DataPage::exportPeaks(const QString& path) {
+    auto num = [](double v) { return std::isfinite(v) ? QString::number(v, 'g', 10) : QString(); };
+    auto quoted = [](QString t) {
+        if (t.contains(',') || t.contains('"')) t = '"' + t.replace('"', QStringLiteral("\"\"")) + '"';
+        return t;
+    };
+    QStringList lines;
+    if (hasFit()) {
+        lines << QStringLiteral("spectrum,position_cm-1,position_err,height,fwhm_cm-1,area,eta,fit");
+        const QString name = quoted(m_entries[size_t(currentRow())].sp.name);
+        for (const peaks::FitPeak& p : m_fitPeaks)
+            lines << QStringList{name, num(p.position), num(p.positionErr), num(p.height), num(p.fwhm), num(p.area),
+                                 p.eta ? num(*p.eta) : QString(), m_profile->currentText()}
+                         .join(',');
+    } else {
+        lines << QStringLiteral("spectrum,position_cm-1,height,fwhm_cm-1,area,snr,added_by_hand");
+        std::vector<int> rows;
+        if (peakLabels() == Labels::AllTicked) rows = tickedRows();
+        else if (currentRow() >= 0) rows = {currentRow()};
+        for (int r : rows) {
+            const Entry& e = m_entries[size_t(r)];
+            for (const peaks::Peak& p : peaksOf(r)) {
+                const bool manual = std::any_of(e.addedPeaks.begin(), e.addedPeaks.end(),
+                                                [&](double a) { return std::abs(a - p.position) < 1e-9; });
+                lines << QStringList{quoted(e.sp.name), num(p.position), num(p.height), num(p.fwhm), num(p.area),
+                                     num(p.snr), manual ? QStringLiteral("yes") : QStringLiteral("no")}
+                             .join(',');
+            }
+        }
+        if (rows.empty()) return false;
+    }
+    QSaveFile f(path);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        warn(tr("Export"), tr("Could not write %1").arg(path));
+        return false;
+    }
+    f.write((lines.join('\n') + '\n').toUtf8());
+    if (!f.commit()) {
+        warn(tr("Export"), tr("Could not write %1").arg(path));
+        return false;
+    }
+    return true;
+}
+
 bool DataPage::exportOneFile(const QString& path) {
     std::vector<fileio::DataSpectrum> list;
     for (int r : tickedRows()) {
@@ -1016,6 +1433,11 @@ void DataPage::exportDialog(const QString& kind) {
         const QString p = QFileDialog::getSaveFileName(this, tr("Save plot"), "spectra." + kind,
                                                        kind.toUpper() + " (*." + kind + ")");
         if (!p.isEmpty()) exportPlot(p);
+        return;
+    }
+    if (kind == "peaks") {
+        const QString p = QFileDialog::getSaveFileName(this, tr("Save peak table"), "peaks.csv", "CSV (*.csv)");
+        if (!p.isEmpty()) exportPeaks(p);
         return;
     }
     if (tickedRows().empty()) return;

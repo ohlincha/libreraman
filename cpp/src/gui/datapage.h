@@ -12,7 +12,14 @@
 // cached per entry, at most kMaxCurves ticked spectra are drawn in the overlay/stacked views (evenly thinned),
 // and a redraw processes new spectra for at most kProcessBudgetMs (the rest follow in later passes). The intensity axis follows the visible x range (PlotWidget autoY).
 //
-// The page is self-contained (no dependency on the main window).
+// Peaks: picked (S/N threshold, on the processed or the raw spectrum, ≥ 100 cm⁻¹) and labelled on the plot
+// for the current spectrum (or all ticked ones). Clicking the plot adds a peak to the current spectrum,
+// right-click offers adding/removing a peak near the cursor; the edits are kept per spectrum. The peaks
+// in the fit window are the start values (components) of the fit, at most maxComponents() (the strongest);
+// editing the peaks refits. Fit problems are shown in the note line (no dialogs).
+//
+// The page is self-contained (no dependency on the main window): "Add to library…" in the list's context
+// menu only emits addToLibraryRequested().
 #include <QColor>
 #include <QStringList>
 #include <QWidget>
@@ -31,7 +38,11 @@ class QComboBox;
 class QLabel;
 class QListWidget;
 class QListWidgetItem;
+class QMenu;
 class QSlider;
+class QSpinBox;
+class QDoubleSpinBox;
+class QTimer;
 class QStackedWidget;
 class QTableWidget;
 
@@ -41,6 +52,8 @@ class PlotWidget;
 class PlotItem;
 class RegionItem;
 class HeatMapItem;
+class PeakLabels;
+class Curve;
 
 class DataPage : public QWidget {
     Q_OBJECT
@@ -97,13 +110,43 @@ public:
     std::pair<Vec, Vec> processed(const fileio::DataSpectrum& sp, QString* error = nullptr) const;
     QString describeProcessing() const;          // Python _describe() (file metadata)
 
-    // ---- peaks and fitting
+    // ---- peaks
+    enum class Labels { Off = 0, Current = 1, AllTicked = 2 };
+    static constexpr double kMinPeakShift = 100.0;   // no peaks below (laser line, filter edge)
+    void setPeakSnr(double snr);                 // pick threshold (default 8)
+    double peakSnr() const;
+    void setPickOnRaw(bool raw);                 // pick on the unprocessed spectrum (default: as shown)
+    bool pickOnRaw() const;
+    void setPeakLabels(Labels l);
+    Labels peakLabels() const;
+    // Picked peaks of a spectrum (minus the removed ones, plus the added ones), sorted by position.
+    std::vector<peaks::Peak> peaksOf(int row) const;
+    // Adds a peak to the current spectrum at x (snapped to the local maximum within ±3 cm⁻¹); refits if
+    // there is a fit. False (and a note) outside the data or below kMinPeakShift.
+    bool addPeakAt(double x);
+    // Removes the peak (or fit component) of the current spectrum nearest to x within `tolerance` cm⁻¹
+    // (< 0: 12 pixels of the plot); refits if there is a fit.
+    bool removePeakNear(double x, double tolerance = -1);
+    void resetPeaks(int row);                    // forget the added/removed peaks of a spectrum
+    PeakLabels* peakLabelItem(int row) const;    // the labels of a spectrum on the plot (nullptr: none)
+    QString note() const;                        // the note line (processing and fit problems)
+    void showNote(const QString& text) { setNote(text); }   // until the next redraw/fit (empty: clear)
+    // Context menu of the plot at shift x (tests: inspect the actions without exec()).
+    void fillPlotMenu(QMenu& menu, double x);
+    void fillListMenu(QMenu& menu, int row);     // context menu of a list entry
+
+    // ---- fitting
     void setFitProfile(const QString& shape);    // pvoigt, voigt, lorentz, gauss
-    // Fit the bands of the current spectrum in [lo, hi]; on failure returns false and the message.
+    void setMaxComponents(int n);                // at most n components (the strongest peaks), default 12
+    int maxComponents() const;
+    // Fit the peaks of the current spectrum in [lo, hi] (any width); on failure returns false and the
+    // message (also shown in the note line).
     bool fitRange(double lo, double hi, QString* error = nullptr);
-    bool fitView(QString* error = nullptr);      // the visible x range (< 1200 cm⁻¹)
+    bool fitView(QString* error = nullptr);      // the visible x range
+    bool refit(QString* error = nullptr);        // the current fit window again (after editing the peaks)
     void clearFit();
     bool hasFit() const { return !m_fitItems.empty(); }
+    int fitComponents() const { return int(m_fitPositions.size()); }
 
     // ---- calculator: a·A + b·B + c (rows; bRow < 0: no B); adds the result, returns its row (-1: none)
     int calculate(int aRow, double a, int bRow, double b, double c);
@@ -113,6 +156,9 @@ public:
     // All ticked spectra in one file: JCAMP-DX LINK file (.jdx/.dx) or multi-file SPC (.spc), by suffix.
     bool exportOneFile(const QString& path);
     bool exportTable(const QString& path);
+    // Peak table as CSV: the fit result if there is one, else the peaks of the current spectrum (labels
+    // "all ticked": of every ticked spectrum), with the spectrum name and whether a peak was added by hand.
+    bool exportPeaks(const QString& path);
     bool exportPlot(const QString& path);       // .png (2000 px wide) or .svg, the plot shown
 
     // ---- widgets (tests, main window)
@@ -126,12 +172,14 @@ public:
 public slots:
     void openFilesDialog();
     void calculatorDialog();
-    void exportDialog(const QString& kind);      // "csv", "jdx", "table", "onejdx", "onespc", "png", "svg"
+    void exportDialog(const QString& kind);      // "csv", "jdx", "table", "peaks", "onejdx", "onespc", "png", "svg"
     void redraw();
 
 signals:
     void spectraChanged();                       // added, removed, renamed, ticked
     void message(const QString& title, const QString& text);   // warnings and notes (also shown as boxes)
+    // "Add to library…" in the list's context menu (the host routes it to the Library page).
+    void addToLibraryRequested(const lr::fileio::DataSpectrum& sp);
 
 protected:
     void changeEvent(QEvent* e) override;
@@ -144,6 +192,11 @@ private:
         QString key;
         Vec procY;
         QString procError;
+        Vec addedPeaks, removedPeaks;            // peak edits (positions, cm⁻¹)
+    };
+    struct Drawn {                               // a spectrum as drawn (stacked: with offset and shift)
+        int row;
+        double dy, dx;
     };
     QString settingsKey() const;
     static constexpr int kProcessBudgetMs = 50;
@@ -155,6 +208,17 @@ private:
     void onItemChanged(QListWidgetItem* it);
     void listContextMenu(const QPoint& pos);
     void updatePeaks();
+    void updatePeakOverlay();
+    void plotClicked(const QPointF& data, Qt::MouseButton button);
+    void plotMenu(const QPointF& data, const QPoint& global);
+    std::pair<Vec, Vec> pickData(int row) const;  // the data peaks are picked on
+    Vec shownY(int row) const;                    // processed y (cached when possible)
+    void peaksChanged();                          // table, labels, refit
+    void setNote(const QString& text);            // empty: back to the processing note
+    double pixelTolerance(double px) const;       // px plot pixels in cm⁻¹
+    // The peak (or fit component: its start position) of the current spectrum nearest to x within tol.
+    bool findPeakNear(double x, double tol, double* pos) const;
+    double drawnShift(int row) const;             // stacked waterfall: sideways shift of a drawn row
     void updateSwatches();
     int heightDecimals() const;
     void fillPeakRow(const std::vector<std::pair<double, int>>& values);   // (value, decimals), NaN = blank
@@ -183,9 +247,23 @@ private:
     QComboBox* m_profile = nullptr;
     QTableWidget* m_table = nullptr;
     QLabel* m_fitLabel = nullptr;
-    QLabel* m_note = nullptr;                    // processing problems
+    QLabel* m_note = nullptr;                    // processing and fit problems
+    QString m_baseNote;                          // processing problems / thinning (set by redraw)
+    QDoubleSpinBox* m_snr = nullptr;
+    QComboBox* m_pickOn = nullptr;               // processed / raw
+    QComboBox* m_labels = nullptr;
+    QSpinBox* m_maxComp = nullptr;
+    QTimer* m_clickTimer = nullptr;              // a click adds a peak unless it was a double-click
+    double m_clickX = 0;
+    std::vector<Drawn> m_drawn;
+    std::vector<PeakLabels*> m_labelItems;       // parallel to m_labelRows
+    std::vector<int> m_labelRows;
+    Curve* m_peakMarks = nullptr;
     std::vector<PlotItem*> m_fitItems;
     RegionItem* m_fitRegion = nullptr;
+    Vec m_fitPositions;                          // start positions of the fit components
+    Vec m_fitResultPositions;                    // fitted positions (same order)
+    std::vector<peaks::FitPeak> m_fitPeaks;
 };
 
 }  // namespace lr::gui

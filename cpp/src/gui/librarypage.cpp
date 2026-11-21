@@ -400,13 +400,17 @@ QWidget* LibraryPage::buildBrowser() {
 
     auto* bl = new QHBoxLayout;
     m_add = new QPushButton(QStringLiteral("Add…"));
-    m_add->setToolTip(QStringLiteral("New entry from a band list you type in (spectra: Import, or “Add to library” "
-                                     "on the Measure page)"));
+    m_add->setToolTip(QStringLiteral("New entry from a band list you type in (spectra: “From file…”, Import, or "
+                                     "“Add to library…” on the Measure and Data pages)"));
+    m_addFile = new QPushButton(QStringLiteral("From file…"));
+    m_addFile->setToolTip(QStringLiteral("Add spectra from files (CSV, vendor text, SPC, JCAMP-DX) as new entries "
+                                         "(as Import ▸ Spectrum files)"));
     m_edit = new QPushButton(QStringLiteral("Edit…"));
     m_delete = new QPushButton(QStringLiteral("Delete"));
     m_count = new QLabel;
     m_count->setStyleSheet(QStringLiteral("color: %1;").arg(theme::mutedText().name()));
     bl->addWidget(m_add);
+    bl->addWidget(m_addFile);
     bl->addWidget(m_edit);
     bl->addWidget(m_delete);
     bl->addStretch();
@@ -423,6 +427,7 @@ QWidget* LibraryPage::buildBrowser() {
     connect(m_table, &QTableWidget::itemSelectionChanged, this, &LibraryPage::onSelectionChanged);
     connect(m_table, &QTableWidget::itemDoubleClicked, this, [this] { editEntry(); });
     connect(m_add, &QPushButton::clicked, this, &LibraryPage::addEntry);
+    connect(m_addFile, &QPushButton::clicked, this, &LibraryPage::importFiles);
     connect(m_edit, &QPushButton::clicked, this, &LibraryPage::editEntry);
     connect(m_delete, &QPushButton::clicked, this, &LibraryPage::deleteEntries);
     return w;
@@ -598,6 +603,7 @@ void LibraryPage::updateHeader(const QString& error) {
     m_importMenu->setEnabled(writable);
     m_exportMenu->setEnabled(m_lib->isOpen());
     m_add->setEnabled(writable);
+    m_addFile->setEnabled(writable);
     m_edit->setEnabled(writable);
     m_delete->setEnabled(writable);
     m_libMenu->menu()->actions().last()->setEnabled(writable);

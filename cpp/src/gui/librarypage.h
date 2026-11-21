@@ -135,6 +135,7 @@ private:
     QComboBox* m_laser = nullptr;
     QTableWidget* m_table = nullptr;
     QPushButton* m_add = nullptr;
+    QPushButton* m_addFile = nullptr;       // "From file…" (Import ▸ Spectrum files)
     QPushButton* m_edit = nullptr;
     QPushButton* m_delete = nullptr;
     QLabel* m_count = nullptr;

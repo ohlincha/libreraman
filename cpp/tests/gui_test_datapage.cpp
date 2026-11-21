@@ -2,6 +2,7 @@
 // stacked, heat map), normalisation, difference, calculator, peak table, fitting, list management and
 // export (files re-readable with fileio::read). Runs offscreen.
 #include "gui/datapage.h"
+#include "gui/datapagehost.h"
 #include "gui/plotwidget.h"
 #include "gui/theme.h"
 
@@ -12,6 +13,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QListWidget>
+#include <QMenu>
 #include <QSignalSpy>
 #include <QStackedWidget>
 #include <QTableWidget>
@@ -50,7 +52,7 @@ DataSpectrum synth(const QString& name, std::vector<std::array<double, 3>> bands
 std::vector<Curve*> curves(PlotWidget* w) {
     std::vector<Curve*> out;
     for (PlotItem* it : w->items())
-        if (auto* c = qobject_cast<Curve*>(it)) out.push_back(c);
+        if (auto* c = qobject_cast<Curve*>(it); c && c->lineVisible()) out.push_back(c);   // not peak markers
     return out;
 }
 
@@ -89,6 +91,11 @@ private slots:
     void calculator();
     void peakTable();
     void fitting();
+    void fitComponents();
+    void peakPicking();
+    void peakClicks();
+    void addToLibrary();
+    void preview();
     void exportFiles();
     void processingDescription();
 };
@@ -401,8 +408,18 @@ void GuiTestDataPage::fitting() {
     p.resize(1000, 700);
     p.addSpectrum(synth("bands", {{{1000, 1500, 10}}, {{1030, 700, 12}}, {{1600, 500, 14}}}, 0, 5));
     QString err;
-    QVERIFY(!p.fitView(&err));                         // full range: zoom in first
-    QVERIFY(err.startsWith("Zoom in"));
+    // the full (wide) view fits too: no width limit, no dialog
+    QVERIFY2(p.fitView(&err), qPrintable(err));
+    QVERIFY2(p.fitText().contains(QStringLiteral("fit of 3 band(s)")), qPrintable(p.fitText()));
+    QVERIFY(p.note().isEmpty());
+    // at most maxComponents() components: the strongest, said in the note line
+    p.setMaxComponents(2);                             // refits
+    QVERIFY2(p.fitText().contains(QStringLiteral("fit of 2 band(s)")), qPrintable(p.fitText()));
+    QCOMPARE(p.fitComponents(), 2);
+    QVERIFY2(p.note().contains(QStringLiteral("2 strongest of 3")), qPrintable(p.note()));
+    QVERIFY(std::abs(p.peakTable()->item(1, 0)->text().toDouble() - 1030) < 1);   // 1600 (weakest) left out
+    p.setMaxComponents(12);
+    p.clearFit();
     p.plot()->setXRange(950, 1100);
     p.setFitProfile("lorentz");
     QVERIFY2(p.fitView(&err), qPrintable(err));
@@ -415,7 +432,10 @@ void GuiTestDataPage::fitting() {
     QVERIFY(std::abs(p.peakTable()->item(0, 3)->text().toDouble() - 10) < 0.5);
     QCOMPARE(p.peakTable()->item(0, 5)->text(), QString());         // η only for pvoigt
     // fit curves: model + 2 components, not taking part in the automatic y range; the fit window
-    QCOMPARE(int(curves(p.plot()).size()), 1 + 3);
+    int fitCurves = 0;
+    for (Curve* c : curves(p.plot()))
+        if (!c->autoScale() && c->lineVisible()) ++fitCurves;
+    QCOMPARE(fitCurves, 1 + 2);
     auto* region = firstItem<RegionItem>(p.plot());
     QVERIFY(region);
     QCOMPARE(region->region().lo, 950.0);
@@ -425,10 +445,10 @@ void GuiTestDataPage::fitting() {
     QVERIFY(p.fitText().startsWith(QStringLiteral("pvoigt fit of 1 band(s) in 1550–1650")));
     QVERIFY(!p.peakTable()->item(0, 5)->text().isEmpty());          // η
     QCOMPARE(firstItem<RegionItem>(p.plot())->region().hi, 1650.0);
-    QCOMPARE(int(curves(p.plot()).size()), 1 + 2);
-    // a range without bands
+    // a range without bands: the reason in the note line
     QVERIFY(!p.fitRange(1300, 1400, &err));
-    QCOMPARE(err, QStringLiteral("no peaks to fit in this region"));
+    QVERIFY2(err.contains(QStringLiteral("no peaks")), qPrintable(err));
+    QCOMPARE(p.note(), err);
     // redraw / clear removes the fit
     p.clearFit();
     QVERIFY(!p.hasFit());
@@ -437,6 +457,215 @@ void GuiTestDataPage::fitting() {
     QVERIFY(p.fitRange(950, 1100));
     p.setNormalisation("max");
     QVERIFY(!p.hasFit());
+}
+
+void GuiTestDataPage::fitComponents() {
+    DataPage p;
+    plain(p);
+    p.resize(1000, 700);
+    p.addSpectrum(synth("bands", {{{1000, 1500, 10}}, {{1030, 700, 12}}}, 0, 5));
+    QVERIFY(p.fitRange(950, 1100));
+    QCOMPARE(p.fitComponents(), 2);
+    // right-click near a component removes it: refit with one component
+    QVERIFY(p.removePeakNear(1029, 5));
+    QCOMPARE(p.fitComponents(), 1);
+    QCOMPARE(p.peakTable()->rowCount(), 1);
+    QVERIFY(!p.removePeakNear(1300, 5));               // nothing there
+    // adding it back (the removed pick returns), and a component where nothing was picked
+    QVERIFY(p.addPeakAt(1031));
+    QCOMPARE(p.fitComponents(), 2);
+    QVERIFY(p.addPeakAt(1060));
+    QCOMPARE(p.fitComponents(), 3);
+    QVERIFY(p.fitText().contains(QStringLiteral("fit of 3 band(s)")));
+    QVERIFY(!p.addPeakAt(1060.5));                     // already there
+    bool found = false;
+    for (const auto& pk : p.peaksOf(0)) found = found || std::abs(pk.position - 1060) <= 3;
+    QVERIFY(found);
+    QVERIFY(p.removePeakNear(1060, 5));                // an added peak is forgotten
+    QCOMPARE(p.fitComponents(), 2);
+    // the plot's context menu offers both
+    QMenu menu;
+    p.fillPlotMenu(menu, 1000.4);
+    QStringList texts;
+    for (QAction* a : menu.actions()) texts << a->text();
+    QVERIFY2(texts.filter(QStringLiteral("Add peak here")).size() == 1, qPrintable(texts.join('|')));
+    QVERIFY2(texts.filter(QStringLiteral("Remove peak at 1000")).size() == 1, qPrintable(texts.join('|')));
+    QVERIFY(texts.contains(QStringLiteral("Refit")));
+    for (QAction* a : menu.actions())
+        if (a->text().startsWith(QStringLiteral("Remove peak"))) a->trigger();
+    QCOMPARE(p.fitComponents(), 1);
+}
+
+void GuiTestDataPage::peakPicking() {
+    DataPage p;
+    plain(p);
+    p.resize(1000, 700);
+    // a band below 100 cm⁻¹ (laser line region) is not picked
+    p.addSpectrum(synth("A", {{{80, 900, 8}}, {{400, 800, 12}}, {{1000, 1500, 10}}}, 0, 5, 50, 1850));
+    p.addSpectrum(synth("B", {{{700, 300, 10}}}, 0, 6));
+    p.setCurrentRow(0);
+    auto peaksA = p.peaksOf(0);
+    QCOMPARE(int(peaksA.size()), 2);
+    QVERIFY(peaksA.front().position > 100);
+    QVERIFY(!p.addPeakAt(80));
+    QVERIFY(p.note().contains(QStringLiteral("100")));
+    // labels of the current spectrum (default), of all ticked ones, or none
+    QCOMPARE(p.peakLabels(), DataPage::Labels::Current);
+    QVERIFY(p.peakLabelItem(0));
+    QCOMPARE(int(p.peakLabelItem(0)->labels().size()), 2);
+    QVERIFY(!p.peakLabelItem(1));
+    p.setPeakLabels(DataPage::Labels::AllTicked);
+    QVERIFY(p.peakLabelItem(0) && p.peakLabelItem(1));
+    QCOMPARE(int(p.peakLabelItem(1)->labels().size()), 1);
+    p.setPeakLabels(DataPage::Labels::Off);
+    QVERIFY(!p.peakLabelItem(0));
+    p.setPeakLabels(DataPage::Labels::Current);
+    // sensitivity: a high S/N threshold keeps only the strong band
+    QVERIFY(peaksA[0].snr < peaksA[1].snr);            // 400 (800 high) weaker than 1000 (1500 high)
+    p.setPeakSnr((peaksA[0].snr + peaksA[1].snr) / 2);
+    QCOMPARE(int(p.peaksOf(0).size()), 1);
+    QCOMPARE(p.peakTable()->rowCount(), 1);
+    p.setPeakSnr(8);
+    // an added peak shows in the table and the labels; it survives a redraw
+    QVERIFY(p.addPeakAt(1500));
+    QCOMPARE(p.peakTable()->rowCount(), 3);
+    p.setNormalisation("max");
+    QCOMPARE(int(p.peaksOf(0).size()), 3);
+    QCOMPARE(int(p.peakLabelItem(0)->labels().size()), 3);
+    // pick on the raw data: a sloping background is not removed there
+    DataPage q;
+    q.setMessagesEnabled(false);
+    DataSpectrum s = synth("slope", {{{600, 800, 10}}, {{1200, 900, 12}}}, 0, 3);
+    for (std::size_t i = 0; i < s.x.size(); ++i) s.y[i] += 2000 + 2 * s.x[i];
+    q.addSpectrum(s);
+    QCOMPARE(int(q.peaksOf(0).size()), 2);
+    q.setPickOnRaw(true);
+    QVERIFY(q.pickOnRaw());
+    const auto raw = q.peaksOf(0);
+    QVERIFY(!raw.empty());
+    QVERIFY(raw.front().height > 2000);                // heights on the background
+    // the peak table export: the added peak flagged
+    QTemporaryDir tmp;
+    QVERIFY(p.exportPeaks(tmp.path() + "/peaks.csv"));
+    QFile f(tmp.path() + "/peaks.csv");
+    QVERIFY(f.open(QIODevice::ReadOnly));
+    const QStringList lines = QString::fromUtf8(f.readAll()).trimmed().split('\n');
+    QCOMPARE(lines.size(), 1 + 3);
+    QVERIFY(lines[0].startsWith(QStringLiteral("spectrum,position_cm-1")));
+    QVERIFY2(lines[3].startsWith(QStringLiteral("A,")) && lines[3].endsWith(QStringLiteral(",yes")) &&
+                 std::abs(lines[3].section(',', 1, 1).toDouble() - 1500) <= 3,
+             qPrintable(lines[3]));
+    p.setPeakLabels(DataPage::Labels::AllTicked);      // all ticked spectra
+    QVERIFY(p.exportPeaks(tmp.path() + "/all.csv"));
+    QFile g(tmp.path() + "/all.csv");
+    QVERIFY(g.open(QIODevice::ReadOnly));
+    QCOMPARE(QString::fromUtf8(g.readAll()).trimmed().split('\n').size(), 1 + 3 + 1);
+}
+
+void GuiTestDataPage::peakClicks() {
+    DataPage p;
+    plain(p);
+    p.resize(1200, 800);
+    p.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&p));
+    p.addSpectrum(synth("bands", {{{1000, 1500, 10}}}, 0, 5));
+    p.plot()->setXRange(900, 1400);
+    const int before = int(p.peaksOf(0).size());
+    // a click in the plot adds a peak (after the double-click interval) ...
+    const QPoint at = p.plot()->mapFromData(QPointF(1200, 300)).toPoint();
+    QTest::mouseClick(p.plot(), Qt::LeftButton, {}, at);
+    QTRY_COMPARE(int(p.peaksOf(0).size()), before + 1);
+    // ... a double-click (zoom out) does not
+    const QPoint at2 = p.plot()->mapFromData(QPointF(1300, 300)).toPoint();
+    QTest::mouseDClick(p.plot(), Qt::LeftButton, {}, at2);
+    QTest::qWait(QApplication::doubleClickInterval() + 100);
+    QCOMPARE(int(p.peaksOf(0).size()), before + 1);
+}
+
+namespace {
+class FakeWindow : public QObject {
+    Q_OBJECT
+public:
+    int calls = 0;
+    QString sample;
+    bool accept = true;
+    Q_INVOKABLE bool addToLibrary(const lr::Spectrum& sp) {
+        ++calls;
+        sample = sp.metaValue(QStringLiteral("sample"));
+        return accept && !sp.shift.empty() && sp.shift.size() == sp.intensity.size();
+    }
+};
+}  // namespace
+
+void GuiTestDataPage::addToLibrary() {
+    DataPage p;
+    plain(p);
+    p.addSpectrum(synth("cyclohexane", {{{801, 900, 8}}}, 0, 5));
+    QSignalSpy spy(&p, &DataPage::addToLibraryRequested);
+    QMenu menu;
+    p.fillListMenu(menu, 0);
+    QAction* add = nullptr;
+    for (QAction* a : menu.actions())
+        if (a->text() == QStringLiteral("Add to library…")) add = a;
+    QVERIFY(add);
+    add->trigger();
+    QCOMPARE(spy.count(), 1);
+    const auto d = spy.at(0).at(0).value<DataSpectrum>();
+    QCOMPARE(d.name, QStringLiteral("cyclohexane"));
+    // the host routes it to the main window's addToLibrary(const lr::Spectrum&)
+    const lr::Spectrum sp = DataPageHost::toSpectrum(d);
+    QCOMPARE(sp.shift.size(), d.x.size());
+    QCOMPARE(sp.metaValue(QStringLiteral("sample")), QStringLiteral("cyclohexane"));
+    FakeWindow w;
+    QString err;
+    QVERIFY2(DataPageHost::routeToLibrary(&w, sp, &err), qPrintable(err));
+    QCOMPARE(w.calls, 1);
+    QCOMPARE(w.sample, QStringLiteral("cyclohexane"));
+    w.accept = false;
+    QVERIFY(!DataPageHost::routeToLibrary(&w, sp, &err));
+    QVERIFY(err.startsWith(QStringLiteral("not added")));
+    QObject plainObject;                               // no such method
+    QVERIFY(!DataPageHost::routeToLibrary(&plainObject, sp, &err));
+    QVERIFY(!err.isEmpty());
+}
+
+// LIBRERAMEN_PREVIEW_DIR=dir: pictures of the peak/fit features (LIBRERAMEN_PREVIEW_SIZE=WxH, default 1300x780)
+void GuiTestDataPage::preview() {
+    const QString dir = qEnvironmentVariable("LIBRERAMEN_PREVIEW_DIR");
+    if (dir.isEmpty()) QSKIP("preview only");
+    QDir().mkpath(dir);
+    const QStringList wh = qEnvironmentVariable("LIBRERAMEN_PREVIEW_SIZE", "1300x780").split('x');
+    const QString tag = qEnvironmentVariable("LIBRERAMEN_PREVIEW_TAG", "1440");
+    DataPage p;
+    plain(p);
+    p.resize(wh[0].toInt(), wh[1].toInt());
+    p.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&p));
+    std::vector<std::array<double, 3>> bands = {{{314, 600, 12}}, {{459, 1500, 8}}, {{762, 300, 10}},
+                                                {{790, 350, 10}}, {{1001, 900, 9}}, {{1030, 400, 12}},
+                                                {{1157, 250, 14}}, {{1442, 500, 18}}, {{1600, 450, 14}},
+                                                {{2850, 700, 20}}, {{2905, 1100, 22}}, {{2960, 600, 18}},
+                                                {{3060, 400, 16}}};
+    p.addSpectrum(synth("sample A", bands, 0, 5, 100, 3400));
+    p.addSpectrum(synth("sample B", {{{459, 900, 8}}, {{1001, 1200, 9}}, {{1600, 300, 14}}}, 0, 6, 100, 3400));
+    p.setCurrentRow(0);
+    p.plot()->setXRange(150, 3300);
+    QVERIFY(p.addPeakAt(1100));
+    QVERIFY(p.fitView());                              // wide range: the 12 strongest
+    QApplication::processEvents();
+    QVERIFY(p.grab().save(dir + "/datafix-fit-wide-" + tag + ".png"));
+    p.clearFit();
+    p.setPeakLabels(DataPage::Labels::AllTicked);
+    p.setView(DataPage::View::Stacked);
+    QApplication::processEvents();
+    QVERIFY(p.grab().save(dir + "/datafix-labels-stacked-" + tag + ".png"));
+    p.setView(DataPage::View::Overlay);
+    p.setPeakLabels(DataPage::Labels::Current);
+    p.setCurrentRow(0);
+    p.plot()->setXRange(700, 1250);
+    QVERIFY(p.fitView());
+    QApplication::processEvents();
+    QVERIFY(p.grab().save(dir + "/datafix-fit-zoom-" + tag + ".png"));
 }
 
 void GuiTestDataPage::exportFiles() {
