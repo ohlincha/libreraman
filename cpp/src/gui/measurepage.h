@@ -180,6 +180,7 @@ private:
     QLabel *m_lblDark, *m_lblSat, *m_lblTime, *m_lblSet, *m_lblPeaks;
 
     QPushButton *m_btnOnce, *m_btnSeries, *m_btnStop, *m_btnPause;
+    QPushButton* m_btnClear = nullptr;          // clears plot, trend and panels (files are kept)
     QLineEdit* m_sample;
     ElidedLabel* m_folderLabel;
     QDoubleSpinBox *m_exposure, *m_acq, *m_prebleach, *m_interval, *m_duration;

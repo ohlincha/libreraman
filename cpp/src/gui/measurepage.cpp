@@ -311,6 +311,10 @@ QWidget* MeasurePage::buildSettingsPanel() {
     m_btnPause->setToolTip(QStringLiteral("<p>Pause the series before its next spectrum (the laser stays off); "
                                           "press again to continue</p>"));
     m_btnPause->setCheckable(true);
+    m_btnClear = new QPushButton(QStringLiteral("Clear"));
+    m_btnClear->setMinimumHeight(46);
+    m_btnClear->setToolTip(QStringLiteral("Clear the plot, the trend and the panels below (saved files are kept)"));
+    connect(m_btnClear, &QPushButton::clicked, this, &MeasurePage::clearAll);
     connect(m_btnOnce, &QPushButton::clicked, this, &MeasurePage::measureOnce);
     connect(m_btnSeries, &QPushButton::clicked, this, &MeasurePage::startSeries);
     connect(m_btnStop, &QPushButton::clicked, this, [this] {
@@ -323,7 +327,10 @@ QWidget* MeasurePage::buildSettingsPanel() {
             m_ctl->setPaused(on);
     });
     ov->addWidget(m_btnOnce);
-    ov->addWidget(m_btnSeries);
+    auto* seriesRow = new QHBoxLayout;          // START SERIES at half width, Clear beside it
+    seriesRow->addWidget(m_btnSeries, 1);
+    seriesRow->addWidget(m_btnClear, 1);
+    ov->addLayout(seriesRow);
     auto* stopRow = new QHBoxLayout;
     stopRow->addWidget(m_btnStop, 2);
     stopRow->addWidget(m_btnPause, 1);
@@ -694,6 +701,7 @@ void MeasurePage::updateEnabled() {
     m_btnSeries->setEnabled(m_ready && !m_busy && on);
     const bool series = m_busy && m_ctl && m_ctl->isSeriesRunning();
     m_btnPause->setEnabled(series);
+    m_btnClear->setEnabled(!m_busy);
     if (!series && m_btnPause->isChecked()) {
         const QSignalBlocker b(m_btnPause);
         m_btnPause->setChecked(false);
