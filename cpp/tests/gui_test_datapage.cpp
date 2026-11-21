@@ -384,7 +384,7 @@ void GuiTestDataPage::peakTable() {
     p.addSpectrum(s);
     p.addSpectrum(synth("other", {{{700, 300, 10}}}, 0, 6));
     QTableWidget* t = p.peakTable();
-    QCOMPARE(t->columnCount(), 6);
+    QCOMPARE(t->columnCount(), 7);   // + possible assignment
     QCOMPARE(t->horizontalHeaderItem(0)->text(), QStringLiteral("position (cm⁻¹)"));
     QCOMPARE(t->rowCount(), 1);                        // current = last added
     p.setCurrentRow(0);
@@ -552,7 +552,7 @@ void GuiTestDataPage::peakPicking() {
     const QStringList lines = QString::fromUtf8(f.readAll()).trimmed().split('\n');
     QCOMPARE(lines.size(), 1 + 3);
     QVERIFY(lines[0].startsWith(QStringLiteral("spectrum,position_cm-1")));
-    QVERIFY2(lines[3].startsWith(QStringLiteral("A,")) && lines[3].endsWith(QStringLiteral(",yes")) &&
+    QVERIFY2(lines[3].startsWith(QStringLiteral("A,")) && lines[3].section(',', 6, 6) == QStringLiteral("yes") &&
                  std::abs(lines[3].section(',', 1, 1).toDouble() - 1500) <= 3,
              qPrintable(lines[3]));
     p.setPeakLabels(DataPage::Labels::AllTicked);      // all ticked spectra
@@ -666,6 +666,14 @@ void GuiTestDataPage::preview() {
     QVERIFY(p.fitView());
     QApplication::processEvents();
     QVERIFY(p.grab().save(dir + "/datafix-fit-zoom-" + tag + ".png"));
+    p.clearFit();
+    p.setBandHelp(true, true);
+    p.plot()->setXRange(150, 3300);
+    QApplication::processEvents();
+    QVERIFY(p.grab().save(dir + "/bandhelp-wide-" + tag + ".png"));
+    p.plot()->setXRange(900, 1700);
+    QApplication::processEvents();
+    QVERIFY(p.grab().save(dir + "/bandhelp-zoom-" + tag + ".png"));
 }
 
 void GuiTestDataPage::exportFiles() {

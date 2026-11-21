@@ -1,5 +1,6 @@
 #include "datapage.h"
 
+#include "bandstrip.h"
 #include "plotwidget.h"
 #include "theme.h"
 
@@ -22,6 +23,7 @@
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
+#include <QHelpEvent>
 #include <QLabel>
 #include <QListWidget>
 #include <QMenu>
@@ -39,6 +41,7 @@
 #include <QStackedWidget>
 #include <QTableWidget>
 #include <QToolButton>
+#include <QToolTip>
 #include <QUrl>
 #include <QVBoxLayout>
 
@@ -253,6 +256,23 @@ void DataPage::build() {
     m_mono->setToolTip(tr("<p>Stacked view: draw all spectra in one colour</p>"));
     connect(m_mono, &QCheckBox::toggled, this, &DataPage::redraw);
     bar2->addWidget(m_mono);
+    bar2->addSpacing(16);
+    bar2->addWidget(new QLabel(tr("Band help:")));
+    m_bandOrganic = new QCheckBox(tr("organic"));
+    m_bandInorganic = new QCheckBox(tr("inorganic"));
+    const QString bandTip = tr("<p>Shows typical Raman ranges of functional groups (organic) or of ions, minerals and "
+                               "oxides (inorganic) above the spectrum; tick both for mixed samples. Hover over a bar "
+                               "for details; the peak table lists candidate assignments. Zoom in to see more bands. "
+                               "Ranges are typical values: positions shift with phase, hydrogen bonding and "
+                               "neighbouring groups.</p>");
+    for (QCheckBox* c : {m_bandOrganic, m_bandInorganic}) {
+        c->setToolTip(bandTip);
+        connect(c, &QCheckBox::toggled, this, [this] {
+            updateBandStrip();
+            updateAssignments();
+        });
+        bar2->addWidget(c);
+    }
     bar2->addStretch();
     bar->addStretch();
     auto* calc = new QPushButton(tr("Calculator…"));
@@ -279,6 +299,7 @@ void DataPage::build() {
 
     m_stack = new QStackedWidget;
     m_plot = new PlotWidget;
+    m_plot->installEventFilter(this);           // band-strip tooltips
     m_plot->setHomeXRange(150, 3500);                   // as the Measure page (zoom out for the full range)
     {   // waterfall: the sideways shift follows the zoomed x range (debounced while the wheel turns)
         auto* t = new QTimer(this);
@@ -380,10 +401,13 @@ void DataPage::build() {
     });
     prow->addWidget(clr);
     rv->addLayout(prow);
-    m_table = new QTableWidget(0, 6);
+    m_table = new QTableWidget(0, 7);
     m_table->setHorizontalHeaderLabels({QStringLiteral("position (cm⁻¹)"), QStringLiteral("±"), tr("height"),
-                                        QStringLiteral("FWHM (cm⁻¹)"), tr("area"), tr("S/N or η")});
+                                        QStringLiteral("FWHM (cm⁻¹)"), tr("area"), tr("S/N or η"),
+                                        tr("possible assignment")});
     m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    m_table->horizontalHeader()->setSectionResizeMode(6, QHeaderView::Interactive);
+    m_table->setColumnWidth(6, 260);
     m_table->verticalHeader()->setDefaultSectionSize(m_table->fontMetrics().height() + 6);
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_table->setAlternatingRowColors(true);
@@ -671,6 +695,8 @@ void DataPage::redraw() {
     m_peakMarks = nullptr;
     m_drawn.clear();
     m_plot->clear();
+    m_bandStrip = nullptr;                      // deleted by clear()
+    updateBandStrip();
     m_heat->clear();
     m_heatItem = nullptr;
     m_baseNote.clear();
@@ -842,6 +868,70 @@ void DataPage::fillPeakRow(const std::vector<std::pair<double, int>>& values) {
         it->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
         m_table->setItem(r, c, it);
     }
+    if (!values.empty() && std::isfinite(values[0].first)) {
+        auto* it = new QTableWidgetItem(assignmentText(values[0].first));
+        it->setToolTip(assignmentText(values[0].first, 12).replace(QStringLiteral("; "), QStringLiteral("\n")));
+        m_table->setItem(r, 6, it);
+    }
+}
+
+// ------------------------------------------------------------------------------------------- band help
+QString DataPage::assignmentText(double position, int max) const {
+    const bool org = m_bandOrganic && m_bandOrganic->isChecked();
+    const bool inorg = m_bandInorganic && m_bandInorganic->isChecked();
+    if (!org && !inorg)
+        return {};
+    QStringList out;
+    for (const bands::Band* b : bands::candidates(position, org, inorg)) {
+        if (int(out.size()) >= max)
+            break;
+        out << QStringLiteral("%1 %2").arg(b->group, b->mode);
+    }
+    return out.join(QStringLiteral("; "));
+}
+
+void DataPage::updateAssignments() {
+    for (int r = 0; r < m_table->rowCount(); ++r) {
+        const QTableWidgetItem* pos = m_table->item(r, 0);
+        bool ok = false;
+        const double v = pos ? pos->text().toDouble(&ok) : 0;
+        auto* it = new QTableWidgetItem(ok ? assignmentText(v) : QString());
+        if (ok)
+            it->setToolTip(assignmentText(v, 12).replace(QStringLiteral("; "), QStringLiteral("\n")));
+        m_table->setItem(r, 6, it);
+    }
+}
+
+void DataPage::setBandHelp(bool organic, bool inorganic) {
+    m_bandOrganic->setChecked(organic);
+    m_bandInorganic->setChecked(inorganic);
+}
+
+void DataPage::updateBandStrip() {
+    const bool org = m_bandOrganic && m_bandOrganic->isChecked();
+    const bool inorg = m_bandInorganic && m_bandInorganic->isChecked();
+    m_plot->setHeadroom(org || inorg ? 0.32 : 0.08);  // room above the curves for the band strip
+    if (!org && !inorg) {
+        if (m_bandStrip)
+            m_plot->removeItem(m_bandStrip);
+        m_bandStrip = nullptr;
+        return;
+    }
+    if (!m_bandStrip)
+        m_bandStrip = m_plot->addItem<BandStripItem>();
+    m_bandStrip->setCategories(org, inorg);
+}
+
+bool DataPage::eventFilter(QObject* obj, QEvent* e) {
+    if (obj == m_plot && e->type() == QEvent::ToolTip && m_bandStrip) {
+        auto* he = static_cast<QHelpEvent*>(e);
+        const QString tip = m_bandStrip->toolTipAt(QPointF(he->pos()));
+        if (!tip.isEmpty()) {
+            QToolTip::showText(he->globalPos(), tip, m_plot);
+            return true;
+        }
+    }
+    return QWidget::eventFilter(obj, e);
 }
 
 int DataPage::heightDecimals() const {
@@ -1352,14 +1442,15 @@ bool DataPage::exportPeaks(const QString& path) {
     };
     QStringList lines;
     if (hasFit()) {
-        lines << QStringLiteral("spectrum,position_cm-1,position_err,height,fwhm_cm-1,area,eta,fit");
+        lines << QStringLiteral("spectrum,position_cm-1,position_err,height,fwhm_cm-1,area,eta,fit,possible_assignment");
         const QString name = quoted(m_entries[size_t(currentRow())].sp.name);
         for (const peaks::FitPeak& p : m_fitPeaks)
             lines << QStringList{name, num(p.position), num(p.positionErr), num(p.height), num(p.fwhm), num(p.area),
-                                 p.eta ? num(*p.eta) : QString(), m_profile->currentText()}
+                                 p.eta ? num(*p.eta) : QString(), m_profile->currentText(),
+                                 quoted(assignmentText(p.position))}
                          .join(',');
     } else {
-        lines << QStringLiteral("spectrum,position_cm-1,height,fwhm_cm-1,area,snr,added_by_hand");
+        lines << QStringLiteral("spectrum,position_cm-1,height,fwhm_cm-1,area,snr,added_by_hand,possible_assignment");
         std::vector<int> rows;
         if (peakLabels() == Labels::AllTicked) rows = tickedRows();
         else if (currentRow() >= 0) rows = {currentRow()};
@@ -1369,7 +1460,8 @@ bool DataPage::exportPeaks(const QString& path) {
                 const bool manual = std::any_of(e.addedPeaks.begin(), e.addedPeaks.end(),
                                                 [&](double a) { return std::abs(a - p.position) < 1e-9; });
                 lines << QStringList{quoted(e.sp.name), num(p.position), num(p.height), num(p.fwhm), num(p.area),
-                                     num(p.snr), manual ? QStringLiteral("yes") : QStringLiteral("no")}
+                                     num(p.snr), manual ? QStringLiteral("yes") : QStringLiteral("no"),
+                                     quoted(assignmentText(p.position))}
                              .join(',');
             }
         }

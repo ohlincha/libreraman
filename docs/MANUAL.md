@@ -45,6 +45,11 @@ Open spectra (CSV, TXT, SPC, JCAMP-DX, vendor files) and compare them: overlay, 
 - **Peaks:** peaks are picked automatically; click the plot to add one, right-click near one to remove it.
 - **Fitting:** zoom in on the bands of interest and press **Fit peaks in view**. The fitted window is shaded;
   drag it or its edges to fit another range. The table gives position, height, FWHM and area per band.
+- **Band help:** tick *organic*, *inorganic* or both (mixed samples) to show the typical Raman ranges of
+  functional groups, ions, minerals and oxides above the spectrum (about 290 entries; zoom in to see more, hover
+  a bar for details). The peak table then lists possible assignments for every peak, most specific first, and
+  the peak CSV export includes them. Ranges are typical values; positions shift with phase, hydrogen bonding
+  and neighbouring groups. The table is `cpp/resources/band_assignments.csv`.
 - **Export:** ticked spectra as CSV, JCAMP-DX (one or multi-block), SPC or one table on a common axis; the
   peak table as CSV; the plot as PNG or SVG.
 

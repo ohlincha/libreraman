@@ -53,6 +53,7 @@ class PlotItem;
 class RegionItem;
 class HeatMapItem;
 class PeakLabels;
+class BandStripItem;
 class Curve;
 
 class DataPage : public QWidget {
@@ -165,6 +166,7 @@ public:
     PlotWidget* plot() const { return m_plot; }
     PlotWidget* heatPlot() const { return m_heat; }
     QTableWidget* peakTable() const { return m_table; }
+    void setBandHelp(bool organic, bool inorganic);   // band-assignment strip and column
     QListWidget* list() const { return m_list; }
     QString fitText() const;
     void setMessagesEnabled(bool on) { m_messages = on; }   // false: no message boxes (tests)
@@ -183,6 +185,7 @@ signals:
 
 protected:
     void changeEvent(QEvent* e) override;
+    bool eventFilter(QObject* obj, QEvent* e) override;   // band-strip tooltips on the plot
 
 private:
     struct Entry {
@@ -239,6 +242,12 @@ private:
     QSlider* m_offset = nullptr;
     QSlider* m_angle = nullptr;                 // stacked: sideways shift per trace (pseudo-3D waterfall)
     QCheckBox* m_mono = nullptr;                // stacked: one colour
+    QCheckBox* m_bandOrganic = nullptr;         // band-assignment help (resources/band_assignments.csv)
+    QCheckBox* m_bandInorganic = nullptr;
+    BandStripItem* m_bandStrip = nullptr;       // owned by m_plot (deleted by clear())
+    void updateBandStrip();
+    void updateAssignments();                   // assignment column of the peak table
+    QString assignmentText(double position, int max = 3) const;
     bool m_inAngleRedraw = false;
     QStackedWidget* m_stack = nullptr;
     PlotWidget* m_plot = nullptr;
