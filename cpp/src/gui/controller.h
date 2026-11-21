@@ -91,8 +91,9 @@ public slots:
     // Searches, connects and initialises (or resumes) in the worker thread; the old instrument is closed.
     // -> connected(info) or connectFailed(message)
     void connectInstrument(bool simulate);
-    // Closes the instrument (laser off) and forgets it (Windows driver repair). Refused while busy.
-    void disconnectInstrument();
+    // Closes the instrument (laser off) and forgets it (Windows driver repair; with powerDown the vendor
+    // shutdown: the instrument switches off, Instrument > Shut down instrument). Refused while busy.
+    void disconnectInstrument(bool powerDown = false);
     // origin: who asked ("GUI", "API (cli)", ...); logged with the settings (spec: every action with origin).
     bool measureOnce(const lr::gui::MeasureSettings& s, const QString& origin = QStringLiteral("GUI"));
     // One spectrum for the Calibration page: like measureOnce (channel, ARM check -> error(), Stop) but not

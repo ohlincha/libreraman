@@ -24,4 +24,9 @@ void LibraryPageHost::activated() {
     }
 }
 
+bool LibraryPageHost::addToLibrary(const lr::Spectrum& sp) {
+    activated();                                           // the default library if none is open yet
+    return m_page->addSpectrum(sp, dialogsEnabled()) > 0;
+}
+
 }  // namespace lr::gui

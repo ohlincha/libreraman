@@ -51,6 +51,8 @@ public:
     ApiServer* apiServer() const { return m_api; }
     QAction* apiAction() const { return m_apiAction; }
     QAction* remoteControlAction() const { return m_remoteAction; }
+    QAction* shutDownAction() const { return m_shutDownAction; }
+    QString apiError() const { return m_apiError; }   // why the local API is not running (empty: running/off)
     // Starts the local API on 127.0.0.1 (port < 0: QSettings "api/port"; apiFile empty: the default API file).
     bool startApi(int port = -1, const QString& apiFile = {});
     void stopApi();
@@ -64,6 +66,12 @@ public slots:
     void connectInstrument(bool simulate);
     void repairDrivers();                             // Windows: re-install the USB drivers, then reconnect
     void fitToScreen();
+    // "Add to library…" from another page (Measure): the Library area stores it (Page::addToLibrary).
+    bool addToLibrary(const lr::Spectrum& sp);
+    // Instrument > Shut down instrument…: confirms (dialogsEnabled), stops a running measurement, then the
+    // vendor power-down (real instrument) or a plain disconnect (simulator). Logs "Instrument shut down".
+    void shutDownInstrument();
+    void raiseWindow();                               // brought to the front (a second instance was started)
 
 private slots:
     void onStatus(const lr::gui::StatusView& st);
@@ -96,6 +104,9 @@ private:
     ApiServer* m_api = nullptr;
     QAction* m_apiAction = nullptr;
     QAction* m_remoteAction = nullptr;
+    QAction* m_shutDownAction = nullptr;
+    QString m_apiError;
+    void finishShutDown();
 };
 
 }  // namespace lr::gui

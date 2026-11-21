@@ -1658,38 +1658,152 @@ void PlotWidget::render(QPainter& p, const QRectF& target) {
 
     p.setRenderHint(QPainter::Antialiasing, true);
     if (m_legend)
-        drawLegend(p, A);
+        drawLegend(p, t);
     if (HeatMapItem* h = colorBarItem())
         drawColorBar(p, L, h);
     p.restore();
 }
 
-void PlotWidget::drawLegend(QPainter& p, const QRectF& area) {
+namespace {
+bool segmentHitsRect(QPointF a, QPointF b, const QRectF& r) {   // Liang-Barsky
+    double t0 = 0, t1 = 1;
+    const double dx = b.x() - a.x(), dy = b.y() - a.y();
+    const double pq[4][2] = {{-dx, a.x() - r.left()}, {dx, r.right() - a.x()},
+                             {-dy, a.y() - r.top()}, {dy, r.bottom() - a.y()}};
+    for (const auto& [pp, q] : pq) {
+        if (pp == 0) {
+            if (q < 0)
+                return false;
+        } else {
+            const double u = q / pp;
+            if (pp < 0)
+                t0 = std::max(t0, u);
+            else
+                t1 = std::min(t1, u);
+            if (t0 > t1)
+                return false;
+        }
+    }
+    return true;
+}
+}  // namespace
+
+struct PlotWidget::LegendLayout {
     std::vector<PlotItem*> entries;
+    int shown = 0;
+    bool more = false;
+    double lh = 0, sym = 22, pad = 6, tw = 0;
+    QString moreText;
+    QRectF box;
+};
+
+// How much a legend box at `box` would hide: curve segments crossing it, and (heavily weighted) peak labels.
+double PlotWidget::legendOverlap(const QRectF& box, const PlotTransform& t, const QFontMetricsF& fm) const {
+    const QRectF r = box.adjusted(-4, -4, 4, 4);
+    double score = 0;
+    for (PlotItem* it : m_items) {
+        if (!it->isVisible())
+            continue;
+        if (auto* c = dynamic_cast<Curve*>(it)) {
+            const std::size_t n = c->size();
+            QPointF prev;
+            bool havePrev = false;
+            for (std::size_t i = 0; i < n; ++i) {
+                const double x = c->m_x[i], y = c->m_y[i];
+                if (!std::isfinite(x) || !std::isfinite(y)) {
+                    havePrev = false;
+                    continue;
+                }
+                const QPointF q = t.map(x, y);
+                if (c->m_line && havePrev ? segmentHitsRect(prev, q, r) : r.contains(q))
+                    score += 1;
+                prev = q;
+                havePrev = true;
+            }
+        } else if (auto* pl = dynamic_cast<PeakLabels*>(it)) {
+            const std::vector<QRectF> rects = pl->layoutLabels(t, fm);
+            for (std::size_t i = 0; i < rects.size(); ++i)
+                if (!rects[i].isNull() && pl->labels()[i].x >= t.x.lo && pl->labels()[i].x <= t.x.hi &&
+                    rects[i].intersects(r))
+                    score += 200;
+        }
+    }
+    return score;
+}
+
+PlotWidget::LegendLayout PlotWidget::legendLayout(const QFontMetricsF& fm, const PlotTransform& t) const {
+    LegendLayout L;
+    const QRectF& area = t.area;
     for (PlotItem* it : m_items)
         if (it->isVisible() && it->hasLegendEntry() && !it->name().isEmpty())
-            entries.push_back(it);
-    if (entries.empty())
-        return;
-    const QFontMetricsF fm(p.font(), p.device());
-    const double lh = fm.height() + 2, sym = 22, pad = 6;
-    const int maxRows = std::max(1, int((area.height() - 20) / lh) - 1);
-    const int shown = std::min(int(entries.size()), maxRows);
-    const bool more = shown < int(entries.size());
+            L.entries.push_back(it);
+    if (L.entries.empty())
+        return L;
+    L.lh = fm.height() + 2;
+    const int maxRows = std::max(1, int((area.height() - 20) / L.lh) - 1);
+    L.shown = std::min(int(L.entries.size()), maxRows);
+    L.more = L.shown < int(L.entries.size());
     const double maxText = std::max(60.0, area.width() * 0.4);
-    double tw = 0;
-    for (int i = 0; i < shown; ++i)
-        tw = std::max(tw, std::min(maxText, fm.horizontalAdvance(entries[std::size_t(i)]->name())));
-    const QString moreText = QStringLiteral("… %1 more").arg(int(entries.size()) - shown);
-    if (more)
-        tw = std::max(tw, fm.horizontalAdvance(moreText));
-    const double w = pad * 3 + sym + tw, h = pad * 2 + lh * (shown + (more ? 1 : 0));
-    const QRectF box(area.right() - 10 - w, area.top() + 10, w, h);
+    for (int i = 0; i < L.shown; ++i)
+        L.tw = std::max(L.tw, std::min(maxText, fm.horizontalAdvance(L.entries[std::size_t(i)]->name())));
+    L.moreText = QStringLiteral("… %1 more").arg(int(L.entries.size()) - L.shown);
+    if (L.more)
+        L.tw = std::max(L.tw, fm.horizontalAdvance(L.moreText));
+    const double w = L.pad * 3 + L.sym + L.tw, h = L.pad * 2 + L.lh * (L.shown + (L.more ? 1 : 0));
+    auto rectAt = [&](LegendPosition c) {
+        const bool right = c == LegendPosition::TopRight || c == LegendPosition::BottomRight;
+        const bool top = c == LegendPosition::TopRight || c == LegendPosition::TopLeft;
+        return QRectF(right ? area.right() - 10 - w : area.left() + 10, top ? area.top() + 10 : area.bottom() - 10 - h,
+                      w, h);
+    };
+    LegendPosition corner = m_legendPos;
+    if (corner == LegendPosition::Auto) {
+        // preference order on ties: top right, top left, bottom right, bottom left; the previous choice is
+        // kept unless another corner is clearly emptier
+        const LegendPosition order[] = {LegendPosition::TopRight, LegendPosition::TopLeft, LegendPosition::BottomRight,
+                                        LegendPosition::BottomLeft};
+        const double keep = legendOverlap(rectAt(m_autoCorner), t, fm);
+        LegendPosition best = m_autoCorner;
+        double bestScore = keep;
+        for (LegendPosition c : order) {
+            const double s = legendOverlap(rectAt(c), t, fm);
+            if (s < bestScore - 0.5 && s < 0.8 * keep) {
+                best = c;
+                bestScore = s;
+            }
+        }
+        m_autoCorner = best;
+        corner = best;
+    }
+    L.box = rectAt(corner);
+    return L;
+}
+
+void PlotWidget::setLegendPosition(LegendPosition pos) {
+    m_legendPos = pos;
+    m_autoCorner = LegendPosition::TopRight;
+    update();
+}
+
+QRectF PlotWidget::legendRect() const {
+    if (!m_legend)
+        return {};
+    ensureView();
+    return legendLayout(QFontMetricsF(font(), this), transform()).box;
+}
+
+void PlotWidget::drawLegend(QPainter& p, const PlotTransform& t) {
+    const QFontMetricsF fm(p.font(), p.device());
+    const LegendLayout L = legendLayout(fm, t);
+    if (L.entries.empty())
+        return;
+    const QRectF& box = L.box;
+    const double lh = L.lh, sym = L.sym, pad = L.pad, tw = L.tw;
     p.setPen(QPen(withAlpha(m_pal.axis, 120), 1));
     p.setBrush(m_pal.legendBackground);
     p.drawRoundedRect(box, 4, 4);
-    for (int i = 0; i < shown; ++i) {
-        PlotItem* it = entries[std::size_t(i)];
+    for (int i = 0; i < L.shown; ++i) {
+        PlotItem* it = L.entries[std::size_t(i)];
         const QRectF row(box.left() + pad, box.top() + pad + i * lh, box.width() - 2 * pad, lh);
         p.save();
         it->paintLegendSymbol(p, QRectF(row.left(), row.top(), sym, row.height()));
@@ -1698,10 +1812,10 @@ void PlotWidget::drawLegend(QPainter& p, const QRectF& area) {
         p.drawText(QRectF(row.left() + sym + pad, row.top(), tw, lh), Qt::AlignLeft | Qt::AlignVCenter,
                    fm.elidedText(it->name(), Qt::ElideMiddle, tw));
     }
-    if (more) {
+    if (L.more) {
         p.setPen(m_pal.text);
-        p.drawText(QRectF(box.left() + pad, box.top() + pad + shown * lh, box.width() - 2 * pad, lh),
-                   Qt::AlignLeft | Qt::AlignVCenter, moreText);
+        p.drawText(QRectF(box.left() + pad, box.top() + pad + L.shown * lh, box.width() - 2 * pad, lh),
+                   Qt::AlignLeft | Qt::AlignVCenter, L.moreText);
     }
 }
 

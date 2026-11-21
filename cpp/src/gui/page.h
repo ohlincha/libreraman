@@ -41,6 +41,9 @@ public:
     virtual void addSpectrum(const lr::Spectrum& /*sp*/) {}
     // The page became the visible area.
     virtual void activated() {}
+    // "Add to library…" of a spectrum from another page (MainWindow::addToLibrary); only the Library area
+    // implements it. True if the spectrum was stored.
+    virtual bool addToLibrary(const lr::Spectrum& /*sp*/) { return false; }
 
 signals:
     void logMessage(const QString& msg);       // shown in the log view at the bottom of the window
