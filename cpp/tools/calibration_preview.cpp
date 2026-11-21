@@ -135,6 +135,45 @@ int main(int argc, char** argv) {
     shot(&win, out + QStringLiteral("/calibration-history") + sfx + QStringLiteral(".png"));
     page->tabs()->setCurrentIndex(3);
     shot(&win, out + QStringLiteral("/calibration-log") + sfx + QStringLiteral(".png"));
+
+    // calibration fixes: carbon tetrachloride alone (offset; a forced linear correction is refused), then a wrong
+    // calibration in use (the old CCl4-only cubic): ethanol finds 2 of 8 bands -> "Match against the factory
+    // calibration"
+    auto measureOne = [&](const QString& s) {
+        page->setSelectedStandards({s});
+        page->measureStandard(s);
+        return waitFor([&] { return page->sample(s) && !ctl.isBusy(); });
+    };
+    page->tabs()->setCurrentIndex(0);
+    page->revertToFactory();
+    page->setMode(CalibrationPage::Mode::Polynomial);
+    page->setDegree(0);
+    if (!measureOne(QStringLiteral("carbon tetrachloride")))
+        return 4;
+    page->fit();
+    shot(&win, out + QStringLiteral("/calfix-ccl4-offset") + sfx + QStringLiteral(".png"));
+    page->setDegree(1);
+    shot(&win, out + QStringLiteral("/calfix-ccl4-linear-refused") + sfx + QStringLiteral(".png"));
+    page->setDegree(0);
+    lr::calib::Result bad;
+    const lr::calib::FitOutput cubic = lr::calib::fit(page->sample(QStringLiteral("carbon tetrachloride"))->matches, 3);
+    bad.poly = cubic.poly;
+    bad.residuals = cubic.residuals;
+    bad.rms = cubic.rms;
+    bad.standards = {QStringLiteral("carbon tetrachloride")};
+    bad.date = QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd HH:mm"));
+    bad.degree = 3;
+    page->rejectCalibration();
+    calstore::accept(bad, 532, QStringLiteral("SIMULATOR"), QStringLiteral("polynomial"));
+    page->refreshHistory();
+    page->makeActive(0);
+    page->setAutoFactoryRetry(false);
+    if (!measureOne(QStringLiteral("ethanol")))
+        return 5;
+    page->fit();
+    shot(&win, out + QStringLiteral("/calfix-wrong-start") + sfx + QStringLiteral(".png"));
+    page->matchAgainstFactory();
+    shot(&win, out + QStringLiteral("/calfix-factory-match") + sfx + QStringLiteral(".png"));
     ctl.shutdown();
     return 0;
 }

@@ -1,6 +1,7 @@
 // Command line (src/cli) against the Python reference: `standards` and offline `calibrate --from` must
 // print exactly what `python3 -m libreramen` prints (tests/golden/cli.json, made by make_golden.py
 // gold_cli()); live `calibrate` is run against the simulator.
+#include "core/calibrate.h"
 #include "core/pyformat.h"
 
 #include <QFile>
@@ -105,7 +106,9 @@ void TestCli::savedCalibration() {
     const QJsonObject o = QJsonDocument::fromJson(j.readAll()).object();
     QCOMPARE(o["channel"].toInt(), 532);
     QCOMPARE(o["serial"].toString(), QStringLiteral("99002169"));
-    QCOMPARE(o["poly"].toObject()["coeff"].toArray().size(), 4);
+    // stored as factory + correction, one polynomial of degree kStoreDegree; "degree" = degree of the correction
+    QCOMPARE(o["poly"].toObject()["coeff"].toArray().size(), lr::calib::kStoreDegree + 1);
+    QCOMPARE(o["degree"].toInt(), 2);
     // errors: unknown standard, missing file
     Run bad = cli({"calibrate", "--standard", "unobtainium", "--from", f.fileName()});
     QCOMPARE(bad.code, 1);

@@ -239,10 +239,10 @@ def gold_calibrate():
     out["calibrate_deg2"] = {"poly": res2["poly"], "rms": res2["rms"], "report": calibrate.report(res2)}
     # one-point calibration (silicon-like): a single matched band shifts the base calibration
     one = [(1000.3, 520.5, 3, 5000.0)]
-    p1, r1, rms1 = calibrate.fit(one, base=ch532.shift)
+    p1, r1, rms1, _ = calibrate.fit(one, base=ch532.shift)
     out["fit_one"] = {"matches": [list(one[0])], "poly": p1, "residuals": [list(r) for r in r1], "rms": rms1}
     two = [list(t) for t in res["residuals"][:2]]
-    p2, r2, rms2 = calibrate.fit([(t[2], t[0], 2, 1.0) for t in two])
+    p2, r2, rms2, _ = calibrate.fit([(t[2], t[0], 2, 1.0) for t in two])
     out["fit_two"] = {"matches": [[t[2], t[0], 2, 1.0] for t in two], "poly": p2, "residuals": [list(r) for r in r2],
                       "rms": rms2}
     for args, key in ((([], None), "fit_error_none"), ((one, None), "fit_error_one")):

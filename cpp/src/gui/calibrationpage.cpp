@@ -144,6 +144,30 @@ QString stdName(const QString& name) {         // canonical standard name (alias
     }
 }
 
+// Rule (a): bands of a standard within the detector's range (factory calibration), how many must be found
+struct BandNeed {
+    int total = 0, need = 0;
+    std::vector<double> strong;
+};
+
+BandNeed bandNeed(const QString& standard, const calib::ShiftFn& factory, int npix) {
+    const double lo = std::min(factory(0), factory(npix - 1)), hi = std::max(factory(0), factory(npix - 1));
+    BandNeed b;
+    for (const standards::Band& band : standards::bands(standard)) {
+        if (band.position < lo || band.position > hi)
+            continue;
+        ++b.total;
+        if (band.strength >= standards::S)
+            b.strong.push_back(band.position);
+    }
+    b.need = (2 * b.total + 2) / 3;                    // ceil(2/3 total)
+    return b;
+}
+
+bool enoughBands(const QString& standard, const std::vector<calib::Match>& m, const calib::ShiftFn& factory, int npix) {
+    const BandNeed b = bandNeed(standard, factory, npix);
+    return int(m.size()) >= b.need;
+}
 }  // namespace
 
 // ============================================================================================ construction
@@ -190,7 +214,16 @@ QWidget* CalibrationPage::buildHeader() {
     m_hdrCal->setWordWrap(true);
     m_hdrCal->setTextInteractionFlags(Qt::TextSelectableByMouse);
     left->addWidget(m_hdrInstrument);
-    left->addWidget(m_hdrCal);
+    auto* calRow = new QHBoxLayout;
+    calRow->setSpacing(10);
+    calRow->addWidget(m_hdrCal, 1);
+    m_btnHdrFactory = new QPushButton(QStringLiteral("↺  Revert to factory calibration"));
+    m_btnHdrFactory->setToolTip(QStringLiteral("<p>Stop using the user calibration and use the factory calibration of the "
+                                               "instrument again. The history is kept: the calibration can be made "
+                                               "active again later (History tab).</p>"));
+    connect(m_btnHdrFactory, &QPushButton::clicked, this, &CalibrationPage::confirmRevert);
+    calRow->addWidget(m_btnHdrFactory);
+    left->addLayout(calRow);
     h->addLayout(left, 1);
     m_hdrReminder = new QLabel;
     m_hdrReminder->setWordWrap(true);
@@ -223,7 +256,6 @@ QWidget* CalibrationPage::buildWizard() {
     scroll->setWidgetResizable(true);
     scroll->setFrameShape(QFrame::NoFrame);
     scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    scroll->setFixedWidth(410);
     auto* inner = new QWidget;
     scroll->setWidget(inner);
     auto* v = new QVBoxLayout(inner);
@@ -271,14 +303,34 @@ QWidget* CalibrationPage::buildWizard() {
     g->addWidget(m_exposure, 1, 1);
     g->addWidget(new QLabel(QStringLiteral("Scans")), 1, 2);
     g->addWidget(m_scans, 1, 3);
+    m_start = new QComboBox;
+    m_start->addItems({QStringLiteral("calibration in use"), QStringLiteral("factory calibration")});
+    m_start->setToolTip(QStringLiteral(
+        "<p>Calibration used to find the reference bands in the spectra (peaks within 12 cm⁻¹ of a band). If the "
+        "calibration in use is wrong, few bands are found: match against the factory calibration instead. The new "
+        "calibration is always a correction to the factory calibration.</p>"));
+    connect(m_start, &QComboBox::currentIndexChanged, this, [this] { rematchAll(); });
+    m_autoRetry = new QCheckBox(QStringLiteral("retry with factory"));
+    m_autoRetry->setChecked(true);
+    m_autoRetry->setToolTip(QStringLiteral("<p>If fewer than ⅔ of a standard's bands are found against the calibration "
+                                           "in use, match against the factory calibration automatically.</p>"));
+    connect(m_autoRetry, &QCheckBox::toggled, this, [this] { rematchAll(); });
+    g->addWidget(new QLabel(QStringLiteral("Match against")), 4, 0);
+    auto* sr = new QHBoxLayout;
+    sr->addWidget(m_start, 1);
+    sr->addWidget(m_autoRetry);
+    g->addLayout(sr, 4, 1, 1, 3);
     m_samplesTable = table({QStringLiteral("Standard"), QStringLiteral("Spectrum"), QStringLiteral("Bands")});
     m_samplesTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     m_samplesTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     m_samplesTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
     m_samplesTable->setFixedHeight(82);
+    m_samplesTable->setToolTip(QStringLiteral("<p>MEASURE and Load file… apply to the highlighted row (▶). After each "
+                                              "measurement the next standard without a spectrum is selected.</p>"));
     connect(m_samplesTable, &QTableWidget::currentCellChanged, this, [this](int row) {
         if (row >= 0 && row < m_samplesTable->rowCount())
             showSample(m_samplesTable->item(row, 0)->data(Qt::UserRole).toString());
+        highlightCurrentRow();
         updateEnabled();
     });
     g->addWidget(m_samplesTable, 2, 0, 1, 4);
@@ -322,13 +374,27 @@ QWidget* CalibrationPage::buildWizard() {
     b = box(QStringLiteral("3 · Fit and accept"));
     g = new QGridLayout(b);
     g->setHorizontalSpacing(6);
-    m_modePoly = new QRadioButton(QStringLiteral("Polynomial through all bands"));
+    m_modePoly = new QRadioButton(QStringLiteral("Polynomial correction"));
     m_modeOffset = new QRadioButton(QStringLiteral("One-point offset / laser wavelength"));
     m_modePoly->setChecked(true);
+    m_modePoly->setToolTip(QStringLiteral(
+        "<p>Corrects the factory calibration with a smooth curve through all matched bands. Its degree is limited by "
+        "how much of the detector the bands cover; outside the covered range the correction is only extrapolated "
+        "linearly. Needs bands spread over the spectrum (e.g. carbon tetrachloride + chloroform, or ethanol).</p>"));
     m_modeOffset->setToolTip(QStringLiteral(
-        "<p>Shifts the calibration in use by a constant (e.g. silicon 520.7 cm⁻¹). This is the same as correcting "
+        "<p>Shifts the factory calibration by a constant (e.g. silicon 520.5 cm⁻¹). This is the same as correcting "
         "the laser wavelength: a constant Raman-shift offset is exactly a change of the excitation wavelength. "
         "With several bands the mean offset is used.</p>"));
+    auto* polyHelp = muted(QStringLiteral("Smooth correction of the factory calibration through all bands; needs bands "
+                                          "spread over the spectrum."));
+    auto* offsetHelp = muted(QStringLiteral("Corrects a drifted laser wavelength: every band moves by the same amount. "
+                                            "One band suffices (silicon 520.5 cm⁻¹ is the classic)."));
+    for (QLabel* l : {polyHelp, offsetHelp}) {
+        l->setContentsMargins(22, 0, 0, 4);
+        QFont f = l->font();
+        f.setPointSizeF(f.pointSizeF() * 0.92);
+        l->setFont(f);
+    }
     auto* grp = new QButtonGroup(b);
     grp->addButton(m_modePoly);
     grp->addButton(m_modeOffset);
@@ -337,10 +403,11 @@ QWidget* CalibrationPage::buildWizard() {
         updateEnabled();
     });
     m_degree = new QComboBox;
-    m_degree->addItems({QStringLiteral("auto"), QStringLiteral("1"), QStringLiteral("2"), QStringLiteral("3"),
-                        QStringLiteral("4")});
-    m_degree->setToolTip(QStringLiteral("<p>Polynomial degree of shift(pixel). Auto: min(3, bands − 2), at least "
-                                        "1.</p>"));
+    m_degree->addItems({QStringLiteral("auto"), QStringLiteral("1"), QStringLiteral("2"), QStringLiteral("3")});
+    m_degree->setToolTip(QStringLiteral(
+        "<p>Degree of the correction to the factory calibration. Auto: offset if the bands cover less than 25 % of "
+        "the detector; linear (2–3 bands) or quadratic (4+ bands) otherwise; cubic only with 6 or more bands spread "
+        "over at least 60 %.</p>"));
     connect(m_degree, &QComboBox::currentIndexChanged, this, [this] {
         if (m_fit)
             fit();
@@ -350,11 +417,38 @@ QWidget* CalibrationPage::buildWizard() {
     g->addWidget(m_modePoly, 0, 0, 1, 2);
     g->addWidget(new QLabel(QStringLiteral("degree")), 0, 2);
     g->addWidget(m_degree, 0, 3);
-    g->addWidget(m_modeOffset, 1, 0, 1, 3);
-    g->addWidget(m_btnFit, 1, 3);
+    g->addWidget(polyHelp, 1, 0, 1, 4);
+    g->addWidget(m_modeOffset, 2, 0, 1, 3);
+    g->addWidget(m_btnFit, 2, 3);
+    g->addWidget(offsetHelp, 3, 0, 1, 4);
+    g->setColumnStretch(1, 1);
+    v->addWidget(b);
+    v->addStretch();
+
+    // ---- left, below the steps (always visible): result, acceptance checklist, Accept / Reject
+    b = box(QStringLiteral("4 · Check and accept"));
+    g = new QGridLayout(b);
+    g->setHorizontalSpacing(6);
+    g->setVerticalSpacing(4);
     m_fitLabel = new QLabel(QStringLiteral("—"));
     m_fitLabel->setWordWrap(true);
-    g->addWidget(m_fitLabel, 2, 0, 1, 4);
+    g->addWidget(m_fitLabel, 4, 0, 1, 4);
+    m_checklist = new QLabel;
+    m_checklist->setWordWrap(true);
+    m_checklist->setTextFormat(Qt::RichText);
+    m_checklist->setObjectName(QStringLiteral("calChecklist"));
+    m_checklist->setToolTip(QStringLiteral(
+        "<p>Accept is possible only when every rule passes: (a) per standard at least ⅔ of its bands and all strong "
+        "bands found; (b) range covered by the bands; (c) beyond the covered range the correction changes by at "
+        "most 15 cm⁻¹ and the new calibration stays within 50 cm⁻¹ of the factory calibration; (d) residual RMS "
+        "at most 3 cm⁻¹.</p>"));
+    g->addWidget(m_checklist, 5, 0, 1, 4);
+    m_btnFactoryMatch = new QPushButton(QStringLiteral("Match against the factory calibration"));
+    m_btnFactoryMatch->setToolTip(QStringLiteral("<p>Find the bands again starting from the factory calibration instead of "
+                                                 "the calibration in use, and fit again.</p>"));
+    m_btnFactoryMatch->setVisible(false);
+    connect(m_btnFactoryMatch, &QPushButton::clicked, this, &CalibrationPage::matchAgainstFactory);
+    g->addWidget(m_btnFactoryMatch, 6, 0, 1, 4);
     g->setColumnStretch(1, 1);
     auto* al = new QHBoxLayout;
     m_btnAccept = new QPushButton(QStringLiteral("✓  Accept"));
@@ -368,10 +462,18 @@ QWidget* CalibrationPage::buildWizard() {
     connect(m_btnReject, &QPushButton::clicked, this, &CalibrationPage::rejectCalibration);
     al->addWidget(m_btnAccept, 2);
     al->addWidget(m_btnReject, 1);
-    g->addLayout(al, 3, 0, 1, 4);
-    v->addWidget(b);
-    v->addStretch();
-    h->addWidget(scroll);
+    g->addLayout(al, 7, 0, 1, 4);
+    auto* left = new QWidget;
+    left->setFixedWidth(410);
+    auto* lv = new QVBoxLayout(left);
+    lv->setContentsMargins(0, 0, 0, 0);
+    lv->setSpacing(6);
+    lv->addWidget(scroll, 1);
+    auto* footer = new QHBoxLayout;                    // aligned with the steps (their scroll bar margin)
+    footer->setContentsMargins(0, 0, 8, 0);
+    footer->addWidget(b);
+    lv->addLayout(footer);
+    h->addWidget(left);
 
     // ---- right: spectrum, residuals
     auto* split = new QSplitter(Qt::Vertical);
@@ -385,8 +487,8 @@ QWidget* CalibrationPage::buildWizard() {
     m_plot->setHeadroom(0.22);
     tv->addWidget(m_plot, 1);
     auto* trow = new QHBoxLayout;
-    trow->addWidget(muted(QStringLiteral("Dashed lines: reference bands · ◆ matched peaks. x axis: calibration "
-                                         "in use.")), 1);
+    m_axisNote = muted(QStringLiteral("Dashed lines: reference bands · ◆ matched peaks. x axis: calibration in use."));
+    trow->addWidget(m_axisNote, 1);
     m_newAxis = new QCheckBox(QStringLiteral("show with the new calibration"));
     m_newAxis->setEnabled(false);
     connect(m_newAxis, &QCheckBox::toggled, this, [this] { showSample(m_shown); });
@@ -397,6 +499,15 @@ QWidget* CalibrationPage::buildWizard() {
     auto* bottom = new QWidget;
     auto* bh = new QHBoxLayout(bottom);
     bh->setContentsMargins(0, 0, 0, 0);
+    m_devPlot = new PlotWidget;
+    m_devPlot->setLabel(Axis::Bottom, QStringLiteral("Detector pixel (shaded: covered by the bands)"));
+    m_devPlot->setLabel(Axis::Left, QStringLiteral("New − factory (cm⁻¹)"));
+    m_devPlot->setHeadroom(0.1);
+    m_devPlot->setLegendVisible(true);
+    m_devPlot->setWheelMode(WheelMode::ZoomX);
+    m_devPlot->setToolTip(QStringLiteral("<p>Whole-detector check: difference between the new calibration and the factory "
+                                         "calibration at every pixel. Inside the shaded range the bands determine it; "
+                                         "outside it is extrapolated and should stay flat.</p>"));
     m_resPlot = new PlotWidget;
     m_resPlot->setLabel(Axis::Bottom, QStringLiteral("Reference band (cm⁻¹)"));
     m_resPlot->setLabel(Axis::Left, QStringLiteral("Deviation (cm⁻¹)"));
@@ -404,18 +515,23 @@ QWidget* CalibrationPage::buildWizard() {
     m_resPlot->setLegendVisible(true);
     m_resPlot->setWheelMode(WheelMode::ZoomX);
     bh->addWidget(m_resPlot, 1);
+    bh->addWidget(m_devPlot, 1);
     m_resTable = table({QStringLiteral("Standard"), QStringLiteral("Band"), QStringLiteral("Before"),
                         QStringLiteral("After"), QStringLiteral("Pixel")});
     m_resTable->setToolTip(QStringLiteral("<p>Per band: position from the calibration in use (before) and from the "
                                           "new fit (after), minus the reference value, in cm⁻¹.</p>"));
     for (int c = 0; c < 5; ++c)
-        m_resTable->horizontalHeader()->setSectionResizeMode(c, QHeaderView::ResizeToContents);
-    bh->addWidget(m_resTable, 1);
+        m_resTable->horizontalHeader()->setSectionResizeMode(c, c == 0 ? QHeaderView::Stretch : QHeaderView::ResizeToContents);
+    m_resTable->horizontalHeader()->setStretchLastSection(false);
     split->addWidget(bottom);
+    split->addWidget(m_resTable);
+    m_resTable->setMinimumHeight(90);
     split->setStretchFactor(0, 3);
     split->setStretchFactor(1, 2);
+    split->setStretchFactor(2, 1);
     h->addWidget(split, 1);
     updateResiduals();
+    updateDetectorPlot();
     return page;
 }
 
@@ -546,14 +662,7 @@ QWidget* CalibrationPage::buildHistory() {
     m_btnFactory = new QPushButton(QStringLiteral("Revert to factory calibration"));
     m_btnFactory->setToolTip(QStringLiteral("<p>Stop using a user calibration; the history is kept, so it can be made "
                                             "active again later.</p>"));
-    connect(m_btnFactory, &QPushButton::clicked, this, [this] {
-        if (dialogsEnabled() &&
-            QMessageBox::question(this, QStringLiteral("Calibration"),
-                                  QStringLiteral("Use the factory calibration of the instrument from now on?")) !=
-                QMessageBox::Yes)
-            return;
-        revertToFactory();
-    });
+    connect(m_btnFactory, &QPushButton::clicked, this, &CalibrationPage::confirmRevert);
     auto* open = new QPushButton(QStringLiteral("Open folder"));
     connect(open, &QPushButton::clicked, this, [] {
         QDir().mkpath(calib::configDir());
@@ -621,6 +730,8 @@ void CalibrationPage::setController(Controller* c) {
 
 void CalibrationPage::activated() {
     updateHeader();
+    if (!m_fit)
+        updateDetectorPlot();
     refreshHistory();
     refreshLog();
     updateEnabled();
@@ -655,42 +766,39 @@ int CalibrationPage::pixelCount() const {
     return channel() == 1064 ? 256 : 2048;
 }
 
-calib::ShiftFn CalibrationPage::currentShift() const {
-    const int ch = channel();
-    std::optional<UserCalibration> user;
-    lr::Calibration cal = lr::defaultCalibration();
+std::optional<UserCalibration> CalibrationPage::userCalibration() const {
     if (lr::Instrument* inst = instrument()) {
-        cal = inst->calibration();
-        const auto it = inst->userCalibration().find(ch);
+        const auto it = inst->userCalibration().find(channel());
         if (it != inst->userCalibration().end())
-            user = it->second;
-    } else {
-        try {
-            user = calib::load(ch, serial());
-        } catch (const lr::Error&) {
-        }
+            return it->second;
+        return std::nullopt;
     }
-    if (user) {
-        const Poly p = user->poly;
-        return [p](double px) { return p(px); };
+    try {
+        return calib::load(channel(), serial());
+    } catch (const lr::Error&) {
+        return std::nullopt;
     }
-    const auto it = cal.channels.find(ch);
+}
+
+bool CalibrationPage::userCalibrationInUse() const { return userCalibration().has_value(); }
+
+calib::ShiftFn CalibrationPage::factoryShift() const {
+    const lr::Calibration& cal = instrument() ? instrument()->calibration() : lr::defaultCalibration();
+    const auto it = cal.channels.find(channel());
     const ChannelCal c = it != cal.channels.end() ? it->second : ChannelCal{};
     return [c](double px) { return c.shift(px); };
 }
 
-QString CalibrationPage::activeCalibrationText() const {
-    std::optional<UserCalibration> user;
-    if (lr::Instrument* inst = instrument()) {
-        const auto it = inst->userCalibration().find(channel());
-        if (it != inst->userCalibration().end())
-            user = it->second;
-    } else {
-        try {
-            user = calib::load(channel(), serial());
-        } catch (const lr::Error&) {
-        }
+calib::ShiftFn CalibrationPage::currentShift() const {
+    if (const std::optional<UserCalibration> user = userCalibration()) {
+        const Poly p = user->poly;
+        return [p](double px) { return p(px); };
     }
+    return factoryShift();
+}
+
+QString CalibrationPage::activeCalibrationText() const {
+    const std::optional<UserCalibration> user = userCalibration();
     if (!user)
         return QStringLiteral("Factory calibration (%1)").arg(instrument() ? instrument()->calibration().source
                                                                            : lr::defaultCalibration().source);
@@ -715,17 +823,7 @@ QString CalibrationPage::reminderText() const {
     const int limit = reminderDays();
     if (limit <= 0)
         return {};
-    std::optional<UserCalibration> user;
-    if (lr::Instrument* inst = instrument()) {
-        const auto it = inst->userCalibration().find(channel());
-        if (it != inst->userCalibration().end())
-            user = it->second;
-    } else {
-        try {
-            user = calib::load(channel(), serial());
-        } catch (const lr::Error&) {
-        }
-    }
+    const std::optional<UserCalibration> user = userCalibration();
     if (!user)
         return QStringLiteral("The %1 nm channel has not been calibrated with LibreRamen yet.").arg(channel());
     const auto days = calstore::daysSince(user->date);
@@ -745,6 +843,7 @@ void CalibrationPage::updateHeader() {
     else
         m_hdrInstrument->setText(QStringLiteral("No instrument connected · offline (S/N %1, %2 nm)").arg(serial()).arg(channel()));
     m_hdrCal->setText(QStringLiteral("In use: ") + activeCalibrationText());
+    m_btnHdrFactory->setVisible(userCalibrationInUse());
     const QString rem = reminderText();
     const bool warn = !rem.isEmpty() && rem.contains(QLatin1String("days ago"));
     m_hdrReminder->setText(rem.isEmpty() ? QString() : (warn ? QStringLiteral("⚠  ") : QStringLiteral("ⓘ  ")) + rem);
@@ -771,6 +870,7 @@ void CalibrationPage::onConnected() {
     updateHeader();
     refreshHistory();
     refreshLog();
+    updateDetectorPlot();
     updateEnabled();
     const QString rem = reminderText();
     if (!rem.isEmpty())                                // after the window's "Instrument ready" line
@@ -790,7 +890,7 @@ void CalibrationPage::updateEnabled() {
             bands += int(s->matches.size());
     m_btnFit->setEnabled(idle && bands >= 1);
     m_degree->setEnabled(m_modePoly->isChecked());
-    m_btnAccept->setEnabled(idle && m_fit.has_value());
+    m_btnAccept->setEnabled(idle && acceptable());
     m_btnReject->setEnabled(m_fit.has_value());
     m_btnCheck->setEnabled(ready && idle);
     m_btnCheckFile->setEnabled(idle);
@@ -799,16 +899,29 @@ void CalibrationPage::updateEnabled() {
     bool anyActive = false;
     for (const auto& e : m_history)
         anyActive = anyActive || e.active;
-    m_btnFactory->setEnabled(idle && anyActive);
+    m_btnFactory->setEnabled(idle && (anyActive || userCalibrationInUse()));
+    m_btnHdrFactory->setEnabled(idle);
+    m_btnFactoryMatch->setEnabled(idle);
     QString instr;
     if (!ready)
         instr = QStringLiteral("No instrument connected: load saved spectra (one row per pixel), or connect the "
                                "instrument to measure.");
     else if (!m_pending.isEmpty())
         instr = QStringLiteral("Measuring %1…").arg(m_pending.section(QLatin1Char(':'), 1));
-    else if (row >= 0)
-        instr = QStringLiteral("Put in <b>%1</b>, close the compartment, press ARM on the instrument, then "
-                               "MEASURE.").arg(m_samplesTable->item(row, 0)->data(Qt::UserRole).toString().toHtmlEscaped());
+    else if (row >= 0) {
+        int measured = 0;
+        for (int i = 0; i < m_samplesTable->rowCount(); ++i)
+            measured += sample(m_samplesTable->item(i, 0)->data(Qt::UserRole).toString()) ? 1 : 0;
+        const QString name = m_samplesTable->item(row, 0)->data(Qt::UserRole).toString();
+        instr = QStringLiteral("<b>Standard %1 of %2</b> (%3 measured). Put in <b>%4</b>, close the compartment, press "
+                               "ARM on the instrument, then MEASURE.")
+                    .arg(row + 1)
+                    .arg(m_samplesTable->rowCount())
+                    .arg(measured)
+                    .arg(name.toHtmlEscaped());
+        if (sample(name))
+            instr += QStringLiteral(" (measuring again replaces its spectrum)");
+    }
     else
         instr = QStringLiteral("Tick at least one standard above.");
     m_instructions->setText(instr);
@@ -909,14 +1022,49 @@ void CalibrationPage::updateSamplesTable() {
         const QString bands = s ? QStringLiteral("%1 / %2").arg(s->matches.size()).arg(standards::bands(n).size())
                                 : QStringLiteral("— / %1").arg(standards::bands(n).size());
         auto* bi = cell(bands, true);
-        if (s && s->matches.size() < 2 && standards::bands(n).size() > 1)
+        if (s && !enoughBands(n, s->matches, factoryShift(), pixelCount())) {
             bi->setForeground(theme::warningText());
+            bi->setToolTip(QStringLiteral("Fewer than ⅔ of the bands found"));
+        } else if (s && s->factoryStart && userCalibrationInUse()) {
+            bi->setToolTip(QStringLiteral("Matched against the factory calibration"));
+        }
         m_samplesTable->setItem(i, 2, bi);
         if (n == current)
             currentRow = i;
     }
     if (currentRow >= 0)
         m_samplesTable->setCurrentCell(currentRow, 0);
+    highlightCurrentRow();
+}
+
+void CalibrationPage::highlightCurrentRow() {
+    // the row MEASURE / Load file apply to: "▶ name" in bold
+    const int cur = m_samplesTable->currentRow();
+    const QSignalBlocker block(m_samplesTable);
+    for (int i = 0; i < m_samplesTable->rowCount(); ++i) {
+        QTableWidgetItem* it = m_samplesTable->item(i, 0);
+        if (!it)
+            continue;
+        const QString name = it->data(Qt::UserRole).toString();
+        it->setText(i == cur ? QStringLiteral("▶ ") + name : name);
+        QFont f = it->font();
+        f.setBold(i == cur);
+        it->setFont(f);
+    }
+}
+
+void CalibrationPage::selectNextUnmeasured() {
+    const int n = m_samplesTable->rowCount();
+    const int cur = std::max(0, m_samplesTable->currentRow());
+    for (int k = 1; k <= n; ++k) {
+        const int i = (cur + k) % n;
+        if (!sample(m_samplesTable->item(i, 0)->data(Qt::UserRole).toString())) {
+            const QSignalBlocker block(m_samplesTable);   // keep showing the spectrum just measured
+            m_samplesTable->setCurrentCell(i, 0);
+            break;
+        }
+    }
+    highlightCurrentRow();
 }
 
 const CalibrationPage::Sample* CalibrationPage::sample(const QString& name) const {
@@ -927,8 +1075,64 @@ const CalibrationPage::Sample* CalibrationPage::sample(const QString& name) cons
     return nullptr;
 }
 
+void CalibrationPage::matchSample(Sample& s) {
+    const std::vector<calib::PixelPeak> peaks = calib::findPeaks(s.y);
+    const bool user = userCalibrationInUse();
+    s.factoryStart = start() == Start::Factory || !user;
+    s.retried = false;
+    s.matches = calib::match(peaks, s.factoryStart ? factoryShift() : currentShift(), s.standard);
+    if (!s.factoryStart && m_autoRetry->isChecked() && !enoughBands(s.standard, s.matches, factoryShift(), pixelCount())) {
+        std::vector<calib::Match> f = calib::match(peaks, factoryShift(), s.standard);
+        const std::size_t before = s.matches.size();
+        if (f.size() > before) {
+            s.matches = std::move(f);
+            s.factoryStart = true;
+            s.retried = true;
+            emit logMessage(QStringLiteral("Calibration: only %1 of %2 %3 bands found with the calibration in use – "
+                                           "matched against the factory calibration instead: %4 found")
+                                .arg(before).arg(standards::bands(s.standard).size()).arg(s.standard)
+                                .arg(s.matches.size()));
+        }
+    }
+}
+
+void CalibrationPage::rematchAll() {
+    for (Sample& s : m_samples)
+        matchSample(s);
+    const bool had = m_fit.has_value();
+    invalidateFit();
+    updateSamplesTable();
+    showSample(m_shown);
+    if (had)
+        fit();
+    updateEnabled();
+}
+
+void CalibrationPage::setStart(Start st) { m_start->setCurrentIndex(st == Start::Factory ? 1 : 0); }
+
+CalibrationPage::Start CalibrationPage::start() const {
+    return m_start->currentIndex() == 1 ? Start::Factory : Start::InUse;
+}
+
+void CalibrationPage::setAutoFactoryRetry(bool on) { m_autoRetry->setChecked(on); }
+
+bool CalibrationPage::matchAgainstFactory() {
+    if (m_busy)
+        return false;
+    {
+        const QSignalBlocker block(m_start);
+        m_start->setCurrentIndex(1);
+    }
+    emit logMessage(QStringLiteral("Calibration: matching the bands against the factory calibration"));
+    const bool hadFit = m_fit.has_value();
+    rematchAll();                                      // refits if there was a fit
+    if (hadFit && !m_fit)
+        fit();
+    return m_fit.has_value();
+}
+
 void CalibrationPage::addSample(Sample s) {
-    s.matches = calib::match(calib::findPeaks(s.y), currentShift(), s.standard);
+    matchSample(s);
     const auto it = std::find_if(m_samples.begin(), m_samples.end(),
                                  [&](const Sample& old) { return old.standard == s.standard; });
     if (it != m_samples.end())
@@ -938,9 +1142,12 @@ void CalibrationPage::addSample(Sample s) {
     invalidateFit();
     updateSamplesTable();
     showSample(s.standard);
+    selectNextUnmeasured();
     updateEnabled();
-    emit logMessage(QStringLiteral("Calibration: %1 – %2 of %3 reference bands found")
-                        .arg(s.standard).arg(s.matches.size()).arg(standards::bands(s.standard).size()));
+    emit logMessage(QStringLiteral("Calibration: %1 – %2 of %3 reference bands found%4")
+                        .arg(s.standard).arg(s.matches.size()).arg(standards::bands(s.standard).size())
+                        .arg(s.factoryStart && userCalibrationInUse() ? QStringLiteral(" (against the factory calibration)")
+                                                                      : QString()));
     emit sampleReady(s.standard);
 }
 
@@ -1121,11 +1328,17 @@ void CalibrationPage::showSample(const QString& name) {
         }
         return;
     }
-    calib::ShiftFn shift = currentShift();
+    // x axis: the calibration the bands were matched against (there the matched peaks sit next to their dashed
+    // reference lines), or the new fit
+    calib::ShiftFn shift = s->factoryStart ? factoryShift() : currentShift();
+    QString axis = s->factoryStart && userCalibrationInUse() ? QStringLiteral("factory calibration (matched against it)")
+                                                             : QStringLiteral("calibration in use");
     if (m_fit && m_newAxis->isChecked()) {
         const Poly p = m_fit->poly;
         shift = [p](double px) { return p(px); };
+        axis = QStringLiteral("new calibration");
     }
+    m_axisNote->setText(QStringLiteral("Dashed lines: reference bands · ◆ matched peaks. x axis: %1.").arg(axis));
     drawSpectrum(m_plot, *s, shift, true);
 }
 
@@ -1165,11 +1378,14 @@ void CalibrationPage::updateResiduals() {
         Curve* after = m_resPlot->addScatter(ax, ay, pal.seriesColor(1), 8, Marker::Diamond);
         after->setName(QStringLiteral("new fit"));
     }
-    double span = 1.0;
+    // y range: the new fit's residuals, and the deviations of the calibration in use up to 20 cm-1 (a wrong one
+    // can be off by thousands; those points are clipped)
+    double maxBefore = 0, maxAfter = 0;
     for (double v : by)
-        span = std::max(span, std::abs(v));
+        maxBefore = std::max(maxBefore, std::abs(v));
     for (double v : ay)
-        span = std::max(span, std::abs(v));
+        maxAfter = std::max(maxAfter, std::abs(v));
+    const double span = std::max({1.0, maxAfter, ay.empty() ? maxBefore : std::min(maxBefore, 20.0)});
     m_resPlot->setAutoY(false);
     m_resPlot->setYRange(-span * 1.3, span * 1.3);
     const auto [lo, hi] = std::minmax_element(bx.begin(), bx.end());
@@ -1183,7 +1399,7 @@ void CalibrationPage::setMode(Mode m) { (m == Mode::Offset ? m_modeOffset : m_mo
 
 CalibrationPage::Mode CalibrationPage::mode() const { return m_modeOffset->isChecked() ? Mode::Offset : Mode::Polynomial; }
 
-void CalibrationPage::setDegree(int degree) { m_degree->setCurrentIndex(std::clamp(degree, 0, 4)); }
+void CalibrationPage::setDegree(int degree) { m_degree->setCurrentIndex(std::clamp(degree, 0, 3)); }
 
 void CalibrationPage::invalidateFit() {
     const bool had = m_fit.has_value();
@@ -1193,22 +1409,44 @@ void CalibrationPage::invalidateFit() {
     m_newAxis->setChecked(false);
     m_newAxis->setEnabled(false);
     m_fitLabel->setText(QStringLiteral("—"));
+    m_rules.clear();
+    m_offerFactory = false;
+    showRules();
     if (had)
         showSample(m_shown);
     updateResiduals();
+    updateDetectorPlot();
 }
 
 bool CalibrationPage::fit() {
-    const calib::ShiftFn base = currentShift();
+    // The new calibration is always a correction to the FACTORY calibration (calib::fit with the factory shift as
+    // base): a calibration in use that is wrong can only affect which peaks are matched, never the shape of the
+    // new curve, and the stored polynomial is factory + correction over the whole detector.
+    const calib::ShiftFn factory = factoryShift();
+    const calib::ShiftFn inUse = currentShift();
+    const int npix = pixelCount();
     calib::Result r;
     std::vector<calib::Match> all;
+    QStringList missing;
     for (const QString& n : selectedStandards()) {
         const Sample* s = sample(n);
-        if (!s)
+        if (!s) {
+            missing << n;
             continue;
+        }
         r.matches.emplace_back(n, s->matches);
         r.standards.push_back(n);
         all.insert(all.end(), s->matches.begin(), s->matches.end());
+    }
+    if (!missing.isEmpty() && !r.standards.empty()) {
+        const QString text = QStringLiteral("No spectrum yet for %1 (ticked): the fit uses only %2.")
+                                 .arg(missing.join(QStringLiteral(", ")),
+                                      QStringList(r.standards.begin(), r.standards.end()).join(QStringLiteral(", ")));
+        emit logMessage(QStringLiteral("Calibration: ") + text);
+        if (dialogsEnabled() &&
+            QMessageBox::question(m_ctx.window ? m_ctx.window : this, QStringLiteral("Calibration"),
+                                  text + QStringLiteral("\n\nFit anyway?")) != QMessageBox::Yes)
+            return false;
     }
     invalidateFit();
     if (all.empty()) {
@@ -1218,38 +1456,30 @@ bool CalibrationPage::fit() {
     }
     try {
         if (mode() == Mode::Offset) {
-            // one-point calibration: shift the calibration in use by a constant (calib::fit with a single band).
-            // Several bands: their weighted mean offset, through one representative band.
+            // one-point calibration: the factory calibration shifted by a constant = the strength-weighted mean
+            // deviation of the bands (a degree-0 correction; equivalent to a corrected laser wavelength)
             double sw = 0, so = 0;
             for (const calib::Match& m : all) {
                 sw += m.strength;
-                so += m.strength * (m.reference - base(m.pixel));
+                so += m.strength * (m.reference - factory(m.pixel));
             }
             m_offset = so / sw;
-            calib::Match one = all.front();
-            if (all.size() > 1)
-                one.reference = base(one.pixel) + m_offset;
-            const calib::FitOutput f = calib::fit({one}, std::nullopt, base);
-            r.poly = f.poly;
-            double ss = 0;
-            for (const calib::Match& m : all) {
-                r.residuals.push_back({m.reference, f.poly(m.pixel) - m.reference, m.pixel});
-                ss += r.residuals.back().residual * r.residuals.back().residual;
-            }
-            r.rms = std::sqrt(ss / double(all.size()));
-            m_fitKind = QStringLiteral("offset");
-        } else {
-            if (all.size() < 2)
-                throw lr::Error("a polynomial needs at least 2 matched bands; use the one-point offset for a single "
-                                "band (e.g. silicon)");
-            const int deg = m_degree->currentIndex();
-            if (deg > 0 && int(all.size()) <= deg)
-                throw lr::Error(QStringLiteral("degree %1 needs at least %2 bands (%3 matched)")
-                                    .arg(deg).arg(deg + 1).arg(all.size()).toStdString());
-            const calib::FitOutput f = calib::fit(all, deg > 0 ? std::optional<int>(deg) : std::nullopt, base);
+            const calib::FitOutput f = calib::fit(all, 0, factory, npix);
             r.poly = f.poly;
             r.residuals = f.residuals;
             r.rms = f.rms;
+            r.degree = 0;
+            m_fitKind = QStringLiteral("offset");
+        } else {
+            const int deg = m_degree->currentIndex();
+            if (deg > 0 && int(all.size()) <= deg)
+                throw lr::Error(QStringLiteral("a degree-%1 correction needs at least %2 bands (%3 matched)")
+                                    .arg(deg).arg(deg + 1).arg(all.size()).toStdString());
+            const calib::FitOutput f = calib::fit(all, deg > 0 ? std::optional<int>(deg) : std::nullopt, factory, npix);
+            r.poly = f.poly;
+            r.residuals = f.residuals;
+            r.rms = f.rms;
+            r.degree = f.degree;
             m_fitKind = QStringLiteral("polynomial");
         }
     } catch (const lr::Error& e) {
@@ -1258,38 +1488,222 @@ bool CalibrationPage::fit() {
         return false;
     }
     r.date = QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd HH:mm"));
-    r.degree = int(r.poly.coeff.size()) - 1;
-    m_before = calstore::check(r.matches, base).bands;
+    const calstore::CheckResult before = calstore::check(r.matches, inUse);
+    m_before = before.bands;
     m_fit = r;
-    const calstore::CheckResult before = calstore::check(r.matches, base);
     if (m_fitKind == QLatin1String("offset")) {
-        m_fitLabel->setText(QStringLiteral("<b>Offset %1 cm⁻¹</b> (%2 band(s), RMS %3 cm⁻¹)<br>"
-                                           "= laser wavelength %4 nm instead of %5 nm")
+        m_fitLabel->setText(QStringLiteral("<b>Offset %1 cm⁻¹</b> to the factory calibration (%2 band(s), RMS %3 cm⁻¹)"
+                                           "<br>= laser wavelength %4 nm instead of %5 nm")
                                 .arg(signedNum(m_offset), QString::number(all.size()))
                                 .arg(r.rms, 0, 'f', 2)
                                 .arg(calstore::equivalentLaserNm(laserNm(), m_offset), 0, 'f', 3)
                                 .arg(laserNm(), 0, 'f', 3));
     } else {
-        m_fitLabel->setText(QStringLiteral("<b>%1 bands, degree %2, RMS %3 cm⁻¹</b> (calibration in use: RMS %4 cm⁻¹)")
-                                .arg(all.size())
-                                .arg(r.degree)
-                                .arg(r.rms, 0, 'f', 2)
-                                .arg(before.rms, 0, 'f', 2));
+        QString kind = calib::degreeName(r.degree);
+        kind[0] = kind[0].toUpper();
+        const QString t = QStringLiteral("<b>%1 correction to the factory calibration</b> · %2 bands · RMS %3 cm⁻¹ "
+                                         "(calibration in use: RMS %4 cm⁻¹)")
+                        .arg(kind)
+                        .arg(all.size())
+                        .arg(r.rms, 0, 'f', 2)
+                        .arg(before.rms, 0, 'f', 2);
+        m_fitLabel->setText(t);
     }
     m_newAxis->setEnabled(true);
+    evaluateRules();
+    showRules();
     updateResiduals();
+    updateDetectorPlot();
     updateEnabled();
     if (m_fitKind == QLatin1String("offset"))
         emit logMessage(QStringLiteral("Calibration fit (one-point offset): %1 cm-1 from %2 band(s), RMS %3 cm-1")
                             .arg(signedNum(m_offset)).arg(all.size()).arg(r.rms, 0, 'f', 2));
     else
-        emit logMessage(QStringLiteral("Calibration fit: ") + calib::report(r, base).section(QLatin1Char('\n'), 0, 0));
+        emit logMessage(QStringLiteral("Calibration fit: ") + calib::report(r, inUse).section(QLatin1Char('\n'), 0, 0));
+    for (const Rule& rule : m_rules)
+        if (rule.state == Rule::Fail)
+            emit logMessage(QStringLiteral("Calibration check failed: ") + rule.text);
     return true;
+}
+
+void CalibrationPage::evaluateRules() {
+    m_rules.clear();
+    m_offerFactory = false;
+    if (!m_fit || m_fit->residuals.empty())
+        return;
+    const calib::ShiftFn factory = factoryShift();
+    const int npix = pixelCount();
+    const bool user = userCalibrationInUse();
+    // (a) per standard: >= 2/3 of the bands within the detector range, and every strong band
+    for (const auto& [name, matches] : m_fit->matches) {
+        const BandNeed need = bandNeed(name, factory, npix);
+        QStringList lost;
+        for (double pos : need.strong)
+            if (std::none_of(matches.begin(), matches.end(), [pos](const calib::Match& m) { return m.reference == pos; }))
+                lost << QString::number(pos, 'f', pos == std::floor(pos) ? 0 : 1);
+        const Sample* s = sample(name);
+        const bool fromInUse = s && !s->factoryStart && user;
+        if (int(matches.size()) < need.need) {
+            m_rules.push_back({Rule::Fail, QStringLiteral("Only %1 of %2 %3 bands found — %4")
+                                               .arg(matches.size()).arg(need.total).arg(name,
+                                                    fromInUse ? QStringLiteral("the calibration in use may be wrong")
+                                                              : QStringLiteral("check the sample and the signal "
+                                                                               "(exposure, scans)"))});
+            m_offerFactory = m_offerFactory || fromInUse;
+        } else if (!lost.isEmpty()) {
+            m_rules.push_back({Rule::Fail, QStringLiteral("%1: strong band %2 cm⁻¹ not found").arg(name, lost.join(QStringLiteral(", ")))});
+            m_offerFactory = m_offerFactory || fromInUse;
+        } else {
+            m_rules.push_back({Rule::Pass, QStringLiteral("%1: %2 of %3 bands found, all strong ones%4")
+                                               .arg(name).arg(matches.size()).arg(need.total)
+                                               .arg(s && s->retried ? QStringLiteral(" (matched against the factory calibration)")
+                                                                    : QString())});
+        }
+    }
+    // (b) coverage
+    double rlo = 1e300, rhi = -1e300, plo = 1e300, phi = -1e300;
+    for (const calib::Residual& r : m_fit->residuals) {
+        rlo = std::min(rlo, r.reference);
+        rhi = std::max(rhi, r.reference);
+        plo = std::min(plo, r.pixel);
+        phi = std::max(phi, r.pixel);
+    }
+    const double cover = 100.0 * (phi - plo) / double(std::max(1, npix - 1));
+    QString cov = QStringLiteral("Bands cover %1–%2 cm⁻¹ (pixels %3–%4, %5 % of the detector); %6")
+                      .arg(rlo, 0, 'f', 0).arg(rhi, 0, 'f', 0).arg(plo, 0, 'f', 0).arg(phi, 0, 'f', 0)
+                      .arg(cover, 0, 'f', 0)
+                      .arg(m_fit->degree == 0 ? QStringLiteral("the offset applies to the whole detector")
+                                              : QStringLiteral("outside this range the correction is extrapolated linearly"));
+    if (cover < 25.0 && m_fitKind == QLatin1String("polynomial"))
+        cov += m_fit->degree > 0 ? QStringLiteral(" — narrow coverage: the one-point offset is recommended")
+                                 : QStringLiteral(" — too narrow for more than an offset (add a standard with bands "
+                                                  "elsewhere for a polynomial correction)");
+    m_rules.push_back({Rule::Info, cov});
+    // (c) whole detector: no runaway extrapolation, no wild departure from the factory calibration
+    double maxAbs = 0, extrap = 0, dmin = 1e300, dmax = -1e300;
+    const double dlo = m_fit->poly(plo) - factory(plo), dhi = m_fit->poly(phi) - factory(phi);
+    for (int p = 0; p < npix; ++p) {
+        const double d = m_fit->poly(p) - factory(p);
+        maxAbs = std::max(maxAbs, std::abs(d));
+        dmin = std::min(dmin, d);
+        dmax = std::max(dmax, d);
+        if (p < plo)
+            extrap = std::max(extrap, std::abs(d - dlo));
+        else if (p > phi)
+            extrap = std::max(extrap, std::abs(d - dhi));
+    }
+    if (extrap > kMaxExtrapolation)
+        m_rules.push_back({Rule::Fail, QStringLiteral("Beyond the bands the correction changes by %1 cm⁻¹ (limit %2): "
+                                                      "extrapolated too far — use the offset or add a standard with "
+                                                      "bands elsewhere")
+                                           .arg(extrap, 0, 'f', 1).arg(kMaxExtrapolation, 0, 'f', 0)});
+    else if (maxAbs > kMaxFromFactory)
+        m_rules.push_back({Rule::Fail, QStringLiteral("New − factory reaches %1 cm⁻¹ (limit %2) — check the matched bands")
+                                           .arg(maxAbs, 0, 'f', 1).arg(kMaxFromFactory, 0, 'f', 0)});
+    else
+        m_rules.push_back({Rule::Pass, QStringLiteral("Whole detector: new − factory %1 … %2 cm⁻¹; beyond the bands it "
+                                                      "changes by ≤ %3 cm⁻¹ (limit %4)")
+                                           .arg(signedNum(dmin, 1), signedNum(dmax, 1))
+                                           .arg(extrap, 0, 'f', 1).arg(kMaxExtrapolation, 0, 'f', 0)});
+    // (d) residuals
+    const int n = int(m_fit->residuals.size());
+    if (n == 1)
+        m_rules.push_back({Rule::Info, QStringLiteral("One band: no residual check (offset only)")});
+    else if (n <= m_fit->degree + 1)
+        m_rules.push_back({Rule::Info, QStringLiteral("%1 bands for a %2 correction: exact fit, residuals not checked")
+                                           .arg(n).arg(calib::degreeName(m_fit->degree))});
+    else if (m_fit->rms > kMaxRms)
+        m_rules.push_back({Rule::Fail, QStringLiteral("Residual RMS %1 cm⁻¹ (limit %2) — a band may be mismatched")
+                                           .arg(m_fit->rms, 0, 'f', 2).arg(kMaxRms, 0, 'f', 1)});
+    else
+        m_rules.push_back({Rule::Pass, QStringLiteral("Residual RMS %1 cm⁻¹ (limit %2)")
+                                           .arg(m_fit->rms, 0, 'f', 2).arg(kMaxRms, 0, 'f', 1)});
+}
+
+void CalibrationPage::showRules() {
+    m_btnFactoryMatch->setVisible(m_fit && m_offerFactory);
+    if (m_rules.empty()) {
+        m_checklist->clear();
+        m_checklist->setVisible(false);
+        return;
+    }
+    const QString green = theme::toneColor(theme::Tone::Green).name(), warn = theme::warningText().name(),
+                  mutedc = theme::mutedText().name();
+    QString html = QStringLiteral("<table cellspacing='0' cellpadding='1'>");
+    for (const Rule& r : m_rules) {
+        const QString icon = r.state == Rule::Pass ? QStringLiteral("✓") : r.state == Rule::Fail ? QStringLiteral("✗")
+                                                                                                   : QStringLiteral("ⓘ");
+        const QString col = r.state == Rule::Pass ? green : r.state == Rule::Fail ? warn : mutedc;
+        html += QStringLiteral("<tr><td style='color:%1; font-weight:bold; padding-right:4px'>%2</td><td%3>%4</td></tr>")
+                    .arg(col, icon, r.state == Rule::Fail ? QStringLiteral(" style='color:%1'").arg(warn) : QString(),
+                         r.text.toHtmlEscaped());
+    }
+    html += QStringLiteral("</table>");
+    if (!acceptable())
+        html += QStringLiteral("<span style='color:%1; font-weight:bold'>Accept is disabled until every check passes."
+                               "</span>").arg(warn);
+    m_checklist->setText(html);
+    m_checklist->setVisible(true);
+}
+
+bool CalibrationPage::acceptable() const {
+    return m_fit.has_value() &&
+           std::none_of(m_rules.begin(), m_rules.end(), [](const Rule& r) { return r.state == Rule::Fail; });
+}
+
+void CalibrationPage::updateDetectorPlot() {
+    m_devPlot->clear();
+    const PlotPalette& pal = m_devPlot->plotPalette();
+    m_devPlot->addHLine(0, QPen(pal.reference, 1));
+    const int npix = pixelCount();
+    const calib::ShiftFn factory = factoryShift();
+    Vec x(std::size_t(npix), 0.0), inUse, fresh;
+    for (int p = 0; p < npix; ++p)
+        x[std::size_t(p)] = p;
+    double span = 5.0;
+    if (userCalibrationInUse()) {
+        const calib::ShiftFn cur = currentShift();
+        for (int p = 0; p < npix; ++p)
+            inUse.push_back(cur(p) - factory(p));
+        QColor c = pal.previous;
+        c.setAlpha(220);
+        m_devPlot->addCurve(x, inUse, QPen(c, 1.3, Qt::DashLine), QStringLiteral("calibration in use"));
+        if (!m_fit)
+            for (double v : inUse)
+                span = std::max(span, 1.3 * std::abs(v));
+    }
+    if (m_fit) {
+        double plo = 1e300, phi = -1e300;
+        for (const calib::Residual& r : m_fit->residuals) {
+            plo = std::min(plo, r.pixel);
+            phi = std::max(phi, r.pixel);
+        }
+        RegionItem* reg = m_devPlot->addRegion(plo, std::max(phi, plo + 2));
+        reg->setMovable(false);
+        for (int p = 0; p < npix; ++p) {
+            fresh.push_back(m_fit->poly(p) - factory(p));
+            span = std::max(span, 1.6 * std::abs(fresh.back()));
+        }
+        Curve* c = m_devPlot->addCurve(x, fresh, QPen(pal.seriesColor(1), 2.0), QStringLiteral("new fit"));
+        c->setZValue(5);
+    }
+    m_devPlot->setAutoY(false);
+    m_devPlot->setYRange(-span, span);
+    m_devPlot->setHomeXRange(0, npix - 1);
+    m_devPlot->setXRange(0, npix - 1);
 }
 
 bool CalibrationPage::acceptCalibration() {
     if (!m_fit)
         return false;
+    if (!acceptable()) {
+        QStringList failed;
+        for (const Rule& r : m_rules)
+            if (r.state == Rule::Fail)
+                failed << r.text;
+        message(QStringLiteral("Calibration"), QStringLiteral("Not accepted: ") + failed.join(QStringLiteral("; ")));
+        return false;
+    }
     if (m_busy) {
         message(QStringLiteral("Calibration"), QStringLiteral("Stop the running measurement first."));
         return false;
@@ -1572,6 +1986,16 @@ bool CalibrationPage::makeActive(int row) {
     refreshHistory();
     emit calibrationChanged();
     return true;
+}
+
+void CalibrationPage::confirmRevert() {
+    if (dialogsEnabled() &&
+        QMessageBox::question(this, QStringLiteral("Calibration"),
+                              QStringLiteral("Use the factory calibration of the instrument from now on?\n\nThe "
+                                             "current calibration stays in the history and can be made active again.")) !=
+            QMessageBox::Yes)
+        return;
+    revertToFactory();
 }
 
 bool CalibrationPage::revertToFactory() {
