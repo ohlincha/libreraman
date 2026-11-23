@@ -177,7 +177,7 @@ private:
     QToolButton* m_procToggle;
     QWidget* m_procBody;
     QScrollArea* m_settingsScroll;
-    QLabel *m_lblDark, *m_lblSat, *m_lblTime, *m_lblSet, *m_lblPeaks;
+    QLabel *m_lblDark, *m_lblSat, *m_lblFluor, *m_lblTime, *m_lblSet, *m_lblPeaks;
 
     QPushButton *m_btnOnce, *m_btnSeries, *m_btnStop, *m_btnPause;
     QPushButton* m_btnClear = nullptr;          // clears plot, trend and panels (files are kept)

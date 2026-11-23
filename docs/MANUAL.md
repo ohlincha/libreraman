@@ -33,6 +33,9 @@ instrument when LibreRamen closes.
    the series.
 4. During a series the *Trend* plot follows one peak; right-click a peak and choose *Use peak … for the trend*.
 
+The dashboard's *Fluorescence* line mentions a dominant fluorescence background (background at least as
+high as the strongest band, e.g. ZnS); hover it for advice. Use the *SNIP, 4th order* baseline for such samples.
+
 Spectra are saved automatically (*Saved in* shows the folder); a series is saved as a folder with one CSV per spectrum plus `series.csv`.
 The **⋯** menu has *Clear* and *Add to library…*.
 
@@ -42,6 +45,19 @@ Open spectra (CSV, TXT, SPC, JCAMP-DX, vendor files) and compare them: overlay, 
 
 - **Processing:** baseline correction, normalisation, derivative, *difference A − B*, and a **Calculator…**
   for arbitrary expressions.
+- **Baseline:** *as Measure page* (default) follows the Measure page's method and strength; or pick a method
+  and a strength (0–10, larger = stiffer) for the Data page alone:
+
+  | Method | Use for |
+  |---|---|
+  | SNIP, 4th order (Measure default) | curved fluorescence backgrounds: ZnS, minerals, coloured samples |
+  | SNIP (classic) | flat or gently sloping backgrounds; cuts into dome-shaped fluorescence |
+  | ALS, arPLS, airPLS | general purpose; tune the strength if bands are clipped or the baseline wanders |
+  | Modified polynomial | single spectra with a smooth background |
+  | Rolling ball | narrow bands on a slowly varying background |
+
+  Baselines are fitted above 150 cm⁻¹ only: below it the laser filter cuts the signal, and that edge would
+  otherwise pull the baseline down beside low-wavenumber bands (ZnS 256/348 cm⁻¹).
 - **Peaks:** peaks are picked automatically; click the plot to add one, right-click near one to remove it.
 - **Fitting:** zoom in on the bands of interest and press **Fit peaks in view**. The fitted window is shaded;
   drag it or its edges to fit another range. The table gives position, height, FWHM and area per band.

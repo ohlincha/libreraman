@@ -232,9 +232,12 @@ MeasurePage::MeasurePage(Controller* ctl, QWidget* parent) : Page(parent), m_ctl
     fillRow->addWidget(m_fillPct);
     m_lblDark = new QLabel(QStringLiteral("—"));
     m_lblSat = new QLabel(QStringLiteral("—"));
+    m_lblFluor = new QLabel(QStringLiteral("—"));
+    m_lblFluor->setWordWrap(true);
     f->addRow(QStringLiteral("Signal"), fillRow);
     f->addRow(QStringLiteral("Dark level"), m_lblDark);
     f->addRow(QStringLiteral("Saturation"), m_lblSat);
+    f->addRow(QStringLiteral("Fluorescence"), m_lblFluor);
     grid->addWidget(db, 2, 0);
     auto* lb = box(QStringLiteral("Last spectrum"));
     f = form(lb);
@@ -494,13 +497,15 @@ QWidget* MeasurePage::buildSettingsPanel() {
     m_baseline = new QComboBox;
     int snip = 0;
     for (const auto& [key, desc] : lr::processing::baselines()) {
-        if (key == QLatin1String("snip"))
+        if (key == QLatin1String("snip4"))
             snip = m_baseline->count();
         m_baseline->addItem(desc, key);
     }
     m_baseline->setCurrentIndex(snip);
-    m_baseline->setToolTip(QStringLiteral("<p>SNIP works well for series; polynomial for single spectra; "
-                                          "AsLS/arPLS when you are willing to adjust the strength.</p>"));
+    m_baseline->setToolTip(QStringLiteral("<p>SNIP 4th order (default) follows curved fluorescence backgrounds (ZnS, "
+                                          "minerals); classic SNIP suits flat backgrounds; polynomial for single "
+                                          "spectra; AsLS/arPLS/airPLS when you are willing to adjust the strength. "
+                                          "Baselines are fitted above 150 cm⁻¹ only.</p>"));
     m_normalise = new QComboBox;
     m_normalise->addItems({QStringLiteral("none"), QStringLiteral("max"), QStringLiteral("area")});
     m_derivative = new QComboBox;
@@ -803,6 +808,19 @@ void MeasurePage::addSpectrum(const lr::Spectrum& sp) {
                               .arg(theme::warningText().name()));
     else
         m_lblSat->setText(rawMax > 55000 ? QStringLiteral("close to maximum") : QStringLiteral("none"));
+    {
+        double bg = 0;
+        const double r = lr::processing::fluorescenceRatio(x, sp.intensity, &bg);
+        const bool fluo = std::isfinite(r) && r >= lr::processing::kFluorescenceRatio
+                          && bg > lr::processing::kFluorescenceCounts;
+        m_lblFluor->setText(!std::isfinite(r) ? QStringLiteral("—")
+                            : fluo ? QStringLiteral("background ≈ %1× the strongest band").arg(r, 0, 'f', r < 10 ? 1 : 0)
+                                   : QStringLiteral("low"));
+        m_lblFluor->setToolTip(fluo ? QStringLiteral("<p>A broad fluorescence background dominates the spectrum. "
+                                                     "The <i>SNIP, 4th order</i> baseline handles it best. It often "
+                                                     "fades with longer laser exposure (photobleaching).</p>")
+                                    : QString());
+    }
     m_lblTime->setText(sp.t.toString(QStringLiteral("HH:mm:ss")));
     m_lblSet->setText(QStringLiteral("%1 × %2 s · %3 nm").arg(sp.averages).arg(lr::py::g(sp.exposure_s)).arg(sp.channel));
     scheduleRedraw();
@@ -933,7 +951,7 @@ void MeasurePage::clearAll() {
         c->setName({});
     }
     m_peakLabels->setLabels({});
-    for (QLabel* l : {m_lblN, m_lblNext, m_lblElapsed, m_lblEnd, m_lblDark, m_lblSat, m_lblTime, m_lblSet,
+    for (QLabel* l : {m_lblN, m_lblNext, m_lblElapsed, m_lblEnd, m_lblDark, m_lblSat, m_lblFluor, m_lblTime, m_lblSet,
                       m_lblPeaks, m_fillPct})
         l->setText(QStringLiteral("—"));
     m_bar->setValue(0);

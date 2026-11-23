@@ -6,6 +6,7 @@
 //                 condition numbers up to ~1e12 for the stiffest settings; modified polynomial: QR here vs SVD)
 // The golden outputs themselves are rounded to 12 significant digits.
 #include <QJsonArray>
+#include <algorithm>
 #include <QJsonObject>
 #include <QtTest>
 
@@ -37,9 +38,11 @@ private slots:
 
     void baselinesList() {
         const auto& b = processing::baselines();
-        QCOMPARE(b.size(), size_t(6));
+        QCOMPARE(b.size(), size_t(8));
         QCOMPARE(b[0].first, QString("none"));
         QCOMPARE(b[5].first, QString("snip"));
+        QCOMPARE(b[6].first, QString("snip4"));
+        QCOMPARE(b[7].first, QString("airpls"));
     }
 
     void baselineDispatcher() {
@@ -49,7 +52,7 @@ private slots:
             const Vec y = spectrum(c["spectrum"].toString());
             const Vec e = golden::vec(c["out"]);
             const Vec a = golden::every(processing::baseline(x, y, m, c["strength"].toDouble()), stride);
-            const bool solve = m == "als" || m == "arpls" || m == "polynomial";
+            const bool solve = m == "als" || m == "arpls" || m == "airpls" || m == "polynomial";
             const double tol = (solve ? kSolve : kExact) * std::max(golden::maxAbs(e), 1.0);
             COMPARE_VEC(a, e, tol, 0.0, m + " " + c["spectrum"].toString());
         }
@@ -67,6 +70,53 @@ private slots:
         COMPARE_VEC(processing::baselineRollingBall(Vec(y.begin(), y.begin() + 40), 40),
                     golden::vec(d["rolling_ball_big"]), kExact * s, 0, "ball (window > data)");
         COMPARE_VEC(processing::baselineSnip(y, 25), golden::vec(d["snip"]), kExact * s, 0, "snip");
+        COMPARE_VEC(processing::baselineSnip4(y, 25), golden::vec(d["snip4"]), kExact * s, 0, "snip4");
+        COMPARE_VEC(processing::baselineAirpls(y, 1e3, 15), golden::vec(d["airpls"]), kSolve * s, 0, "airpls");
+    }
+
+    // Baselines are fitted on x >= 150 cm-1 only: below it the baseline is the data (corrected = 0), and the
+    // edge-filter cliff does not drag the fit down beside low-wavenumber bands.
+    void baselineFitRange() {
+        const Vec y = spectrum("zinc sulfide");
+        for (const auto& [m, desc] : processing::baselines()) {
+            if (m == "none") continue;
+            const Vec b = processing::baseline(x, y, m, 5.0);
+            Vec fx, fy;
+            for (size_t i = 0; i < x.size(); ++i) {
+                if (x[i] < processing::kBaselineFitMin) QCOMPARE(b[i], y[i]);
+                else { fx.push_back(x[i]); fy.push_back(y[i]); }
+            }
+            const Vec fb = processing::baseline(fx, fy, m, 5.0);      // the same as fitting the range alone
+            size_t k = 0;
+            for (size_t i = 0; i < x.size(); ++i)
+                if (x[i] >= processing::kBaselineFitMin) QCOMPARE(b[i], fb[k++]);
+        }
+    }
+
+    // ZnS (simulator spectrum, strong dome-shaped fluorescence): SNIP 4th order and the penalised methods leave
+    // the region between the bands near zero; classic SNIP cuts into the dome (documents why snip4 is default).
+    void fluorescenceIndicator() {
+        double bg = 0;
+        const double zns = processing::fluorescenceRatio(x, spectrum("zinc sulfide"), &bg);
+        QVERIFY2(zns > 3 && bg > processing::kFluorescenceCounts, qPrintable(QString::number(zns)));
+        QVERIFY(processing::fluorescenceRatio(x, spectrum("ethanol")) < 0.1);
+        QVERIFY(processing::fluorescenceRatio(x, spectrum("carbon tetrachloride")) < 0.1);
+        QVERIFY(std::isnan(processing::fluorescenceRatio(Vec{100, 200}, Vec{1, 2})));
+    }
+
+    void znsFluorescence() {
+        const Vec y = spectrum("zinc sulfide");
+        auto residual = [&](const QString& m) {               // median corrected value, 1200-2200 cm-1
+            const Vec b = processing::baseline(x, y, m, 5.0);
+            Vec r;
+            for (size_t i = 0; i < x.size(); ++i)
+                if (x[i] > 1200 && x[i] < 2200) r.push_back(y[i] - b[i]);
+            std::nth_element(r.begin(), r.begin() + long(r.size() / 2), r.end());
+            return r[r.size() / 2];
+        };
+        for (const char* m : {"snip4", "als", "arpls", "airpls"})
+            QVERIFY2(residual(m) < 1500, qPrintable(QString("%1: %2").arg(m).arg(residual(m))));
+        QVERIFY(residual("snip") > 5000);
     }
 
     void despike() {

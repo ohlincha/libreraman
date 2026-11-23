@@ -304,6 +304,8 @@ const std::vector<std::pair<QString, QString>>& baselines() {
         {"polynomial", "Modified polynomial (iterative)"},
         {"rolling_ball", "Rolling ball"},
         {"snip", "SNIP (statistics-sensitive non-linear iterative peak clipping)"},
+        {"snip4", "SNIP, 4th order, decreasing window (curved/fluorescent backgrounds)"},
+        {"airpls", "Adaptive iteratively reweighted penalized least squares (airPLS)"},
     };
     return b;
 }
@@ -421,15 +423,102 @@ Vec baselineSnip(const Vec& y, int iterations) {
     return z;
 }
 
-Vec baseline(const Vec& x, const Vec& y, const QString& method, double strength) {
-    if (method.isEmpty() || method == "none") return Vec(y.size(), 0.0);
-    const double s = std::clamp(strength, 0.0, 10.0);
+// baseline_snip4
+Vec baselineSnip4(const Vec& y, int iterations) {
+    const size_t n = y.size();
+    if (n == 0) return {};
+    const double ymin = *std::min_element(y.begin(), y.end());
+    Vec v(n);
+    for (size_t i = 0; i < n; ++i) v[i] = std::log(std::log(std::sqrt(std::max(y[i] - ymin, 0.0) + 1) + 1) + 1);
+    Vec nv;
+    for (int kk = iterations; kk >= 1; --kk) {
+        const size_t k = size_t(kk);
+        if (n < 2 * k + 1) continue;
+        const size_t h = std::max<size_t>(k / 2, 1);
+        nv.assign(v.begin(), v.end());
+        for (size_t i = k; i < n - k; ++i) {
+            const double b2 = (v[i - k] + v[i + k]) / 2;
+            const double b4 = (-v[i - k] + 4 * v[i - h] + 4 * v[i + h] - v[i + k]) / 6;
+            nv[i] = std::min(v[i], std::max(b2, b4));
+        }
+        v.swap(nv);
+    }
+    Vec z(n);
+    for (size_t i = 0; i < n; ++i) {
+        const double a = std::exp(std::exp(v[i]) - 1) - 1;
+        z[i] = a * a - 1 + ymin;
+    }
+    return z;
+}
+
+// baseline_airpls
+Vec baselineAirpls(const Vec& y, double lam, int niter) {
+    const size_t n = y.size();
+    Vec w(n, 1.0), z = y;
+    double scale = 0.0;
+    for (double v : y) scale += std::abs(v);
+    for (int t = 1; t <= niter; ++t) {
+        z = solvePenalized(w, y, lam);
+        double dn = 0.0, dmax = 0.0;
+        bool any = false;
+        for (size_t i = 0; i < n; ++i) {
+            const double d = y[i] - z[i];
+            if (d < 0) { any = true; dn -= d; dmax = std::max(dmax, -d); }
+        }
+        if (!any || dn < 1e-3 * scale) break;
+        for (size_t i = 0; i < n; ++i) {
+            const double d = y[i] - z[i];
+            w[i] = d < 0 ? std::exp(std::min(t * -d / dn, 50.0)) : 0.0;
+        }
+        w[0] = w[n - 1] = std::exp(std::min(t * dmax / dn, 50.0));
+    }
+    return z;
+}
+
+namespace {
+Vec baselineOn(const Vec& x, const Vec& y, const QString& method, double s) {
     if (method == "als") return baselineAls(y, std::pow(10.0, 2 + s * 0.6));
     if (method == "arpls") return baselineArpls(y, std::pow(10.0, 2 + s * 0.6));
+    if (method == "airpls") return baselineAirpls(y, std::pow(10.0, 2 + s * 0.6));
     if (method == "polynomial") return baselinePolynomial(x, y, int(std::nearbyint(1 + s)));
     if (method == "rolling_ball") return baselineRollingBall(y, 10 + s * 30);
     if (method == "snip") return baselineSnip(y, int(10 + s * 15));
+    if (method == "snip4") return baselineSnip4(y, int(10 + s * 15));
     throw Error(("unknown baseline method '" + method + "'").toStdString());
+}
+}  // namespace
+
+Vec baseline(const Vec& x, const Vec& y, const QString& method, double strength) {
+    if (method.isEmpty() || method == "none") return Vec(y.size(), 0.0);
+    const double s = std::clamp(strength, 0.0, 10.0);
+    bool known = false;
+    for (const auto& b : baselines()) known = known || b.first == method;
+    if (!known) throw Error(("unknown baseline method '" + method + "'").toStdString());
+    // fit on x >= kBaselineFitMin only (the edge-filter cliff below it ruins every method)
+    std::vector<size_t> fit;
+    for (size_t i = 0; i < x.size() && i < y.size(); ++i)
+        if (x[i] >= kBaselineFitMin) fit.push_back(i);
+    if (fit.size() == y.size() || fit.size() < 16) return baselineOn(x, y, method, s);
+    Vec fx, fy;
+    for (size_t i : fit) { fx.push_back(x[i]); fy.push_back(y[i]); }
+    const Vec fz = baselineOn(fx, fy, method, s);
+    Vec z = y;
+    for (size_t k = 0; k < fit.size(); ++k) z[fit[k]] = fz[k];
+    return z;
+}
+
+double fluorescenceRatio(const Vec& x, const Vec& y, double* background) {
+    Vec fy;
+    for (size_t i = 0; i < x.size() && i < y.size(); ++i)
+        if (x[i] >= kBaselineFitMin && x[i] <= 3500) fy.push_back(y[i]);
+    if (background) *background = std::nan("");
+    if (fy.size() < 64) return std::nan("");
+    const Vec b = baselineSnip4(fy, 85);                       // strength 5
+    double band = 0.0;
+    for (size_t i = 0; i < fy.size(); ++i) band = std::max(band, fy[i] - b[i]);
+    const double bg = median(b);
+    if (background) *background = bg;
+    return band > 0 ? bg / band : std::nan("");
 }
 
 // despike: a point is a spike if it rises far above a 5-point median (more than threshold x noise) AND

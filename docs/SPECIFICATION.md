@@ -156,7 +156,8 @@ Non-destructive: raw signal and background frames are always stored; corrections
 top and can be changed later for a whole series.
 - Background: per spectrum, once, every N minutes, stored file (with scaling, e.g. solvent), none.
 - Baseline: asymmetric least squares (ALS, arPLS, airPLS), modified polynomial, rolling ball,
-  SNIP, manual anchor points, vendor-style segments.
+  SNIP (2nd order and 4th order with decreasing window), manual anchor points, vendor-style segments; fitted on
+  x ≥ 150 cm⁻¹ (below the edge filter the baseline equals the data).
 - Cosmic-ray removal (multi-scan comparison and single-spectrum spike detection), Savitzky–Golay
   smoothing, intensity-response correction (instrument NIST coefficients), normalisation,
   resampling to an even grid.

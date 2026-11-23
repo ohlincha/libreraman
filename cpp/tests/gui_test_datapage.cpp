@@ -319,6 +319,18 @@ void GuiTestDataPage::normalisation() {
     p.setBaselineCorrection(true);
     QCOMPARE(p.settings().baseline, QStringLiteral("polynomial"));
     QCOMPARE(p.settings().strength, 3.0);
+    // a method chosen on the page overrides the Measure page's, with the page's strength
+    p.setBaselineMethod("als");
+    p.setBaselineStrength(7.5);
+    QCOMPARE(p.settings().baseline, QStringLiteral("als"));
+    QCOMPARE(p.settings().strength, 7.5);
+    QVERIFY(p.baselineCorrection());
+    p.setBaselineCorrection(false);
+    QCOMPARE(p.settings().baseline, QStringLiteral("none"));
+    p.setBaselineCorrection(true);                                 // back to the last method
+    QCOMPARE(p.baselineMethod(), QStringLiteral("als"));
+    p.setBaselineMethod("measure");
+    QCOMPARE(p.settings().baseline, QStringLiteral("polynomial"));
 }
 
 void GuiTestDataPage::difference() {
@@ -747,7 +759,7 @@ void GuiTestDataPage::processingDescription() {
     DataPage p;
     p.setMessagesEnabled(false);
     QCOMPARE(p.describeProcessing(),
-             QStringLiteral("baseline=snip strength=5.0 despike=False smooth=False normalize=none"));
+             QStringLiteral("baseline=snip4 strength=5.0 despike=False smooth=False normalize=none"));
     p.setBaselineCorrection(false);
     p.setNormalisation("area");
     QCOMPARE(p.describeProcessing(),

@@ -484,7 +484,7 @@ class MeasurePage(QWidget):
         self.baseline = QComboBox()
         for k, d in processing.BASELINES.items():
             self.baseline.addItem(d, k)
-        self.baseline.setCurrentIndex(list(processing.BASELINES).index("snip"))
+        self.baseline.setCurrentIndex(list(processing.BASELINES).index("snip4"))
         self.baseline.setToolTip("<p>SNIP works well for series; polynomial for single spectra; AsLS/arPLS when "
                                  "you are willing to adjust the strength.</p>")
         self.normalise = QComboBox()

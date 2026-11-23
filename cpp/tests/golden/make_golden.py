@@ -99,6 +99,8 @@ def gold_processing():
         "rolling_ball": res(processing.baseline_rolling_ball(short, radius=11.5)),
         "rolling_ball_big": res(processing.baseline_rolling_ball(short[:40], radius=40)),
         "snip": res(processing.baseline_snip(short, iterations=25)),
+        "snip4": res(processing.baseline_snip4(short, iterations=25)),
+        "airpls": res(processing.baseline_airpls(short, lam=1e3, niter=15)),
     }
     sp = spiky()
     frames = []

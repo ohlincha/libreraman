@@ -1,6 +1,9 @@
 #pragma once
 // Spectral processing (Python: processing.py). Everything works on copies; raw data is never modified.
-// Baseline methods: als, arpls, polynomial (modified polynomial), rolling_ball, snip, none.
+// Baseline methods: als, arpls, airpls, polynomial (modified polynomial), rolling_ball, snip, snip4, none.
+// baseline() fits only on x >= kBaselineFitMin (150 cm-1): below it the edge filter cuts the signal to ~0 and
+// that cliff drags every method down beside low-wavenumber bands (ZnS on fluorescence). There the baseline
+// equals the data.
 //
 // lr::sig holds the few scipy.signal / scipy.ndimage equivalents the processing and peak code relies on
 // (savgol_filter, find_peaks, peak_prominences, peak_widths), with scipy's semantics.
@@ -42,9 +45,21 @@ Vec baselineArpls(const Vec& y, double lam = 1e5, double ratio = 1e-3, int niter
 Vec baselinePolynomial(const Vec& x, const Vec& y, int order = 5, int niter = 100);
 Vec baselineRollingBall(const Vec& y, double radius = 100);
 Vec baselineSnip(const Vec& y, int iterations = 60);
+// SNIP with the 4th-order clipping filter and a decreasing window: follows concave (fluorescence) backgrounds.
+Vec baselineSnip4(const Vec& y, int iterations = 60);
+// airPLS (Zhang 2010): weight 0 above the fit, exp(t|d|/|sum d-|) below.
+Vec baselineAirpls(const Vec& y, double lam = 1e5, int niter = 20);
+inline constexpr double kBaselineFitMin = 150.0;
 // strength 0-10 maps to the method's main parameter (larger = smoother/stiffer baseline). "none" or an
 // empty method gives zeros; an unknown method throws lr::Error.
 Vec baseline(const Vec& x, const Vec& y, const QString& method = "als", double strength = 5.0);
+
+// Fluorescence indicator: median SNIP-4th-order baseline over 150-3500 cm-1 divided by the strongest band
+// above it (raw counts). ~0.01-0.05 for clear liquids, > 1 when fluorescence dominates (ZnS ~6). NaN if
+// there are fewer than 64 points in the range or no band above the baseline.
+double fluorescenceRatio(const Vec& x, const Vec& y, double* background = nullptr);
+inline constexpr double kFluorescenceRatio = 1.0;          // mention fluorescence at or above this ratio...
+inline constexpr double kFluorescenceCounts = 1000.0;      // ...when the background is also above this level
 
 Vec despike(const Vec& y, double threshold = 8.0);                  // single-spectrum cosmic-ray removal
 Vec despikeFrames(const std::vector<Vec>& frames, double k = 5.0);  // multi-scan removal, returns the mean

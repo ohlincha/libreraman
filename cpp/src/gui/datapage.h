@@ -4,7 +4,7 @@
 // Spectra measured in this session are added with addSpectrum(); files can be opened or dropped onto the
 // list. The ticked spectra are shown as an overlay, stacked with an offset, or as a heat map (one row per
 // spectrum), processed with the Measure page's settings (setProcessingSettings) plus the page's own
-// normalisation and baseline switch. Other features: difference A − B of the first two ticked spectra,
+// normalisation and baseline method. Other features: difference A − B of the first two ticked spectra,
 // a calculator a·A + b·B + c, the peak table of the current spectrum, profile fits of the bands inside the
 // visible x range (the fit window can then be dragged to refit), and export (CSV, JCAMP-DX, common-axis
 // table, all ticked spectra in one JCAMP-DX or SPC file, plot as PNG/SVG). Multi-spectrum files (JCAMP-DX
@@ -98,7 +98,13 @@ public:
     View view() const;
     void setNormalisation(const QString& mode);  // "none", "max", "area"
     QString normalisation() const;
-    void setBaselineCorrection(bool on);
+    // Baseline: "measure" (the Measure page's method and strength, the default), "none", or a
+    // processing::baselines() key with this page's strength (0-10).
+    void setBaselineMethod(const QString& key);
+    QString baselineMethod() const;
+    void setBaselineStrength(double s);
+    double baselineStrength() const;
+    void setBaselineCorrection(bool on);         // off = "none"; on = the last method other than "none"
     bool baselineCorrection() const;
     void setDifference(bool on);                 // first ticked − second ticked
     bool difference() const;
@@ -237,7 +243,9 @@ private:
     QListWidget* m_list = nullptr;
     QComboBox* m_mode = nullptr;
     QComboBox* m_norm = nullptr;
-    QCheckBox* m_baseline = nullptr;
+    QComboBox* m_baseline = nullptr;           // "measure" = the Measure page's method, else a method key
+    QDoubleSpinBox* m_strength = nullptr;      // used when a method is chosen on this page
+    QString m_lastBaseline = QStringLiteral("measure");   // restored by setBaselineCorrection(true)
     QCheckBox* m_diff = nullptr;
     QSlider* m_offset = nullptr;
     QSlider* m_angle = nullptr;                 // stacked: sideways shift per trace (pseudo-3D waterfall)

@@ -149,8 +149,8 @@ QString signedTerm(double k) {                  // " + 2·" / " − 0.5·" (Pyth
 // ============================================================================================== set-up
 DataPage::DataPage(QWidget* parent) : QWidget(parent) {
     m_settingsFn = [] {
-        processing::Settings s;            // Measure page defaults: SNIP, strength 5 (slider 50)
-        s.baseline = QStringLiteral("snip");
+        processing::Settings s;            // Measure page defaults: SNIP 4th order, strength 5 (slider 50)
+        s.baseline = QStringLiteral("snip4");
         s.strength = 5.0;
         return s;
     };
@@ -218,11 +218,34 @@ void DataPage::build() {
     connect(m_norm, qOverload<int>(&QComboBox::currentIndexChanged), this, &DataPage::redraw);
     bar->addWidget(m_norm);
     bar->addSpacing(6);
-    m_baseline = new QCheckBox(tr("baseline correction"));
-    m_baseline->setChecked(true);
-    m_baseline->setToolTip(tr("<p>Baseline method and strength of the Measure page</p>"));
-    connect(m_baseline, &QCheckBox::toggled, this, &DataPage::redraw);
+    bar->addWidget(new QLabel(tr("Baseline")));
+    m_baseline = new QComboBox;
+    m_baseline->addItem(tr("as Measure page"), QStringLiteral("measure"));
+    for (const auto& [key, desc] : processing::baselines()) {
+        m_baseline->addItem(key == QLatin1String("none") ? tr("none") : desc, key);
+        m_baseline->setItemData(m_baseline->count() - 1, desc, Qt::ToolTipRole);
+    }
+    m_baseline->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+    m_baseline->setMinimumContentsLength(14);
+    m_baseline->setToolTip(tr("<p>Baseline correction. <i>as Measure page</i> uses the Measure page's method and "
+                              "strength. SNIP 4th order follows curved fluorescence backgrounds (ZnS, minerals); "
+                              "classic SNIP suits flat ones. Baselines are fitted above 150 cm⁻¹ only.</p>"));
+    m_strength = new QDoubleSpinBox;
+    m_strength->setRange(0.0, 10.0);
+    m_strength->setSingleStep(0.5);
+    m_strength->setDecimals(1);
+    m_strength->setValue(5.0);
+    m_strength->setEnabled(false);
+    m_strength->setToolTip(tr("<p>Baseline stiffness 0–10: larger = smoother baseline</p>"));
+    connect(m_baseline, qOverload<int>(&QComboBox::currentIndexChanged), this, [this] {
+        const QString k = baselineMethod();
+        if (k != QLatin1String("none")) m_lastBaseline = k;
+        m_strength->setEnabled(k != QLatin1String("measure") && k != QLatin1String("none"));
+        redraw();
+    });
+    connect(m_strength, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &DataPage::redraw);
     bar->addWidget(m_baseline);
+    bar->addWidget(m_strength);
     m_diff = new QCheckBox(tr("difference A − B"));
     m_diff->setToolTip(tr("<p>First ticked spectrum minus the second, both processed as shown</p>"));
     connect(m_diff, &QCheckBox::toggled, this, &DataPage::redraw);
@@ -636,8 +659,15 @@ void DataPage::setView(View v) { m_mode->setCurrentIndex(int(v)); }
 DataPage::View DataPage::view() const { return View(m_mode->currentIndex()); }
 void DataPage::setNormalisation(const QString& mode) { m_norm->setCurrentText(mode); }
 QString DataPage::normalisation() const { return m_norm->currentText(); }
-void DataPage::setBaselineCorrection(bool on) { m_baseline->setChecked(on); }
-bool DataPage::baselineCorrection() const { return m_baseline->isChecked(); }
+void DataPage::setBaselineMethod(const QString& key) {
+    const int i = m_baseline->findData(key);
+    if (i >= 0) m_baseline->setCurrentIndex(i);
+}
+QString DataPage::baselineMethod() const { return m_baseline->currentData().toString(); }
+void DataPage::setBaselineStrength(double s) { m_strength->setValue(s); }
+double DataPage::baselineStrength() const { return m_strength->value(); }
+void DataPage::setBaselineCorrection(bool on) { setBaselineMethod(on ? m_lastBaseline : QStringLiteral("none")); }
+bool DataPage::baselineCorrection() const { return baselineMethod() != QLatin1String("none"); }
 void DataPage::setDifference(bool on) { m_diff->setChecked(on); }
 bool DataPage::difference() const { return m_diff->isChecked(); }
 void DataPage::setOffset(int percent) { m_offset->setValue(percent); }
@@ -649,7 +679,11 @@ QString DataPage::fitText() const { return m_fitLabel->text(); }
 
 processing::Settings DataPage::settings() const {
     processing::Settings s = m_settingsFn();
-    if (!m_baseline->isChecked()) s.baseline = QStringLiteral("none");
+    const QString k = baselineMethod();
+    if (k != QLatin1String("measure")) {
+        s.baseline = k;
+        s.strength = m_strength->value();
+    }
     s.normalize = m_norm->currentText();
     return s;
 }
@@ -672,9 +706,9 @@ QString DataPage::settingsKey() const {
 }
 
 QString DataPage::describeProcessing() const {
-    const processing::Settings ps = m_settingsFn();
+    const processing::Settings ps = settings();
     return QStringLiteral("baseline=%1 strength=%2 despike=%3 smooth=%4 normalize=%5")
-        .arg(m_baseline->isChecked() ? ps.baseline : QStringLiteral("none"), py::fixed(ps.strength, 1),
+        .arg(ps.baseline, py::fixed(ps.strength, 1),
              py::str(ps.despike), py::str(ps.smooth), m_norm->currentText());
 }
 

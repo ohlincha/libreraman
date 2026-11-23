@@ -61,7 +61,7 @@ QJsonObject enumProp(const char* description, const QStringList& values) {
 }
 
 QJsonObject processingSchema() {
-    QStringList baselines{"none", "als", "arpls", "polynomial", "rolling_ball", "snip"};
+    QStringList baselines{"none", "als", "arpls", "airpls", "polynomial", "rolling_ball", "snip", "snip4"};
     return {{"type", "object"},
             {"description", "Processing before the analysis (default: the settings of the Measure page in the GUI)."},
             {"properties", QJsonObject{{"baseline", enumProp("Baseline method", baselines)},
