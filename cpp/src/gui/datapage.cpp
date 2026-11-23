@@ -36,6 +36,7 @@
 #include <QSlider>
 #include <QSpinBox>
 #include <QSaveFile>
+#include <QSettings>
 #include <QTimer>
 #include <QElapsedTimer>
 #include <QSplitter>
@@ -52,6 +53,13 @@
 #include <limits>
 
 namespace lr::gui {
+
+namespace {
+constexpr char kBaselineKey[] = "data/baseline";
+constexpr char kStrengthKey[] = "data/baseline_strength";
+constexpr char kFitMinKey[] = "data/baseline_fit_min";
+}  // namespace
+
 
 namespace {
 
@@ -230,7 +238,9 @@ void DataPage::build() {
     m_baseline->setMinimumContentsLength(14);
     m_baseline->setToolTip(tr("<p>Baseline correction. <i>as Measure page</i> uses the Measure page's method and "
                               "strength. SNIP 4th order follows curved fluorescence backgrounds (ZnS, minerals); "
-                              "classic SNIP suits flat ones. Baselines are fitted above 150 cm⁻¹ only.</p>"));
+                              "classic SNIP suits flat ones. Baselines are fitted from the shift set under "
+                              "<i>fit from</i> (150 cm⁻¹: below it the instrument's edge filter cuts the "
+                              "signal).</p>"));
     m_strength = new QDoubleSpinBox;
     m_strength->setRange(0.0, 10.0);
     m_strength->setSingleStep(0.5);
@@ -242,11 +252,30 @@ void DataPage::build() {
         const QString k = baselineMethod();
         if (k != QLatin1String("none")) m_lastBaseline = k;
         m_strength->setEnabled(k != QLatin1String("measure") && k != QLatin1String("none"));
+        m_fitMin->setEnabled(k != QLatin1String("none"));
+        saveBaselineSettings();
         redraw();
     });
-    connect(m_strength, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &DataPage::redraw);
+    connect(m_strength, qOverload<double>(&QDoubleSpinBox::valueChanged), this, [this] {
+        saveBaselineSettings();
+        redraw();
+    });
+    m_fitMin = new QSpinBox;
+    m_fitMin->setRange(0, 1000);
+    m_fitMin->setSingleStep(10);
+    m_fitMin->setValue(int(processing::kBaselineFitMin));
+    m_fitMin->setPrefix(tr("fit from "));
+    m_fitMin->setSuffix(tr(" cm⁻¹"));
+    m_fitMin->setToolTip(tr("<p>The baseline is fitted from this shift upwards; below it the corrected spectrum is "
+                            "zero. 150 cm⁻¹ suits this instrument (its edge filter cuts the signal below). For "
+                            "imported spectra with real bands lower down, use 0.</p>"));
+    connect(m_fitMin, qOverload<int>(&QSpinBox::valueChanged), this, [this] {
+        saveBaselineSettings();
+        redraw();
+    });
     bar->addWidget(m_baseline);
     bar->addWidget(m_strength);
+    bar->addWidget(m_fitMin);
     m_diff = new QCheckBox(tr("difference A − B"));
     m_diff->setToolTip(tr("<p>First ticked spectrum minus the second, both processed as shown</p>"));
     connect(m_diff, &QCheckBox::toggled, this, &DataPage::redraw);
@@ -327,6 +356,17 @@ void DataPage::build() {
     bar->addWidget(exp);
     rv->addLayout(bar);
     rv->addLayout(bar2);
+    {   // last session's baseline settings (#6)
+        const QSignalBlocker b1(m_baseline), b2(m_strength), b3(m_fitMin);
+        const QSettings st;
+        setBaselineMethod(st.value(QLatin1String(kBaselineKey), QStringLiteral("measure")).toString());
+        m_strength->setValue(st.value(QLatin1String(kStrengthKey), 5.0).toDouble());
+        m_fitMin->setValue(st.value(QLatin1String(kFitMinKey), int(processing::kBaselineFitMin)).toInt());
+        const QString k = baselineMethod();
+        if (k != QLatin1String("none")) m_lastBaseline = k;
+        m_strength->setEnabled(k != QLatin1String("measure") && k != QLatin1String("none"));
+        m_fitMin->setEnabled(k != QLatin1String("none"));
+    }
 
     m_stack = new QStackedWidget;
     m_plot = new PlotWidget;
@@ -674,6 +714,15 @@ void DataPage::setBaselineMethod(const QString& key) {
 QString DataPage::baselineMethod() const { return m_baseline->currentData().toString(); }
 void DataPage::setBaselineStrength(double s) { m_strength->setValue(s); }
 double DataPage::baselineStrength() const { return m_strength->value(); }
+void DataPage::setBaselineFitMin(double cm) { m_fitMin->setValue(int(std::lround(cm))); }
+double DataPage::baselineFitMin() const { return m_fitMin->value(); }
+
+void DataPage::saveBaselineSettings() const {
+    QSettings st;
+    st.setValue(QLatin1String(kBaselineKey), baselineMethod());
+    st.setValue(QLatin1String(kStrengthKey), m_strength->value());
+    st.setValue(QLatin1String(kFitMinKey), m_fitMin->value());
+}
 void DataPage::setBaselineCorrection(bool on) { setBaselineMethod(on ? m_lastBaseline : QStringLiteral("none")); }
 void DataPage::setIntensityCorrection(bool on) { m_intensity->setChecked(on); }
 bool DataPage::intensityCorrection() const { return m_intensity->isChecked(); }
@@ -694,6 +743,7 @@ processing::Settings DataPage::settings() const {
         s.baseline = k;
         s.strength = m_strength->value();
     }
+    s.fitMin = m_fitMin->value();
     s.intensity = m_intensity->isChecked();
     s.normalize = m_norm->currentText();
     return s;
@@ -720,7 +770,7 @@ QString DataPage::settingsKey() const {
         .arg(s.baseline, QString::number(s.strength, 'g', 17), QString::number(int(s.despike)),
              QString::number(int(s.smooth)), QString::number(s.smoothWindow), QString::number(s.derivative),
              QString::number(s.derivWindow), s.normalize, s.band ? QString::number(*s.band, 'g', 17) : QString())
-           + QStringLiteral("|intensity=%1").arg(int(s.intensity));
+           + QStringLiteral("|intensity=%1|fit_min=%2").arg(int(s.intensity)).arg(s.fitMin, 0, 'g', 17);
 }
 
 QString DataPage::describeProcessing() const {
@@ -728,6 +778,7 @@ QString DataPage::describeProcessing() const {
     return QStringLiteral("baseline=%1 strength=%2 despike=%3 smooth=%4 normalize=%5")
         .arg(ps.baseline, py::fixed(ps.strength, 1),
              py::str(ps.despike), py::str(ps.smooth), m_norm->currentText())
+           + (ps.fitMin != processing::kBaselineFitMin ? QStringLiteral(" fit_min=%1").arg(ps.fitMin) : QString())
            + (ps.intensity ? QStringLiteral(" intensity=True") : QString());
 }
 

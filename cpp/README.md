@@ -1,8 +1,9 @@
 # LibreRamen – C++ implementation
 
-The C++/Qt 6 implementation of LibreRamen. The Python package in `../libreramen` is the **reference**:
-it was developed against the real instrument, and the C++ code must behave the same (same USB/serial
-traffic, same safety rules, same file formats, same numbers within floating-point tolerance).
+The C++/Qt 6 implementation of LibreRamen, and the only maintained one. The Python package in `../libreramen`
+was the first version, developed against the real instrument; it is **frozen** (not maintained, not shipped).
+The golden files in `tests/golden/` were generated from it and are kept as they are; new or changed behaviour
+is tested in C++ only (issue #8).
 `../PROTOCOL.md` documents the instrument.
 
 ## Build

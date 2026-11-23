@@ -488,16 +488,16 @@ Vec baselineOn(const Vec& x, const Vec& y, const QString& method, double s) {
 }
 }  // namespace
 
-Vec baseline(const Vec& x, const Vec& y, const QString& method, double strength) {
+Vec baseline(const Vec& x, const Vec& y, const QString& method, double strength, double fitMin) {
     if (method.isEmpty() || method == "none") return Vec(y.size(), 0.0);
     const double s = std::clamp(strength, 0.0, 10.0);
     bool known = false;
     for (const auto& b : baselines()) known = known || b.first == method;
     if (!known) throw Error(("unknown baseline method '" + method + "'").toStdString());
-    // fit on x >= kBaselineFitMin only (the edge-filter cliff below it ruins every method)
+    // fit on x >= fitMin only (the edge-filter cliff below it ruins every method)
     std::vector<size_t> fit;
     for (size_t i = 0; i < x.size() && i < y.size(); ++i)
-        if (x[i] >= kBaselineFitMin) fit.push_back(i);
+        if (x[i] >= fitMin) fit.push_back(i);
     if (fit.size() == y.size() || fit.size() < 16) return baselineOn(x, y, method, s);
     Vec fx, fy;
     for (size_t i : fit) { fx.push_back(x[i]); fy.push_back(y[i]); }
@@ -603,6 +603,7 @@ Settings Settings::fromMap(const QVariantMap& m) {
     Settings s;
     if (m.contains("baseline")) s.baseline = m.value("baseline").isNull() ? QString("none") : m.value("baseline").toString();
     if (m.contains("strength")) s.strength = m.value("strength").toDouble();
+    if (m.contains("fit_min") && !m.value("fit_min").isNull()) s.fitMin = m.value("fit_min").toDouble();
     if (m.contains("despike")) s.despike = m.value("despike").toBool();
     if (m.contains("smooth")) s.smooth = m.value("smooth").toBool();
     if (m.contains("smooth_window")) s.smoothWindow = m.value("smooth_window").toInt();
@@ -618,7 +619,7 @@ std::pair<Vec, Vec> process(const Vec& x, const Vec& y0, const Settings& st) {
     Vec y = y0;
     if (st.despike) y = despike(y);
     if (st.smooth) y = smooth(y, st.smoothWindow);
-    Vec base = baseline(x, y, st.baseline, st.strength);
+    Vec base = baseline(x, y, st.baseline, st.strength, st.fitMin);
     Vec out(y.size());
     for (size_t i = 0; i < y.size(); ++i) out[i] = y[i] - base[i];
     if (st.derivative) out = sig::savgolFilter(out, st.derivWindow | 1, 3, st.derivative);

@@ -104,6 +104,9 @@ signals:
 public slots:
     void measureOnce();
     void startSeries();
+    // Empty or the old default "sample": asks for a name (when dialogs are enabled); false = cancelled.
+    // A real name is remembered for the next start of the program.
+    bool confirmSampleName();
     void setBand(double value, bool automatic = false);
     void onSeriesProgress(const lr::SeriesProgress& p);
     void setBusy(bool busy);

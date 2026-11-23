@@ -207,6 +207,11 @@ void GuiTestMainWindow::measureOnce() {
     QVERIFY(QFileInfo(file).fileName().endsWith(QStringLiteral(".csv")));
     QCOMPARE(sp.metaValue(QStringLiteral("sample")), QStringLiteral("CCl4 test"));
     QVERIFY(log().contains(QStringLiteral("Saved ")));
+    {   // #7: the name is remembered for the next start of the program
+        QCOMPARE(QSettings().value(QStringLiteral("measure/sample")).toString(), QStringLiteral("CCl4 test"));
+        MeasurePage fresh(nullptr);
+        QCOMPARE(fresh.sampleEdit()->text(), QStringLiteral("CCl4 test"));
+    }
     // shown: spectrum, peaks (CCl4: 459 cm-1 is the tallest band, followed by the trend)
     QCOMPARE(int(m->history().size()), 1);
     QVERIFY(!m->lastPeaks().empty());

@@ -93,6 +93,23 @@ private slots:
         }
     }
 
+    // #5: the fit start is a parameter (Data page "fit from", API fit_min): 0 fits everything, so imported
+    // spectra keep their bands below 150 cm-1; process() passes Settings::fitMin through.
+    void baselineFitMinParameter() {
+        const Vec y = spectrum("zinc sulfide");
+        const Vec all = processing::baseline(x, y, "snip4", 5.0, 0.0);
+        bool differs = false;                          // 0-150 cm-1 is now fitted (negative shifts are not)
+        for (size_t i = 0; i < x.size(); ++i)
+            if (x[i] >= 0 && x[i] < processing::kBaselineFitMin) differs = differs || all[i] != y[i];
+        QVERIFY(differs);
+        processing::Settings st;
+        st.baseline = "snip4";
+        st.fitMin = 0.0;
+        QCOMPARE(processing::process(x, y, st).second, all);
+        QCOMPARE(processing::Settings::fromMap({{"fit_min", 40.0}}).fitMin, 40.0);
+        QCOMPARE(processing::Settings::fromMap({}).fitMin, processing::kBaselineFitMin);
+    }
+
     // ZnS (simulator spectrum, strong dome-shaped fluorescence): SNIP 4th order and the penalised methods leave
     // the region between the bands near zero; classic SNIP cuts into the dome (documents why snip4 is default).
     void fluorescenceIndicator() {

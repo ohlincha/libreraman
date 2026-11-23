@@ -12,7 +12,9 @@ Methods (`processing::baselines()`): none, als, arpls, airpls, polynomial, rolli
 0–10 maps to each method's main parameter (λ = 10^(2+0.6 s) for the penalised ones, 10 + 15 s iterations for
 SNIP).
 
-- **Fit range:** only x ≥ 150 cm⁻¹ is fitted; below it the baseline equals the data. Including the edge-filter
+- **Fit range:** only x ≥ fitMin is fitted (default `kBaselineFitMin` = 150 cm⁻¹, the 532 nm edge filter; Data
+  page *fit from*, API `fit_min`; 0 for imported spectra with bands lower down); below it the baseline equals
+  the data. Including the edge-filter
   cliff dragged every method down beside low-wavenumber bands (ZnS 256/348 cm⁻¹), 10–30× worse (issue #1).
 - **snip4** (SNIP, 4th-order clipping filter, decreasing window, Morháč) follows dome-shaped fluorescence;
   classic SNIP cuts into it (~15000 counts residual on the simulator ZnS spectrum). snip4 is the Measure
@@ -20,4 +22,7 @@ SNIP).
 - Data page: own method drop-down, default *as Measure page*.
 - Fluorescence indicator: median snip4 baseline / strongest band over 150–3500 cm⁻¹ (ZnS 5.7, ethanol 0.02);
   noted on the Measure dashboard at ≥ 1 with background > 1000 counts.
-- Library matching still uses classic SNIP (issue #4).
+- Library matching (full-spectrum HQI and peak tables) uses snip4 too (issue #4). Simulator test: with a
+  fluorescence dome as high as the strongest band, classic SNIP matched every sample as ZnS; snip4 found all.
+  On clean noisy spectra snip4 scores are lower (water ~0.93, ZnS ~0.85 vs ~0.99) but still far ahead.
+  Libraries record `peak_baseline` in their info table; older automatic peak tables are re-picked once.

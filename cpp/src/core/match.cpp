@@ -128,7 +128,7 @@ std::vector<PeakEntry> pickPeaks(const Vec& x0, const Vec& y0, double snr, int m
     Vec x, y;
     sortedFinite(x0, y0, x, y);
     if (x.size() < 16) return {};
-    const Vec b = processing::baseline(x, y, "snip", 5.0);
+    const Vec b = processing::baseline(x, y, "snip4", 5.0);
     for (size_t i = 0; i < y.size(); ++i) y[i] -= b[i];
     std::vector<peaks::Peak> pk = peaks::pick(x, y, snr, 2.0, false, 50.0);   // not the laser line/notch edge
     std::sort(pk.begin(), pk.end(), [](const peaks::Peak& a, const peaks::Peak& c) { return a.height > c.height; });

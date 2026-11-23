@@ -611,7 +611,8 @@ bool ApiServer::requestSettings(const QJsonObject& body, lr::processing::Setting
         return false;
     }
     const QJsonObject o = body.value(QStringLiteral("settings")).toObject();
-    Fields f(o, {QStringLiteral("baseline"), QStringLiteral("strength"), QStringLiteral("despike"), QStringLiteral("smooth"),
+    Fields f(o, {QStringLiteral("baseline"), QStringLiteral("strength"), QStringLiteral("fit_min"),
+                 QStringLiteral("despike"), QStringLiteral("smooth"),
                  QStringLiteral("smooth_window"), QStringLiteral("derivative"), QStringLiteral("deriv_window"),
                  QStringLiteral("normalize"), QStringLiteral("band")});
     QStringList methods{QStringLiteral("none")};
@@ -619,6 +620,7 @@ bool ApiServer::requestSettings(const QJsonObject& body, lr::processing::Setting
         methods << b.first;
     f.choice(QStringLiteral("baseline"), {}, methods);
     f.num(QStringLiteral("strength"), 5, 0, 10);
+    f.num(QStringLiteral("fit_min"), lr::processing::kBaselineFitMin, 0, 4000);
     f.integer(QStringLiteral("smooth_window"), 9, 3, 101);
     f.integer(QStringLiteral("derivative"), 0, 0, 2);
     f.integer(QStringLiteral("deriv_window"), 11, 5, 101);
@@ -634,6 +636,7 @@ bool ApiServer::requestSettings(const QJsonObject& body, lr::processing::Setting
 namespace {
 QJsonObject settingsJson(const lr::processing::Settings& s) {
     QJsonObject o{{QStringLiteral("baseline"), s.baseline},       {QStringLiteral("strength"), s.strength},
+                  {QStringLiteral("fit_min"), s.fitMin},
                   {QStringLiteral("despike"), s.despike},         {QStringLiteral("smooth"), s.smooth},
                   {QStringLiteral("smooth_window"), s.smoothWindow}, {QStringLiteral("derivative"), s.derivative},
                   {QStringLiteral("deriv_window"), s.derivWindow}, {QStringLiteral("normalize"), s.normalize}};

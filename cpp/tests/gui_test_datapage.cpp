@@ -14,7 +14,9 @@
 #include <QFileInfo>
 #include <QListWidget>
 #include <QMenu>
+#include <QSettings>
 #include <QSignalSpy>
+#include <QStandardPaths>
 #include <QStackedWidget>
 #include <QTableWidget>
 #include <QTemporaryDir>
@@ -80,6 +82,7 @@ class GuiTestDataPage : public QObject {
     Q_OBJECT
 private slots:
     void initTestCase();
+    void init();
     void openGoldenFiles();
     void openFolderAndErrors();
     void listManagement();
@@ -98,12 +101,16 @@ private slots:
     void preview();
     void exportFiles();
     void processingDescription();
+    void baselineSettingsRemembered();
 };
 
 void GuiTestDataPage::initTestCase() {
+    QStandardPaths::setTestModeEnabled(true);          // QSettings away from the user's configuration
     theme::apply(*qApp, theme::Mode::Light);
     QVERIFY(QDir(FILES).exists());
 }
+
+void GuiTestDataPage::init() { QSettings().remove(QStringLiteral("data")); }   // each test starts at defaults
 
 void GuiTestDataPage::openGoldenFiles() {
     DataPage p;
@@ -764,6 +771,25 @@ void GuiTestDataPage::processingDescription() {
     p.setNormalisation("area");
     QCOMPARE(p.describeProcessing(),
              QStringLiteral("baseline=none strength=5.0 despike=False smooth=False normalize=area"));
+}
+
+// #6: the page's baseline method, strength and fit start survive a restart; #5: fit start reaches the settings.
+void GuiTestDataPage::baselineSettingsRemembered() {
+    {
+        DataPage p;
+        QCOMPARE(p.baselineMethod(), QStringLiteral("measure"));
+        QCOMPARE(p.baselineFitMin(), 150.0);
+        p.setBaselineMethod("snip");
+        p.setBaselineStrength(7.5);
+        p.setBaselineFitMin(0);
+        QCOMPARE(p.settings().fitMin, 0.0);
+        QVERIFY(p.describeProcessing().contains("fit_min=0"));
+    }
+    DataPage q;
+    QCOMPARE(q.baselineMethod(), QStringLiteral("snip"));
+    QCOMPARE(q.baselineStrength(), 7.5);
+    QCOMPARE(q.baselineFitMin(), 0.0);
+    QCOMPARE(q.settings().baseline, QStringLiteral("snip"));
 }
 
 QTEST_MAIN(GuiTestDataPage)

@@ -1,7 +1,7 @@
 #pragma once
 // Spectral processing (Python: processing.py). Everything works on copies; raw data is never modified.
 // Baseline methods: als, arpls, airpls, polynomial (modified polynomial), rolling_ball, snip, snip4, none.
-// baseline() fits only on x >= kBaselineFitMin (150 cm-1): below it the edge filter cuts the signal to ~0 and
+// baseline() fits only on x >= fitMin (default kBaselineFitMin, 150 cm-1): below it the edge filter cuts the signal to ~0 and
 // that cliff drags every method down beside low-wavenumber bands (ZnS on fluorescence). There the baseline
 // equals the data.
 //
@@ -49,10 +49,14 @@ Vec baselineSnip(const Vec& y, int iterations = 60);
 Vec baselineSnip4(const Vec& y, int iterations = 60);
 // airPLS (Zhang 2010): weight 0 above the fit, exp(t|d|/|sum d-|) below.
 Vec baselineAirpls(const Vec& y, double lam = 1e5, int niter = 20);
+// The 532 nm channel's edge filter cuts the signal below this shift: the default lower end of the baseline fit,
+// and the low end of the Measure plot's autoscale, the fluorescence check and the intensity correction.
 inline constexpr double kBaselineFitMin = 150.0;
 // strength 0-10 maps to the method's main parameter (larger = smoother/stiffer baseline). "none" or an
-// empty method gives zeros; an unknown method throws lr::Error.
-Vec baseline(const Vec& x, const Vec& y, const QString& method = "als", double strength = 5.0);
+// empty method gives zeros; an unknown method throws lr::Error. Only x >= fitMin is fitted; below it the
+// baseline equals the data (fitMin <= the smallest x fits everything, e.g. 0 for imported spectra).
+Vec baseline(const Vec& x, const Vec& y, const QString& method = "als", double strength = 5.0,
+             double fitMin = kBaselineFitMin);
 
 // Fluorescence indicator: median SNIP-4th-order baseline over 150-3500 cm-1 divided by the strongest band
 // above it (raw counts). ~0.01-0.05 for clear liquids, > 1 when fluorescence dominates (ZnS ~6). NaN if
@@ -70,6 +74,7 @@ Vec normalize(const Vec& x, const Vec& y, const QString& mode = "none", std::opt
 struct Settings {                       // the settings dict of process()
     QString baseline = "none";
     double strength = 5.0;
+    double fitMin = kBaselineFitMin;    // lower end of the baseline fit (cm-1), see baseline()
     bool despike = false;
     bool smooth = false;
     int smoothWindow = 9;
@@ -80,7 +85,7 @@ struct Settings {                       // the settings dict of process()
     // Intensity (instrument-response) correction: applied by the caller BEFORE process(), with the active
     // correction of the spectrum's instrument (response::corrected); process() itself ignores it.
     bool intensity = false;
-    // From a dict with the Python keys (baseline, strength, despike, smooth, smooth_window, derivative,
+    // From a dict with the Python keys (baseline, strength, fit_min, despike, smooth, smooth_window, derivative,
     // deriv_window, normalize, band, intensity); missing keys keep the defaults.
     static Settings fromMap(const QVariantMap& m);
 };

@@ -26,11 +26,12 @@
 #include <optional>
 #include <vector>
 
+#include "processing.h"
 #include "spectrum.h"
 
 namespace lr::response {
 
-inline constexpr double kMinShift = 150.0;      // the edge filter cuts the signal below this
+inline constexpr double kMinShift = processing::kBaselineFitMin;   // the edge filter cuts the signal below this
 inline constexpr double kMinLevel = 0.05;       // valid range: smoothed reference above this fraction of its max
 inline constexpr double kMinSnr = 50.0;         // reference must be at least this far above its noise
 inline constexpr double kMaxDynamic = 30.0;     // larger max/min factor ratios get a warning

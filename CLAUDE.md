@@ -1,7 +1,7 @@
 # LibreRamen
 
 Software for the Anton Paar Cora 5000 Raman spectrometer. The product is the C++/Qt6 app in `cpp/`; the Python
-package `libreramen/` is unmaintained and only generates golden test data.
+package `libreramen/` is frozen (unmaintained; the golden test data it made are kept as they are).
 
 Read `knowledge/index.md` first: instrument constraints (532 nm only, laser power manual, one GC vial), methods,
 file formats, build and test commands, and recorded decisions (Open Knowledge Format bundle). When you learn a

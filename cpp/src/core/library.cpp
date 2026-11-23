@@ -118,10 +118,14 @@ QString fmt(double v) { return QString::number(v, 'g', 12); }
 // Peaks below this shift are not picked (laser line, notch-filter edge, anti-Stokes side).
 constexpr double kMinPeakShift = 50.0;
 
-// Peaks of a spectrum for the peak table: SNIP baseline, noise-based picking, relative heights.
-std::vector<PeakEntry> autoPeaks(const Vec& x, const Vec& y) {
+// Baseline of the automatic peak tables. Recorded in the info table ("peak_baseline"); tables picked with an
+// older method are re-picked once when the library is opened for writing (issue #4).
+const QString kPeakBaseline = QStringLiteral("snip4");
+
+// Peaks of a spectrum for the peak table: SNIP 4th-order baseline, noise-based picking, relative heights.
+std::vector<PeakEntry> autoPeaks(const Vec& x, const Vec& y, const QString& method = kPeakBaseline) {
     if (x.size() < 16) return {};
-    Vec base = processing::baseline(x, y, "snip", 5.0);
+    Vec base = processing::baseline(x, y, method, 5.0);
     Vec yc(y.size());
     for (size_t i = 0; i < y.size(); ++i) yc[i] = y[i] - base[i];
     std::vector<peaks::Peak> pk = peaks::pick(x, yc, 5.0, 2.0, false, kMinPeakShift);
@@ -324,6 +328,59 @@ struct Library::Impl {
                                                                                                    LIBRERAMEN_VERSION));
         tx.commit();
         version = int(m.size());
+    }
+
+    // Issue #4: peak tables used to be picked on a classic-SNIP baseline. Re-pick, once, every table that is
+    // still exactly what the old automatic picking gives (edited or imported peak lists are left alone), then
+    // record the method. Read-only files keep their tables.
+    void upgradePeaks() {
+        if (readOnly) return;
+        if (scalar("SELECT value FROM info WHERE key = 'peak_baseline'").toString() == kPeakBaseline) return;
+        Tx tx(*this);
+        std::vector<qint64> ids;
+        for (QSqlQuery q = exec("SELECT id FROM entries"); q.next();) ids.push_back(q.value(0).toLongLong());
+        QSqlQuery qs(db), qp(db), del(db), ins(db);
+        qs.prepare("SELECT x, y FROM spectra WHERE entry_id = ? ORDER BY id LIMIT 1");
+        qp.prepare("SELECT position, intensity, width, label FROM peaks WHERE entry_id = ? ORDER BY position");
+        del.prepare("DELETE FROM peaks WHERE entry_id = ?");
+        ins.prepare("INSERT INTO peaks(entry_id, position, intensity, width, label) VALUES (?,?,?,?,?)");
+        auto same = [](double a, double b, double tol) { return std::abs(a - b) <= tol * std::max(1.0, std::abs(a)); };
+        for (qint64 id : ids) {
+            qs.addBindValue(id);
+            exec(qs);
+            if (!qs.next()) continue;
+            const Vec x = fromBlob(qs.value(0).toByteArray()), y = fromBlob(qs.value(1).toByteArray());
+            qs.finish();
+            std::vector<PeakEntry> stored;
+            qp.addBindValue(id);
+            exec(qp);
+            while (qp.next())
+                stored.push_back({qp.value(0).toDouble(), qp.value(1).toDouble(), qp.value(2).toDouble(),
+                                  qp.value(3).toString()});
+            qp.finish();
+            const std::vector<PeakEntry> old = autoPeaks(x, y, QStringLiteral("snip"));
+            bool automatic = !stored.empty() && stored.size() == old.size();
+            for (size_t i = 0; automatic && i < old.size(); ++i)
+                automatic = stored[i].label.isEmpty() && same(stored[i].position, old[i].position, 1e-9) &&
+                            same(stored[i].intensity, old[i].intensity, 1e-9) &&
+                            same(stored[i].width, old[i].width, 1e-9);
+            if (!automatic) continue;
+            del.addBindValue(id);
+            exec(del);
+            for (const PeakEntry& p : autoPeaks(x, y)) {
+                ins.addBindValue(id);
+                ins.addBindValue(p.position);
+                ins.addBindValue(p.intensity);
+                ins.addBindValue(p.width);
+                ins.addBindValue(QString(""));
+                exec(ins);
+            }
+        }
+        QSqlQuery put(db);
+        put.prepare("INSERT OR REPLACE INTO info(key, value) VALUES ('peak_baseline', ?)");
+        put.addBindValue(kPeakBaseline);
+        exec(put);
+        tx.commit();
     }
 
     Entry readEntry(const QSqlQuery& q) const {   // columns of kEntryCols
@@ -542,6 +599,7 @@ void Library::open(const QString& path, OpenMode mode, bool create) {
             d->journal = d->scalar("PRAGMA journal_mode").toString().toLower();
         }
         d->migrate();
+        d->upgradePeaks();
     } catch (...) {
         close();
         throw;

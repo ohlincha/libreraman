@@ -33,6 +33,10 @@ instrument when LibreRamen closes.
    the series.
 4. During a series the *Trend* plot follows one peak; right-click a peak and choose *Use peak … for the trend*.
 
+The sample name (box *Sample*) goes into the file names and the files. If it is empty, LibreRamen asks for one
+when you press MEASURE or START SERIES; the last name is kept for the next start of the program, so change it
+when you change the sample.
+
 The dashboard's *Fluorescence* line mentions a dominant fluorescence background (background at least as
 high as the strongest band, e.g. ZnS); hover it for advice. Use the *SNIP, 4th order* baseline for such samples.
 
@@ -56,8 +60,10 @@ Open spectra (CSV, TXT, SPC, JCAMP-DX, vendor files) and compare them: overlay, 
   | Modified polynomial | single spectra with a smooth background |
   | Rolling ball | narrow bands on a slowly varying background |
 
-  Baselines are fitted above 150 cm⁻¹ only: below it the laser filter cuts the signal, and that edge would
-  otherwise pull the baseline down beside low-wavenumber bands (ZnS 256/348 cm⁻¹).
+  Baselines are fitted from the shift in *fit from* upwards (default 150 cm⁻¹): below it the laser filter cuts
+  the signal, and that edge would otherwise pull the baseline down beside low-wavenumber bands (ZnS 256/348
+  cm⁻¹). For imported spectra from other instruments with real bands below 150 cm⁻¹, set it to 0. The page's
+  baseline method, strength and *fit from* are kept for the next start of the program.
 - **Peaks:** peaks are picked automatically; click the plot to add one, right-click near one to remove it.
 - **Fitting:** zoom in on the bands of interest and press **Fit peaks in view**. The fitted window is shaded;
   drag it or its edges to fit another range. The table gives position, height, FWHM and area per band.
@@ -73,7 +79,10 @@ Open spectra (CSV, TXT, SPC, JCAMP-DX, vendor files) and compare them: overlay, 
 
 A spectral library is an SQLite file (**New library…**, **Open…**). Add spectra from Data or Measure, from
 files, or import a RRUFF folder. Select a spectrum and press **Match** to rank the library entries against
-it; *Filters* narrow the search.
+it; *Filters* narrow the search. Matching removes the baseline with *SNIP, 4th order* by default, so fluorescent
+samples are still matched to clean reference spectra (classic SNIP left part of the fluorescence behind and
+matched them to the wrong entry). Peak tables of libraries made with LibreRamen 0.2.4 or older are re-picked
+the same way the first time the library is opened for writing; edited peak tables are kept.
 
 ## Analysis
 

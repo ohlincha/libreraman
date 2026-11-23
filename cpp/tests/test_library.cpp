@@ -13,6 +13,8 @@
 #include "core/fileio.h"
 #include "core/library.h"
 #include "core/match.h"
+#include "core/peaks.h"
+#include "core/processing.h"
 #include "core/simulator.h"
 
 using namespace lr;
@@ -578,6 +580,81 @@ private slots:
         QVERIFY(std::abs(match::hqi(d, d) - 1.0) < 1e-12);
     }
 
+    // Issue #4: a fluorescence background (a dome as high as the strongest band) on a fresh measurement. With
+    // classic SNIP every sample was matched as ZnS; SNIP 4th order (the default) still finds the right one.
+    // Issue #4: a library whose peak tables were picked on classic SNIP is re-picked once on SNIP 4th order;
+    // an edited table is kept.
+    void upgradePeakTables() {
+        auto classic = [](const Vec& x, const Vec& y) {     // the old library::autoPeaks
+            const Vec b = processing::baseline(x, y, "snip", 5.0);
+            Vec yc(y.size());
+            for (size_t i = 0; i < y.size(); ++i) yc[i] = y[i] - b[i];
+            auto pk = peaks::pick(x, yc, 5.0, 2.0, false, 50.0);
+            std::sort(pk.begin(), pk.end(), [](const auto& a, const auto& c) { return a.height > c.height; });
+            if (pk.size() > 40) pk.resize(40);
+            const double hmax = pk.empty() ? 1.0 : pk.front().height;
+            std::vector<PeakEntry> out;
+            for (const auto& q : pk) out.push_back({q.position, q.height / hmax, q.fwhm, {}});
+            std::sort(out.begin(), out.end(), [](const auto& a, const auto& c) { return a.position < c.position; });
+            return out;
+        };
+        const QString path = file("upgrade.sqlite");
+        auto [x, y] = simulatorSpectrum("zinc sulfide");       // fluorescent: the two methods differ
+        qint64 autoId = 0, editedId = 0;
+        {
+            Library lib;
+            lib.open(path);
+            QCOMPARE(lib.info("peak_baseline"), QStringLiteral("snip4"));     // new files are marked
+            Entry e;
+            e.name = "ZnS old";
+            e.spectra.push_back({0, "raw", false, x, y});
+            e.peaks = classic(x, y);
+            QVERIFY(e.peaks.size() > 1);
+            autoId = lib.add(e);
+            e.name = "ZnS edited";
+            e.peaks = {{348.0, 1.0, 10.0, "ZnS LO"}};
+            editedId = lib.add(e);
+            lib.setInfo("peak_baseline", "");                   // as written by LibreRamen <= 0.2.4
+        }
+        Library lib;
+        lib.open(path);
+        QCOMPARE(lib.info("peak_baseline"), QStringLiteral("snip4"));
+        const auto now = lib.get(autoId)->peaks;
+        const auto want = match::pickPeaks(x, y);
+        QCOMPARE(now.size(), want.size());
+        for (size_t i = 0; i < now.size(); ++i) QVERIFY(std::abs(now[i].position - want[i].position) < 1e-6);
+        const auto edited = lib.get(editedId)->peaks;
+        QCOMPARE(int(edited.size()), 1);
+        QCOMPARE(edited[0].label, QStringLiteral("ZnS LO"));
+    }
+
+    void searchFluorescent() {
+        Library lib;
+        lib.open(file("fluor.sqlite"));
+        createDemo(lib);
+        match::Matcher m;
+        QCOMPARE(m.preprocess().baseline, QStringLiteral("snip4"));
+        m.load(lib);
+        auto sim = simulator();
+        for (const QString& sample : {QStringLiteral("carbon tetrachloride"), QStringLiteral("chloroform"),
+                                      QStringLiteral("ethanol"), QStringLiteral("water")}) {
+            sim->setSample(sample);
+            AcquireOptions o;
+            o.exposure_s = 0.5;
+            const Spectrum sp = sim->acquire(o);
+            Vec y = sp.intensity;
+            const double amp = *std::max_element(y.begin(), y.end());
+            for (size_t i = 0; i < y.size(); ++i) {
+                const double u = (sp.shift[i] - 1800) / 1300;
+                y[i] += amp * std::exp(-u * u);
+            }
+            const auto hits = m.search(sp.shift, y, 5);
+            QVERIFY2(hits[0].name.toLower() == sample,
+                     qPrintable(QString("%1 matched as %2 (%3)").arg(sample, hits[0].name).arg(hits[0].score)));
+            QVERIFY2(hits[0].score > 0.8, qPrintable(QString("%1: HQI %2").arg(sample).arg(hits[0].score)));
+        }
+    }
+
     void searchSimulator() {
         Library lib;
         lib.open(file("match.sqlite"));
@@ -602,7 +679,8 @@ private slots:
             const Spectrum sp = sim->acquire(o);
             hits = m.search(sp.shift, sp.intensity, 5);
             QCOMPARE(hits[0].name.toLower(), sample);
-            QVERIFY2(hits[0].score > 0.95, qPrintable(QString("%1: HQI %2").arg(sample).arg(hits[0].score)));
+            // snip4 (default) follows broad bands a little, so noisy water/ZnS score ~0.85-0.93, still far ahead
+            QVERIFY2(hits[0].score > 0.8, qPrintable(QString("%1: HQI %2").arg(sample).arg(hits[0].score)));
             QVERIFY2(hits[1].score < hits[0].score - 0.1,
                      qPrintable(QString("%1: runner-up %2 %3").arg(sample, hits[1].name).arg(hits[1].score)));
             QVERIFY(hits[0].licence.contains("MIT"));

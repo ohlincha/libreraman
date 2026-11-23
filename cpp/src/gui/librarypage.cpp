@@ -474,7 +474,7 @@ QWidget* LibraryPage::buildMatchPanel() {
     m_baseline = new QComboBox;
     for (const auto& [key, desc] : processing::baselines())
         if (key != "polynomial") m_baseline->addItem(key == "none" ? QStringLiteral("no baseline") : key.toUpper(), key);
-    m_baseline->setCurrentIndex(std::max(0, m_baseline->findData(QStringLiteral("snip"))));
+    m_baseline->setCurrentIndex(std::max(0, m_baseline->findData(QStringLiteral("snip4"))));
     m_baseline->setToolTip(QStringLiteral("Baseline removed from query and library spectra before comparing"));
     m_deriv = new QComboBox;
     m_deriv->addItems({QStringLiteral("no derivative"), QStringLiteral("1st derivative"), QStringLiteral("2nd derivative")});

@@ -6,6 +6,6 @@ tags: [decision]
 ---
 # Python package unmaintained
 
-The product is the C++ app. `libreramen/` (Python) stays only as the generator of the C++ golden files; whether
-to freeze those and test new behaviour in C++ only is open (issue #8). On 2026-11-23 `processing.py` was still
-extended (snip4, airpls, fit range, fluorescence ratio) to regenerate the goldens.
+The product is the C++ app. `libreramen/` (Python) is frozen: not maintained, not shipped. The user does not
+care about it (2026-11-23, issue #8 closed). The existing golden files stay as they are; new behaviour is tested
+in C++ only. The package may be deleted later; nothing in the C++ app depends on it.

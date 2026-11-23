@@ -19,6 +19,7 @@
 #include <QFrame>
 #include <QGridLayout>
 #include <QGroupBox>
+#include <QInputDialog>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -28,6 +29,7 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include <QScrollArea>
+#include <QSettings>
 #include <QSlider>
 #include <QSpinBox>
 #include <QTimeEdit>
@@ -41,6 +43,7 @@
 namespace lr::gui {
 
 namespace {
+constexpr char kSampleKey[] = "measure/sample";   // last sample name (#7)
 
 QFormLayout* form(QWidget* parent) {                  // Python form()
     auto* f = new QFormLayout(parent);
@@ -362,8 +365,12 @@ QWidget* MeasurePage::buildSettingsPanel() {
     auto* g = new QGridLayout(s);
     g->setHorizontalSpacing(6);
     g->setVerticalSpacing(4);
-    m_sample = new QLineEdit(QStringLiteral("sample"));
+    m_sample = new QLineEdit(QSettings().value(QLatin1String(kSampleKey)).toString());
     m_sample->setPlaceholderText(QStringLiteral("sample name (used in file names)"));
+    connect(m_sample, &QLineEdit::editingFinished, this, [this] {
+        const QString n = m_sample->text().trimmed();
+        if (!n.isEmpty()) QSettings().setValue(QLatin1String(kSampleKey), n);
+    });
     m_folderLabel = new ElidedLabel;
     m_folderLabel->setStyleSheet(QStringLiteral("color: %1;").arg(theme::mutedText().name()));
     auto* change = new QToolButton;
@@ -729,7 +736,31 @@ void MeasurePage::updateEnabled() {
 }
 
 // ============================================================================================ actions
+bool MeasurePage::confirmSampleName() {
+    const QString n = m_sample->text().trimmed();
+    if (!n.isEmpty() && n != QLatin1String("sample")) {
+        QSettings().setValue(QLatin1String(kSampleKey), n);
+        return true;
+    }
+    if (!dialogsEnabled())
+        return true;                                   // tests / self-test: falls back to "sample"
+    bool ok = false;
+    const QString t = QInputDialog::getText(this, QStringLiteral("Sample name"),
+                                            QStringLiteral("Name of the sample (used in the file names, so the "
+                                                           "spectra can be found later):"),
+                                            QLineEdit::Normal, n, &ok).trimmed();
+    if (!ok)
+        return false;
+    if (!t.isEmpty()) {
+        m_sample->setText(t);
+        QSettings().setValue(QLatin1String(kSampleKey), t);
+    }
+    return true;
+}
+
 void MeasurePage::measureOnce() {
+    if (!confirmSampleName())
+        return;
     if (m_folderAuto)                                  // a new folder each day while the program runs
         m_folder = defaultFolder(), showFolder();
     if (m_ctl)
@@ -737,7 +768,7 @@ void MeasurePage::measureOnce() {
 }
 
 void MeasurePage::startSeries() {
-    if (!m_ctl)
+    if (!m_ctl || !confirmSampleName())
         return;
     if (m_folderAuto)
         m_folder = defaultFolder(), showFolder();
@@ -1106,9 +1137,9 @@ void MeasurePage::redrawTrend() {
         const std::size_t i = m_history.size() - n + k;
         const lr::Spectrum& s = m_history[i];
         ys.push_back(processedAt(i).y);
-        Vec sel;                                       // 99.5th percentile above 150 cm-1
+        Vec sel;                                       // 99.5th percentile above the edge filter
         for (std::size_t j = 0; j < s.shift.size() && j < ys.back().size(); ++j)
-            if (s.shift[j] > 150)
+            if (s.shift[j] > lr::processing::kBaselineFitMin)
                 sel.push_back(ys.back()[j]);
         if (!sel.empty()) {
             std::sort(sel.begin(), sel.end());

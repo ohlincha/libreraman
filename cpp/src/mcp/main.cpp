@@ -66,6 +66,8 @@ QJsonObject processingSchema() {
             {"description", "Processing before the analysis (default: the settings of the Measure page in the GUI)."},
             {"properties", QJsonObject{{"baseline", enumProp("Baseline method", baselines)},
                                        {"strength", prop("number", "Baseline stiffness 0-10 (default 5)")},
+                                       {"fit_min", prop("number", "Fit the baseline above this shift only, cm-1 "
+                                                                  "(default 150, the edge filter; 0 = from 0 cm-1)")},
                                        {"despike", prop("boolean", "Remove cosmic-ray spikes")},
                                        {"smooth", prop("boolean", "Savitzky-Golay smoothing")},
                                        {"smooth_window", prop("integer", "Smoothing window (points, odd)")},

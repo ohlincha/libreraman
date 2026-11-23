@@ -5,3 +5,4 @@ title: Knowledge bundle log
 - 2026-11-23: bundle created (instrument, baselines, intensity response, CSV format, toolchain, three decisions).
 - 2026-11-23: lab instruments (Shimadzu UV-2100, PerkinElmer Lambda 750, Lambda 1050?) and the Raman PC.
 - 2026-11-23: lab/ moved to the shared bundle in the parent Instruments folder.
+- 2026-11-23: #4 decided (snip4 for matching and peak tables), #8 decided (Python frozen); #5 fit start adjustable, #6 Data baseline remembered, #7 sample name remembered/asked.

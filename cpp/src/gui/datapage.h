@@ -104,6 +104,9 @@ public:
     QString baselineMethod() const;
     void setBaselineStrength(double s);
     double baselineStrength() const;
+    // Baseline fit lower end (cm-1): 150 for this instrument (edge filter); 0 fits imported spectra everywhere.
+    void setBaselineFitMin(double cm);
+    double baselineFitMin() const;
     void setIntensityCorrection(bool on);        // per spectrum, by the serial in its metadata
     bool intensityCorrection() const;
     void setBaselineCorrection(bool on);         // off = "none"; on = the last method other than "none"
@@ -247,7 +250,9 @@ private:
     QComboBox* m_norm = nullptr;
     QComboBox* m_baseline = nullptr;           // "measure" = the Measure page's method, else a method key
     QDoubleSpinBox* m_strength = nullptr;      // used when a method is chosen on this page
+    QSpinBox* m_fitMin = nullptr;              // baseline fit lower end (cm-1)
     QString m_lastBaseline = QStringLiteral("measure");   // restored by setBaselineCorrection(true)
+    void saveBaselineSettings() const;         // method, strength and fit start persist (QSettings)
     QCheckBox* m_diff = nullptr;
     QSlider* m_offset = nullptr;
     QSlider* m_angle = nullptr;                 // stacked: sideways shift per trace (pseudo-3D waterfall)
