@@ -1283,8 +1283,9 @@ void createDemo(Library& lib, bool withStandards) {
 
 // ------------------------------------------------------------------------------------------- reference set
 namespace {
-constexpr int kReferenceVersion = 2;               // bump when resources/reference changes
-const char* const kReferenceFiles[] = {":/core/reference/battery.json", ":/core/reference/solvents.json"};
+constexpr int kReferenceVersion = 3;               // bump when resources/reference changes
+const char* const kReferenceFiles[] = {":/core/reference/battery.json", ":/core/reference/solvents.json",
+                                        ":/core/reference/interphase.json", ":/core/reference/polymers.json"};
 
 std::vector<Entry> referenceSet() {
     std::vector<Entry> out;
@@ -1312,7 +1313,7 @@ std::vector<Entry> referenceSet() {
                             (so["covers"].toString().isEmpty() ? QString() : QStringLiteral(" (") + so["covers"].toString() + ')');
             }
             if (!src.isEmpty()) e.sourceId = src.first().toObject()["doi_or_url"].toString();
-            e.licence = QStringLiteral("Band positions from the cited literature (factual data); compiled for LibreRamen (MIT)");
+            e.licence = o["licence"].toString(QStringLiteral("Band positions from the cited literature (factual data); compiled for LibreRamen (MIT)"));
             QString notes = o["notes"].toString();
             if (!o["rruff_id"].toString().isEmpty())
                 notes += QStringLiteral("\nRRUFF: %1 (import from rruff.info yourself; not redistributable)").arg(o["rruff_id"].toString());
@@ -1325,6 +1326,17 @@ std::vector<Entry> referenceSet() {
                 const QJsonObject p = pv.toObject();
                 e.peaks.push_back({p["position"].toDouble(), p["intensity"].toDouble(), p["width"].toDouble(),
                                    p["label"].toString()});
+            }
+            const QJsonObject so = o["spectrum"].toObject();   // measured spectrum (open data sets)
+            if (!so.isEmpty()) {
+                SpectrumData sd;
+                sd.label = so["label"].toString();
+                sd.processed = so["processed"].toBool();
+                for (const QJsonValue& xv : so["x"].toArray()) sd.x.push_back(xv.toDouble());
+                for (const QJsonValue& yv : so["y"].toArray()) sd.y.push_back(yv.toDouble());
+                if (sd.x.size() != sd.y.size() || sd.x.size() < 2) throw Error("bad reference spectrum: " + e.name.toStdString());
+                if (e.peaks.empty()) e.peaks = autoPeaks(sd.x, sd.y);
+                e.spectra.push_back(std::move(sd));
             }
             std::sort(e.peaks.begin(), e.peaks.end(), [](const PeakEntry& a, const PeakEntry& b) { return a.position < b.position; });
             out.push_back(std::move(e));
@@ -1340,9 +1352,7 @@ int referenceCount() { return int(referenceSet().size()); }
 int addReferenceEntries(Library& lib) {
     if (lib.readOnly()) throw Error("the library is open read-only");
     QSet<QString> have;
-    Filter f;
-    f.source = Source::Literature;
-    for (const Entry& e : lib.find(f)) {
+    for (const Entry& e : lib.find(Filter{})) {
         const QString k = e.provenance.value("reference_key").toString();
         if (!k.isEmpty()) have.insert(k);
     }

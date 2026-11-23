@@ -670,6 +670,21 @@ private slots:
         const auto hc = m.searchPeaks(cy, {}, 3);
         QVERIFY(!hc.empty());
         QVERIFY2(hc[0].name.contains("Cyclohexane"), qPrintable(hc[0].name));
+        // measured reference spectra (open data sets): stored with a peak table, and found by full-spectrum
+        // search from a noisy copy with a sloping background
+        const auto withData = lib.find(Filter{}, true);
+        for (const char* name : {"Polypropylene (PP)", "Lithium carbonate (measured spectrum)", "PVDF (measured spectrum)"}) {
+            const auto e = std::find_if(withData.begin(), withData.end(), [&](const Entry& x) { return x.name == name; });
+            QVERIFY2(e != withData.end(), name);
+            QVERIFY(!e->spectra.empty() && e->spectra[0].x.size() > 1000);
+            QVERIFY(e->peakCount > 3 || e->peaks.size() > 3);
+            Vec y = e->spectra[0].y;
+            for (std::size_t i = 0; i < y.size(); ++i)
+                y[i] = 1000 * y[i] + 0.2 * e->spectra[0].x[i] + 15 * std::sin(1.7 * i);
+            const auto hs = m.search(e->spectra[0].x, y, 3);
+            QVERIFY(!hs.empty());
+            QVERIFY2(hs[0].name == name, qPrintable(hs[0].name));
+        }
         // a library from an older version gets only the entries it lacks
         Library old;
         old.open(file("reference-old.sqlite"));

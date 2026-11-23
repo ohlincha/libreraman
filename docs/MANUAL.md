@@ -104,9 +104,13 @@ matched them to the wrong entry).
 **Reference entries.** The default library comes with literature reference entries: band positions of battery
 materials (cathodes, carbons and anodes, binders and cellulose, electrolyte salts and anions, SEI products), common
 solvents (water, alcohols, acetone, acetonitrile, DMSO, DMF, chlorinated and aromatic solvents, alkanes) and the
-ASTM E1840 shift standards (cyclohexane, paracetamol, naphthalene, polystyrene, sulfur, toluene), each
-with its sources (DOIs), the excitation laser, notes on composition and phase, and a confidence. They are peak
-lists, not spectra, so use **peak search** for them; class *Literature*, tag *reference*. New versions of
+ASTM E1840 shift standards (cyclohexane, paracetamol, naphthalene, polystyrene, sulfur, toluene). Band-list
+entries come with their sources (DOIs), the excitation laser, notes on composition and phase, and a confidence. These are peak
+lists, not spectra, so use **peak search** for them; class *Literature*, tag *reference*. The default library also
+has measured spectra from open data sets, usable with full-spectrum search: 42 polymers at 532 nm (PE, PP, PTFE, PVDF,
+nylon, PET, PMMA, polyimide, cellulose and more; Miller et al. 2022, CC BY 4.0) and 7 battery-interphase compounds at
+488 nm (Li₂CO₃, LiPF₆, Li₂O, lithium acetate, MnF₂, NiF₂, PEO; Karapin-Springorum et al. 2025, CC0). The licence
+and citation are in each entry. New versions of
 LibreRamen add new reference entries to the default library; entries you edited are kept. **Library ▸ Add
 reference entries** adds them to any other library. Peak tables picked automatically by an older version (0.3.1 or older) are
 re-picked the same way the first time the library is opened for writing; edited peak tables are kept.

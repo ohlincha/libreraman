@@ -4,5 +4,7 @@
     <file>band_assignments.csv</file>
     <file>reference/battery.json</file>
     <file>reference/solvents.json</file>
+    <file>reference/interphase.json</file>
+    <file>reference/polymers.json</file>
   </qresource>
 </RCC>
