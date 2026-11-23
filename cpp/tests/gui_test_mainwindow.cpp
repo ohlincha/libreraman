@@ -14,6 +14,7 @@
 #include "core/simulator.h"
 
 #include <QApplication>
+#include <QCheckBox>
 #include <QComboBox>
 #include <QDir>
 #include <QDirIterator>
@@ -77,6 +78,8 @@ private slots:
     void addToLibraryAndClear();
     void peaksOnlyInUsefulRange();
     void settingsFitWithoutScrolling();
+    void simulatorReactionsListed();
+    void measureCurveToggles();
     void closePolicySetting();
     void shutDownInstrument();
     void closeWhileSeriesRunning();
@@ -413,6 +416,25 @@ void GuiTestMainWindow::peaksOnlyInUsefulRange() {
     for (double p : MeasurePage::pickPeaks(sp.shift, sp.intensity))
         QVERIFY(p >= MeasurePage::kPeakMin && p <= MeasurePage::kUsefulMax);
     m->clearAll();
+}
+
+// The reaction samples (spectra change with time) are offered in the simulator bar, not only the recorded ones.
+void GuiTestMainWindow::simulatorReactionsListed() {
+    QStringList items;
+    for (int i = 0; i < m_win->simulatorSample()->count(); ++i) items << m_win->simulatorSample()->itemText(i);
+    for (const QString& r : lr::simulatorReactionNames()) QVERIFY2(items.contains(r), qPrintable(r));
+    QVERIFY(items.contains(QStringLiteral("zinc sulfide")));
+}
+
+// Measure page: baseline and earlier spectra can be hidden (strip above the plot); the choice is remembered.
+void GuiTestMainWindow::measureCurveToggles() {
+    MeasurePage* m = m_win->measurePage();
+    QVERIFY(m->showBaselineBox()->isVisible());
+    QVERIFY(m->showEarlierBox()->isVisible());
+    const bool was = m->showEarlierBox()->isChecked();
+    m->showEarlierBox()->setChecked(!was);
+    QCOMPARE(QSettings().value(QStringLiteral("measure/showEarlier")).toBool(), !was);
+    m->showEarlierBox()->setChecked(was);
 }
 
 void GuiTestMainWindow::settingsFitWithoutScrolling() {

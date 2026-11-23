@@ -40,6 +40,8 @@ struct SimData {
     std::vector<std::pair<QString, Vec>> samples;   // counts per second
 };
 const SimData& simulatorData();               // loaded once from the Qt resource; throws Error
+// Samples whose spectra change with time (in addition to the recorded ones in simulatorData()).
+QStringList simulatorReactionNames();
 
 class SimCora : public Instrument, public SimControls {
 public:

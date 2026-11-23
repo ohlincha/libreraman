@@ -36,14 +36,17 @@ instrument when LibreRamen closes.
 3. Press **▶ MEASURE** for one spectrum, or switch to *Time series* and press **⟳ START SERIES** for repeated
    spectra at a fixed interval (or *as fast as possible*, laser stays on). **❚❚ Pause** / **■ Stop** control
    the series.
-4. During a series the *Trend* plot follows one peak; right-click a peak and choose *Use peak … for the trend*.
+4. To try a series without the instrument: **Instrument → Use simulator**, choose a *reaction:* sample in the
+   simulator bar (its spectra change with time), press *Press ARM* and *Close compartment*.
+5. During a series the *Trend* plot follows one peak; right-click a peak and choose *Use peak … for the trend*.
 
 The sample name (box *Sample*) goes into the file names and the files. If it is empty, LibreRamen asks for one
 when you press MEASURE or START SERIES; the last name is kept for the next start of the program, so change it
 when you change the sample.
 
 **Baseline** (the strip above the plot): the method, its strength, and whether the plot shows the raw spectrum,
-the corrected one or both (the dashed line is the baseline). *SNIP, 4th order* is the default. Cosmic-ray
+the corrected one or both (the dashed line is the baseline), and whether the baseline and the earlier spectra
+of the same sample (faded) are drawn. *SNIP, 4th order* is the default. Cosmic-ray
 removal, smoothing, intensity correction, normalisation and derivative are under *Processing* in the right
 column.
 

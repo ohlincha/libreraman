@@ -577,6 +577,24 @@ QWidget* MeasurePage::buildSettingsPanel() {
     m_plotBar->addSpacing(16);
     m_plotBar->addWidget(new QLabel(QStringLiteral("show")));
     m_plotBar->addLayout(shrow);
+    m_plotBar->addSpacing(16);
+    {   // which curves besides the newest spectrum (remembered)
+        const QSettings st;
+        m_showBaseline = new QCheckBox(QStringLiteral("baseline"));
+        m_showBaseline->setChecked(st.value(QStringLiteral("measure/showBaseline"), true).toBool());
+        m_showBaseline->setToolTip(QStringLiteral("Show the baseline (dashed) with the spectrum (display <i>both</i>)"));
+        m_showEarlier = new QCheckBox(QStringLiteral("earlier spectra"));
+        m_showEarlier->setChecked(st.value(QStringLiteral("measure/showEarlier"), true).toBool());
+        m_showEarlier->setToolTip(QStringLiteral("Show the previous spectra of the same sample, faded, behind the newest"));
+        for (auto [box, key] : {std::pair{m_showBaseline, "measure/showBaseline"}, {m_showEarlier, "measure/showEarlier"}}) {
+            const QString k = QString::fromLatin1(key);
+            connect(box, &QCheckBox::toggled, this, [this, k](bool on) {
+                QSettings().setValue(k, on);
+                redraw();
+            });
+            m_plotBar->addWidget(box);
+        }
+    }
     m_plotBar->addStretch();
     fl->addRow(m_despike);
     fl->addRow(m_smoothing);
@@ -1059,14 +1077,18 @@ void MeasurePage::redraw() {
             shown = lr::processing::despike(raw);
         else
             shown = raw;
-        m_baseCurve->setData(x, pr.base);
+        if (m_showBaseline->isChecked())
+            m_baseCurve->setData(x, pr.base);
+        else
+            m_baseCurve->clearData();
     }
     m_curve->setData(x, shown);
     const QString sample = sp.metaValue(QStringLiteral("sample"));
     const QString idx = sp.metaValue(QStringLiteral("series_index"));
     m_curve->setName((sample.isEmpty() ? tr("spectrum") : sample) + QStringLiteral("  ") +
                      sp.t.toString(QStringLiteral("HH:mm:ss")) + (idx.isEmpty() ? QString() : QStringLiteral("  #") + idx));
-    m_baseCurve->setName(mode == Both && ps.baseline != QLatin1String("none") ? tr("baseline") : QString());
+    m_baseCurve->setName(mode == Both && ps.baseline != QLatin1String("none") && m_showBaseline->isChecked() ? tr("baseline")
+                                                                                                    : QString());
     for (Curve* c : m_oldCurves) {
         c->clearData();
         c->setName({});
@@ -1079,7 +1101,7 @@ void MeasurePage::redraw() {
         if (o.metaValue(QStringLiteral("sample")) != sample || o.channel != sp.channel) break;
         ++same;
     }
-    const std::size_t nOld = std::min<std::size_t>(std::size_t(kFaded), same);
+    const std::size_t nOld = m_showEarlier->isChecked() ? std::min<std::size_t>(std::size_t(kFaded), same) : 0;
     for (std::size_t k = 0; k < nOld; ++k) {            // the newest previous spectrum is the least faded
         const std::size_t i = m_history.size() - 1 - nOld + k;
         const lr::Spectrum& o = m_history[i];

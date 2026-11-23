@@ -90,6 +90,8 @@ public:
     QToolButton* processingToggle() const { return m_procToggle; }
     QWidget* processingBody() const { return m_procBody; }
     QComboBox* baselineBox() const { return m_baseline; }   // in the strip above the plot (always visible)
+    QCheckBox* showBaselineBox() const { return m_showBaseline; }
+    QCheckBox* showEarlierBox() const { return m_showEarlier; }
     QScrollArea* settingsScrollArea() const { return m_settingsScroll; }
     QComboBox* trendModeBox() const { return m_trendMode; }
     const std::deque<lr::Spectrum>& history() const { return m_history; }
@@ -198,6 +200,7 @@ private:
     QSlider* m_strength;
     QHBoxLayout* m_plotBar = nullptr;                // baseline and display above the plot
     QCheckBox *m_despike, *m_smoothing, *m_intensity;
+    QCheckBox *m_showBaseline = nullptr, *m_showEarlier = nullptr;   // strip above the plot
     QRadioButton *m_showRaw, *m_showCor, *m_showBoth;
 };
 

@@ -108,6 +108,12 @@ namespace {
 const QString kEvaporation = QStringLiteral("reaction: ethanol evaporating from water");
 const QString kConsecutive = QStringLiteral("reaction: A → B → C (ethanol → chloroform → CCl4, demo)");
 
+}  // namespace
+
+QStringList simulatorReactionNames() { return {kEvaporation, kConsecutive}; }
+
+namespace {
+
 double monoNow() {
     static QElapsedTimer t = [] {
         QElapsedTimer e;
@@ -176,7 +182,7 @@ QString SimCora::sample() const {
 QStringList SimCora::sampleNames() const {
     QStringList l;
     for (const auto& s : data_.samples) l << s.first;
-    l << kEvaporation << kConsecutive;
+    l << simulatorReactionNames();
     return l;
 }
 

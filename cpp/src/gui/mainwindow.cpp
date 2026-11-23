@@ -237,6 +237,7 @@ QWidget* MainWindow::buildSimulatorBar() {
     for (const QString& n : names)
         if (!ordered.contains(n))
             ordered << n;
+    ordered << lr::simulatorReactionNames();       // spectra change with time: for trying time series
     m_simSample->addItems(ordered);
     connect(m_simSample, &QComboBox::currentTextChanged, m_ctl, &Controller::simSetSample);
     sl->addWidget(m_simSample);
