@@ -20,6 +20,7 @@
 
 class QCheckBox;
 class QComboBox;
+class QHBoxLayout;
 class QDoubleSpinBox;
 class QLabel;
 class QLineEdit;
@@ -88,6 +89,7 @@ public:
     QLabel* signalLabel() const { return m_fillPct; }         // "37 %" next to the Signal bar
     QToolButton* processingToggle() const { return m_procToggle; }
     QWidget* processingBody() const { return m_procBody; }
+    QComboBox* baselineBox() const { return m_baseline; }   // in the strip above the plot (always visible)
     QScrollArea* settingsScrollArea() const { return m_settingsScroll; }
     QComboBox* trendModeBox() const { return m_trendMode; }
     const std::deque<lr::Spectrum>& history() const { return m_history; }
@@ -194,6 +196,7 @@ private:
     QLabel* m_minLabel;
     QComboBox *m_baseline, *m_normalise, *m_derivative;
     QSlider* m_strength;
+    QHBoxLayout* m_plotBar = nullptr;                // baseline and display above the plot
     QCheckBox *m_despike, *m_smoothing, *m_intensity;
     QRadioButton *m_showRaw, *m_showCor, *m_showBoth;
 };

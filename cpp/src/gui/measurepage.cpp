@@ -170,7 +170,16 @@ MeasurePage::MeasurePage(Controller* ctl, QWidget* parent) : Page(parent), m_ctl
     m_peakLabels = m_plot->addPeakLabels();
     connect(m_plot, &PlotWidget::rightClicked, this, &MeasurePage::spectrumMenu);
     connect(m_plot, &PlotWidget::autoRangeRequested, this, &MeasurePage::redraw);
-    grid->addWidget(m_plot, 0, 0, 1, 3);
+    {   // baseline and what is shown, right above the plot: visible on any screen (not in the settings column)
+        auto* plotBox = new QWidget;
+        auto* pv = new QVBoxLayout(plotBox);
+        pv->setContentsMargins(0, 0, 0, 0);
+        pv->setSpacing(2);
+        m_plotBar = new QHBoxLayout;
+        pv->addLayout(m_plotBar);
+        pv->addWidget(m_plot, 1);
+        grid->addWidget(plotBox, 0, 0, 1, 3);
+    }
 
     // series box
     auto* sb = box(QStringLiteral("Series"));
@@ -498,7 +507,8 @@ QWidget* MeasurePage::buildSettingsPanel() {
     m_procToggle->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     m_procToggle->setAutoRaise(true);
     m_procToggle->setStyleSheet(QStringLiteral("QToolButton { font-weight: bold; border: none; }"));
-    m_procToggle->setToolTip(QStringLiteral("Baseline, cosmic rays, smoothing, normalisation, what is shown"));
+    m_procToggle->setToolTip(QStringLiteral("Cosmic rays, smoothing, intensity correction, normalisation, derivative "
+                                            "(baseline and what is shown: above the plot)"));
     v->addWidget(m_procToggle);
     s = box(QString());
     m_procBody = s;
@@ -529,6 +539,8 @@ QWidget* MeasurePage::buildSettingsPanel() {
     m_strength->setRange(0, 100);
     m_strength->setValue(50);
     m_strength->setToolTip(QStringLiteral("Baseline stiffness: larger = smoother baseline"));
+    m_strength->setMaximumWidth(120);
+    m_baseline->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     m_despike = new QCheckBox(QStringLiteral("remove cosmic rays"));
     m_despike->setChecked(true);
     m_smoothing = new QCheckBox(QStringLiteral("smooth (Savitzky–Golay)"));
@@ -557,14 +569,20 @@ QWidget* MeasurePage::buildSettingsPanel() {
     connect(m_intensity, &QCheckBox::toggled, this, &MeasurePage::processingChanged);
     connect(m_normalise, &QComboBox::currentIndexChanged, this, &MeasurePage::processingChanged);
     connect(m_derivative, &QComboBox::currentIndexChanged, this, &MeasurePage::processingChanged);
-    fl->addRow(QStringLiteral("Baseline"), m_baseline);
-    fl->addRow(QStringLiteral("Strength"), m_strength);
+    m_plotBar->addWidget(new QLabel(QStringLiteral("<b>Baseline</b>")));
+    m_plotBar->addWidget(m_baseline);
+    m_plotBar->addSpacing(8);
+    m_plotBar->addWidget(new QLabel(QStringLiteral("strength")));
+    m_plotBar->addWidget(m_strength);
+    m_plotBar->addSpacing(16);
+    m_plotBar->addWidget(new QLabel(QStringLiteral("show")));
+    m_plotBar->addLayout(shrow);
+    m_plotBar->addStretch();
     fl->addRow(m_despike);
     fl->addRow(m_smoothing);
     fl->addRow(m_intensity);
     fl->addRow(QStringLiteral("Normalise"), m_normalise);
     fl->addRow(QStringLiteral("Derivative"), m_derivative);
-    fl->addRow(QStringLiteral("Show"), shrow);
     v->addWidget(s);
 
     for (QGroupBox* gb : w->findChildren<QGroupBox*>()) {   // compact boxes

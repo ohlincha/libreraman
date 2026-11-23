@@ -42,6 +42,11 @@ The sample name (box *Sample*) goes into the file names and the files. If it is 
 when you press MEASURE or START SERIES; the last name is kept for the next start of the program, so change it
 when you change the sample.
 
+**Baseline** (the strip above the plot): the method, its strength, and whether the plot shows the raw spectrum,
+the corrected one or both (the dashed line is the baseline). *SNIP, 4th order* is the default. Cosmic-ray
+removal, smoothing, intensity correction, normalisation and derivative are under *Processing* in the right
+column.
+
 The dashboard's *Fluorescence* line mentions a dominant fluorescence background (background at least as
 high as the strongest band, e.g. ZnS); hover it for advice. Use the *SNIP, 4th order* baseline for such samples.
 

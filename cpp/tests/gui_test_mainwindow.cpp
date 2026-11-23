@@ -419,6 +419,7 @@ void GuiTestMainWindow::settingsFitWithoutScrolling() {
     MeasurePage* m = m_win->measurePage();
     QVERIFY(!m->processingToggle()->isChecked());   // Processing collapsed by default
     QVERIFY(!m->processingBody()->isVisible());
+    QVERIFY(m->baselineBox()->isVisible());         // the baseline choice is not hidden in Processing
     m->processingToggle()->click();
     QVERIFY(m->processingBody()->isVisible());
     m->processingToggle()->click();
