@@ -13,3 +13,4 @@ title: Knowledge bundle log
 - 2026-11-23: reference set 2: solvents.json (26 solvents and shift standards), kReferenceVersion 2.
 - 2026-11-23: reference set 3: measured spectra from open data (OSF polymer library CC BY 4.0, 42; Dryad interphase CC0, 7), tools/make_spectra.py; SDBS unavailable.
 - 2026-11-23: Data page Match button (ticked spectrum -> Library Match tab via MainWindow::matchInLibrary).
+- 2026-11-23: reference set 4: electrolyte.json (10 carbonate electrolyte entries incl. Li+-solvated EC/PC, LP30); many publishers block automated access.

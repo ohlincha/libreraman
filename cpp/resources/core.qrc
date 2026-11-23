@@ -6,5 +6,6 @@
     <file>reference/solvents.json</file>
     <file>reference/interphase.json</file>
     <file>reference/polymers.json</file>
+    <file>reference/electrolyte.json</file>
   </qresource>
 </RCC>

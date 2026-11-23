@@ -670,6 +670,11 @@ private slots:
         const auto hc = m.searchPeaks(cy, {}, 3);
         QVERIFY(!hc.empty());
         QVERIFY2(hc[0].name.contains("Cyclohexane"), qPrintable(hc[0].name));
+        // electrolyte: the Li+-solvated EC bands find a Li+-containing EC entry, not neat EC
+        const std::vector<PeakEntry> ec{{903, 1, 0, {}}, {733, 0.5, 0, {}}, {1787, 0.3, 0, {}}};
+        const auto he = m.searchPeaks(ec, {}, 3);
+        QVERIFY(!he.empty());
+        QVERIFY2(he[0].name.contains("Li+") || he[0].name.contains("LiPF6"), qPrintable(he[0].name));
         // measured reference spectra (open data sets): stored with a peak table, and found by full-spectrum
         // search from a noisy copy with a sloping background
         const auto withData = lib.find(Filter{}, true);

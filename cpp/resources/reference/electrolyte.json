@@ -1,0 +1,634 @@
+[
+ {
+  "name": "Ethylene carbonate (EC)",
+  "formula": "C3H4O3",
+  "cas": "96-49-1",
+  "cls": "electrolyte solvent",
+  "tags": [
+   "EC",
+   "carbonate",
+   "cyclic carbonate"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 720,
+    "intensity": 0,
+    "width": 0,
+    "label": "ring deformation (O-C-O / skeletal, often written δ(O-C-O)); 717 in SERS; shifts to ~729-733 when Li+-coordinated"
+   },
+   {
+    "position": 893,
+    "intensity": 0,
+    "width": 0,
+    "label": "ring breathing (C-C / skeletal); DIAGNOSTIC free-EC band, shifts to ~903 when Li+-coordinated"
+   },
+   {
+    "position": 1777,
+    "intensity": 0,
+    "width": 0,
+    "label": "C=O stretch, Fermi-resonance doublet component (in EC/DMC/LiPF6)"
+   },
+   {
+    "position": 1805,
+    "intensity": 0,
+    "width": 0,
+    "label": "C=O stretch, Fermi-resonance doublet component (C=O with 2x ring breathing overtone); ~1787 when Li+-coordinated"
+   },
+   {
+    "position": 2952,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-H stretch (SERS value, melt at 39 °C)"
+   },
+   {
+    "position": 3019,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-H stretch (SERS value, melt at 39 °C)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Miele E. et al., Hollow-core optical fibre sensors for operando Raman spectroscopy of Li-ion battery liquid electrolytes, Nat. Commun. 2022, 13, 1651",
+    "doi_or_url": "https://doi.org/10.1038/s41467-022-29330-4",
+    "covers": "893 free ring breathing, ~720 skeletal, ~1805 C=O (785 nm, in LiPF6 EC/EMC electrolyte)"
+   },
+   {
+    "ref": "Cabo-Fernandez L., Neale A. R., Braga F., Sazanovich I. V., Kostecki R., Hardwick L. J., Phys. Chem. Chem. Phys. 2019 (Kerr gated Raman of LiPF6 and LiPF6-based carbonate electrolyte; open copy escholarship.org/uc/item/8k657312)",
+    "doi_or_url": "https://doi.org/10.1039/c9cp02430a",
+    "covers": "1777 and 1805 C=O doublet, ~900 band (EC/DMC LP30, CW 400-785 nm incl. 532)"
+   },
+   {
+    "ref": "Yang G., Ivanov I. N., Ruther R. E., Sacci R. L., Subjakova V., Hallinan D. T., Nanda J., Electrolyte Solvation Structure at Solid/Liquid Interface Probed by Nanogap Surface-Enhanced Raman Spectroscopy, ACS Nano 2018 (accepted manuscript, par.nsf.gov/servlets/purl/10391043)",
+    "doi_or_url": "https://doi.org/10.1021/acsnano.8b05038",
+    "covers": "720 Raman (717 SERS) ring deformation, 896-897 skeletal, 1781/1807 C=O doublet and 2952/3019 C-H (SERS of EC melt at 39 °C, 785 nm)"
+   },
+   {
+    "ref": "Borodin O., Olguin M., Ganesh P., Kent P. R. C., Allen J. L., Henderson W. A., Competitive lithium solvation of linear and cyclic carbonates from quantum chemistry, Phys. Chem. Chem. Phys. 2016, 18, 164-175 (OSTI 1238740 accepted manuscript)",
+    "doi_or_url": "https://doi.org/10.1039/c5cp05121e",
+    "covers": "894 cm-1 EC Raman band and its +11 cm-1 shift on Li+ binding (DFT plus comparison with experiment)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "EC is solid at RT (mp ~34-37 °C). Positions here are from liquid EC (melt) or EC in carbonate electrolytes, not the crystal; crystalline EC differs, especially in the C=O region. Sources disagree by ±3 cm-1 (893-897 for ring breathing; 1773-1781/1800-1808 for the C=O doublet). Diagnostic: 893 (free) vs 903 (Li+-bound) ring breathing and 717-720 vs 729-733 ring deformation. No intensities given in the sources; ring breathing ~893 is the strongest band in the fingerprint region. C-H stretch positions are from SERS and may be slightly shifted from normal Raman.",
+  "confidence": "medium"
+ },
+ {
+  "name": "EC coordinated to Li+ (in LiPF6/EC-based electrolyte)",
+  "formula": "C3H4O3·Li+",
+  "cas": "",
+  "cls": "electrolyte species",
+  "tags": [
+   "EC",
+   "Li+ solvation",
+   "solvated EC",
+   "carbonate"
+  ],
+  "laser_nm": 785,
+  "peaks": [
+   {
+    "position": 733,
+    "intensity": 0,
+    "width": 0,
+    "label": "ring deformation of Li+-coordinated EC (Raman; 729 in SERS/IR); free EC at 717-720"
+   },
+   {
+    "position": 903,
+    "intensity": 0,
+    "width": 0,
+    "label": "ring breathing of Li+-coordinated EC; DIAGNOSTIC, free EC at 893 (fitted 900-915 range in RSC Adv 2025)"
+   },
+   {
+    "position": 1787,
+    "intensity": 0,
+    "width": 0,
+    "label": "C=O stretch of Li+-coordinated EC; free EC at ~1805"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Miele E. et al., Hollow-core optical fibre sensors for operando Raman spectroscopy of Li-ion battery liquid electrolytes, Nat. Commun. 2022, 13, 1651",
+    "doi_or_url": "https://doi.org/10.1038/s41467-022-29330-4",
+    "covers": "893 free / 903 solvated ring breathing; ~1805 free / ~1787 solvated C=O (785 nm)"
+   },
+   {
+    "ref": "Yang G., Ivanov I. N., Ruther R. E., Sacci R. L., Subjakova V., Hallinan D. T., Nanda J., Electrolyte Solvation Structure at Solid/Liquid Interface Probed by Nanogap Surface-Enhanced Raman Spectroscopy, ACS Nano 2018 (accepted manuscript, par.nsf.gov/servlets/purl/10391043)",
+    "doi_or_url": "https://doi.org/10.1021/acsnano.8b05038",
+    "covers": "733 (Raman) / 729 (SERS, IR) Li+-coordinated EC ring deformation vs 717-720 free"
+   },
+   {
+    "ref": "Operando Raman spectroscopy for investigating lithium deposition/dissolution and diffusion at the microelectrode surface, RSC Adv. 2025 (PMC12243104)",
+    "doi_or_url": "https://doi.org/10.1039/d5ra03080c",
+    "covers": "885-900 free EC vs 900-915 Li+-bound EC (532 nm)"
+   },
+   {
+    "ref": "Borodin O., Olguin M., Ganesh P., Kent P. R. C., Allen J. L., Henderson W. A., Competitive lithium solvation of linear and cyclic carbonates from quantum chemistry, Phys. Chem. Chem. Phys. 2016, 18, 164-175 (OSTI 1238740 accepted manuscript)",
+    "doi_or_url": "https://doi.org/10.1039/c5cp05121e",
+    "covers": "+11 cm-1 DFT shift of the 894 band on Li+ binding, consistent with experiment; Raman activity of coordinated EC ~17-20% higher than free"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Solution species, not an isolated compound: appears alongside free EC in any Li-salt/EC electrolyte. Solvation numbers are obtained by fitting the 893/903 pair (or 717/730); Borodin et al. recommend correcting for the ~17-20% higher Raman activity of coordinated EC. Positions vary by a few cm-1 with salt, concentration and co-solvent. Laser listed is that of the main source (Miele); RSC Adv source used 532 nm.",
+  "confidence": "high"
+ },
+ {
+  "name": "Propylene carbonate (PC)",
+  "formula": "C4H6O3",
+  "cas": "108-32-7",
+  "cls": "electrolyte solvent",
+  "tags": [
+   "PC",
+   "carbonate",
+   "cyclic carbonate"
+  ],
+  "laser_nm": 1064,
+  "peaks": [
+   {
+    "position": 712,
+    "intensity": 0,
+    "width": 0,
+    "label": "ring deformation (free PC); DIAGNOSTIC, shifts to ~721 when Li+-coordinated"
+   },
+   {
+    "position": 848,
+    "intensity": 0,
+    "width": 0,
+    "label": "ring breathing / skeletal band, used as internal reference in earlier studies"
+   },
+   {
+    "position": 958,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH3 group vibration; concentration-insensitive internal reference"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Åvall G., Wallenstein J., Cheng G. et al., Highly Concentrated Electrolytes: Electrochemical and Physicochemical Characteristics of LiPF6 in Propylene Carbonate Solutions, J. Electrochem. Soc. 2021, 168, 050521 (open access)",
+    "doi_or_url": "https://doi.org/10.1149/1945-7111/abfdc3",
+    "covers": "712 (free PC) Raman ring mode, 848 and 958 Raman reference bands (FT-Raman, 1064 nm); IR bands 774, 1043, 1074, 1173, 1353, 1388, 1779 also tabulated (IR, not Raman)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Neat liquid at RT. Only the Raman bands explicitly given in the source are listed; the paper's Table II gives FTIR positions for PC (C=O 1779, CO2 asym 1173, ring 1353/1388, C-O 1043, ring/C-Me 1074, ring deformation 774/711) which have Raman counterparts nearby but are not Raman values. Commercial PC is racemic with ring-puckering conformers, which complicates band fitting (Allen et al. 2014). Incomplete band list: C=O (~1780-1790) and C-H region not confirmed from an opened Raman source.",
+  "confidence": "medium"
+ },
+ {
+  "name": "PC coordinated to Li+ (in LiPF6/PC electrolyte)",
+  "formula": "C4H6O3·Li+",
+  "cas": "",
+  "cls": "electrolyte species",
+  "tags": [
+   "PC",
+   "Li+ solvation",
+   "solvated PC"
+  ],
+  "laser_nm": 1064,
+  "peaks": [
+   {
+    "position": 721,
+    "intensity": 0,
+    "width": 0,
+    "label": "ring deformation of Li+-coordinated PC; DIAGNOSTIC vs free PC at 712"
+   },
+   {
+    "position": 742,
+    "intensity": 0,
+    "width": 0,
+    "label": "PF6- P-F symmetric stretch in the same fit window (ion-paired contribution grows with concentration)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Åvall G., Wallenstein J., Cheng G. et al., Highly Concentrated Electrolytes: Electrochemical and Physicochemical Characteristics of LiPF6 in Propylene Carbonate Solutions, J. Electrochem. Soc. 2021, 168, 050521 (open access)",
+    "doi_or_url": "https://doi.org/10.1149/1945-7111/abfdc3",
+    "covers": "Voigt fit of 680-760 region: 712 free PC, 721 coordinated PC, 742 PF6-; IR: C=O 1779->1750, CO2 asym 1173->1200, C-O 1043->1059 on Li+ coordination"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Solution species in LiPF6/PC (0-3.2 M). The 712/721 pair gives Li+-PC solvation numbers (4.5 down to 2.6 with increasing concentration in this study). IR shows larger shifts (C=O -29, CO2 asym +27 cm-1) but these are IR values. Non-linear decrease of the 742 band intensity is attributed to ion pairing.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Dimethyl carbonate (DMC)",
+  "formula": "C3H6O3",
+  "cas": "616-38-6",
+  "cls": "electrolyte solvent",
+  "tags": [
+   "DMC",
+   "carbonate",
+   "linear carbonate"
+  ],
+  "laser_nm": 532,
+  "peaks": [
+   {
+    "position": 518,
+    "intensity": 0,
+    "width": 0,
+    "label": "O-C-O deformation (523 quoted in review); develops a Li+ side-band on salt addition"
+   },
+   {
+    "position": 916,
+    "intensity": 0,
+    "width": 0,
+    "label": "O-CH3 stretch / skeletal (cis-cis conformer); DIAGNOSTIC, shifts up on Li+ coordination (DFT +14 to +29 cm-1)"
+   },
+   {
+    "position": 1756,
+    "intensity": 0,
+    "width": 0,
+    "label": "C=O stretch (1750-1756 in EC/DMC electrolyte)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Cabo-Fernandez L., Neale A. R., Braga F., Sazanovich I. V., Kostecki R., Hardwick L. J., Phys. Chem. Chem. Phys. 2019 (Kerr gated Raman of LiPF6 and LiPF6-based carbonate electrolyte; open copy escholarship.org/uc/item/8k657312)",
+    "doi_or_url": "https://doi.org/10.1039/c9cp02430a",
+    "covers": "518, 916, 1750 and 1756 bands assigned to DMC in EC/DMC/LiPF6 (CW 400-785 nm incl. 532)"
+   },
+   {
+    "ref": "Raman and Infrared Spectroscopy of Materials for Lithium-Ion Batteries (review), Int. J. Mol. Sci. 2025, 26, 11879 (PMC12732522)",
+    "doi_or_url": "https://doi.org/10.3390/ijms262411879",
+    "covers": "DMC O-C-O deformation at 523 with side-band on LiClO4 addition"
+   },
+   {
+    "ref": "Borodin O., Olguin M., Ganesh P., Kent P. R. C., Allen J. L., Henderson W. A., Competitive lithium solvation of linear and cyclic carbonates from quantum chemistry, Phys. Chem. Chem. Phys. 2016, 18, 164-175 (OSTI 1238740 accepted manuscript)",
+    "doi_or_url": "https://doi.org/10.1039/c5cp05121e",
+    "covers": "DMC band near 920 used for Li+ solvation; DFT shift +29 (single) / +14 (4-coordinate) for cis-cis DMC, cis-trans DMC band ~860"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Neat liquid at RT; exists as cis-cis (dominant) and cis-trans conformers in the liquid. Positions taken from EC/DMC electrolyte spectra, so expect ±3 cm-1 vs neat DMC. Diagnostic: ~916-920 (free) vs higher-frequency Li+-bound side-band; 518-523 O-C-O deformation side-band. Incomplete list (C-H region and 1100-1460 bands not individually assigned in the opened sources).",
+  "confidence": "medium"
+ },
+ {
+  "name": "Ethyl methyl carbonate (EMC)",
+  "formula": "C4H8O3",
+  "cas": "623-53-0",
+  "cls": "electrolyte solvent",
+  "tags": [
+   "EMC",
+   "carbonate",
+   "linear carbonate"
+  ],
+  "laser_nm": 785,
+  "peaks": [
+   {
+    "position": 900,
+    "intensity": 0,
+    "width": 0,
+    "label": "skeletal mode (overlaps EC ring breathing in EC/EMC mixtures)"
+   },
+   {
+    "position": 1750,
+    "intensity": 0,
+    "width": 0,
+    "label": "C=O stretch, free EMC; DIAGNOSTIC, ~1735 when Li+-solvated"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Miele E. et al., Hollow-core optical fibre sensors for operando Raman spectroscopy of Li-ion battery liquid electrolytes, Nat. Commun. 2022, 13, 1651",
+    "doi_or_url": "https://doi.org/10.1038/s41467-022-29330-4",
+    "covers": "~900 skeletal, ~1750 free / ~1735 Li+-solvated C=O (785 nm, in LiPF6 EC/EMC electrolyte)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Neat liquid at RT. Only two bands confirmed from an opened source, both from an EC/EMC electrolyte spectrum; the full neat-EMC band list was not found in an accessible source. Li+-solvated EMC C=O at ~1735 (integration window 1730-1765 used for free+solvated).",
+  "confidence": "low"
+ },
+ {
+  "name": "Diethyl carbonate (DEC)",
+  "formula": "C5H10O3",
+  "cas": "105-58-8",
+  "cls": "electrolyte solvent",
+  "tags": [
+   "DEC",
+   "carbonate",
+   "linear carbonate"
+  ],
+  "laser_nm": 785,
+  "peaks": [
+   {
+    "position": 613,
+    "intensity": 0,
+    "width": 0,
+    "label": "O-C-O scissoring"
+   },
+   {
+    "position": 902,
+    "intensity": 0,
+    "width": 0,
+    "label": "O-C-O bending (prominent); overlaps EC 896 band in EC/DEC"
+   },
+   {
+    "position": 1122,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH3 rocking; insensitive to environment, used for normalisation"
+   },
+   {
+    "position": 1735,
+    "intensity": 0,
+    "width": 0,
+    "label": "C=O stretch, Fermi-resonance doublet component; Li+-coordinated ~1725"
+   },
+   {
+    "position": 1753,
+    "intensity": 0,
+    "width": 0,
+    "label": "C=O stretch, Fermi-resonance doublet component; Li+-coordinated ~1744"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Yang G., Ivanov I. N., Ruther R. E., Sacci R. L., Subjakova V., Hallinan D. T., Nanda J., Electrolyte Solvation Structure at Solid/Liquid Interface Probed by Nanogap Surface-Enhanced Raman Spectroscopy, ACS Nano 2018 (accepted manuscript, par.nsf.gov/servlets/purl/10391043)",
+    "doi_or_url": "https://doi.org/10.1021/acsnano.8b05038",
+    "covers": "613, 902, 1122, 1735/1753 C=O doublet and Li+-coordinated 1725/1744 (nanogap SERS, 785 nm); methyl bands between 1050-1550"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Neat liquid. All positions are from nanogap SERS (785 nm), which the authors note can shift and broaden bands relative to normal Raman; the C=O doublet splitting was reported as a first observation and may be SERS-specific. Use with caution until checked against a normal Raman spectrum.",
+  "confidence": "low"
+ },
+ {
+  "name": "Fluoroethylene carbonate (FEC)",
+  "formula": "C3H3FO3",
+  "cas": "114435-02-8",
+  "cls": "electrolyte solvent",
+  "tags": [
+   "FEC",
+   "carbonate",
+   "additive",
+   "fluorinated"
+  ],
+  "laser_nm": 785,
+  "peaks": [
+   {
+    "position": 729,
+    "intensity": 0,
+    "width": 0,
+    "label": "ring deformation O-C-O (12 cm-1 above EC)"
+   },
+   {
+    "position": 868,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-F stretch; DIAGNOSTIC for FEC vs EC"
+   },
+   {
+    "position": 908,
+    "intensity": 0,
+    "width": 0,
+    "label": "ring deformation / skeletal (FEC analogue of EC 893-896)"
+   },
+   {
+    "position": 1000,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-C skeletal stretch"
+   },
+   {
+    "position": 1088,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-C skeletal stretch"
+   },
+   {
+    "position": 1814,
+    "intensity": 0,
+    "width": 0,
+    "label": "C=O stretch doublet component"
+   },
+   {
+    "position": 1835,
+    "intensity": 0,
+    "width": 0,
+    "label": "C=O stretch doublet component"
+   },
+   {
+    "position": 2865,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-H stretch"
+   },
+   {
+    "position": 2898,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-H stretch"
+   },
+   {
+    "position": 3017,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-H stretch (CFH / CH2 asym)"
+   },
+   {
+    "position": 3066,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-H stretch"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Yang G., Ivanov I. N., Ruther R. E., Sacci R. L., Subjakova V., Hallinan D. T., Nanda J., Electrolyte Solvation Structure at Solid/Liquid Interface Probed by Nanogap Surface-Enhanced Raman Spectroscopy, ACS Nano 2018 (accepted manuscript, par.nsf.gov/servlets/purl/10391043)",
+    "doi_or_url": "https://doi.org/10.1021/acsnano.8b05038",
+    "covers": "all bands (nanogap SERS of FEC at 39 °C, 785 nm)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Liquid at 39 °C (mp ~18-23 °C). All positions are SERS values; the authors state the confocal (normal) Raman spectrum was almost featureless at their low power, so normal-Raman positions may differ by a few cm-1. Diagnostic: 868 C-F stretch and the C=O doublet above 1810 (vs EC 1781/1807).",
+  "confidence": "low"
+ },
+ {
+  "name": "1 M LiPF6 in EC/DMC (LP30)",
+  "formula": "LiPF6 + C3H4O3 + C3H6O3",
+  "cas": "",
+  "cls": "electrolyte",
+  "tags": [
+   "LP30",
+   "LiPF6",
+   "EC",
+   "DMC",
+   "commercial electrolyte"
+  ],
+  "laser_nm": 532,
+  "peaks": [
+   {
+    "position": 518,
+    "intensity": 0,
+    "width": 0,
+    "label": "DMC O-C-O deformation (assignment from other sources)"
+   },
+   {
+    "position": 717,
+    "intensity": 0,
+    "width": 0,
+    "label": "EC ring deformation, free EC"
+   },
+   {
+    "position": 723,
+    "intensity": 0,
+    "width": 0,
+    "label": "EC ring deformation region (Li+-coordinated EC contribution; tentative)"
+   },
+   {
+    "position": 741,
+    "intensity": 0,
+    "width": 0,
+    "label": "PF6- A1g symmetric stretch (stated by source)"
+   },
+   {
+    "position": 893,
+    "intensity": 0,
+    "width": 0,
+    "label": "EC ring breathing, free EC"
+   },
+   {
+    "position": 904,
+    "intensity": 0,
+    "width": 0,
+    "label": "EC ring breathing, Li+-coordinated EC (assignment from Miele 2022)"
+   },
+   {
+    "position": 916,
+    "intensity": 0,
+    "width": 0,
+    "label": "DMC O-CH3 stretch / skeletal"
+   },
+   {
+    "position": 973,
+    "intensity": 0,
+    "width": 0,
+    "label": "EC/DMC band (unassigned in source)"
+   },
+   {
+    "position": 1220,
+    "intensity": 0,
+    "width": 0,
+    "label": "EC/DMC band (unassigned in source)"
+   },
+   {
+    "position": 1455,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH3/CH2 deformation"
+   },
+   {
+    "position": 1487,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH2 scissoring (EC)"
+   },
+   {
+    "position": 1750,
+    "intensity": 0,
+    "width": 0,
+    "label": "DMC C=O stretch"
+   },
+   {
+    "position": 1777,
+    "intensity": 0,
+    "width": 0,
+    "label": "EC C=O Fermi-resonance doublet component"
+   },
+   {
+    "position": 1808,
+    "intensity": 0,
+    "width": 0,
+    "label": "EC C=O stretch"
+   },
+   {
+    "position": 2849,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-H stretch"
+   },
+   {
+    "position": 2888,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-H stretch"
+   },
+   {
+    "position": 2935,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-H stretch"
+   },
+   {
+    "position": 2967,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-H stretch"
+   },
+   {
+    "position": 3002,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-H stretch"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Cabo-Fernandez L., Neale A. R., Braga F., Sazanovich I. V., Kostecki R., Hardwick L. J., Phys. Chem. Chem. Phys. 2019 (Kerr gated Raman of LiPF6 and LiPF6-based carbonate electrolyte; open copy escholarship.org/uc/item/8k657312)",
+    "doi_or_url": "https://doi.org/10.1039/c9cp02430a",
+    "covers": "all positions (1 M LiPF6 in EC/DMC 1:1 w/w, BASF LP30, CW spectra at 400/532/633/785 nm and Kerr-gated 400 nm); only the 741 PF6- assignment is explicit in the source"
+   },
+   {
+    "ref": "Miele E. et al., Hollow-core optical fibre sensors for operando Raman spectroscopy of Li-ion battery liquid electrolytes, Nat. Commun. 2022, 13, 1651",
+    "doi_or_url": "https://doi.org/10.1038/s41467-022-29330-4",
+    "covers": "free/coordinated EC 893/903 assignment used to label 893/904"
+   },
+   {
+    "ref": "Yang G., Ivanov I. N., Ruther R. E., Sacci R. L., Subjakova V., Hallinan D. T., Nanda J., Electrolyte Solvation Structure at Solid/Liquid Interface Probed by Nanogap Surface-Enhanced Raman Spectroscopy, ACS Nano 2018 (accepted manuscript, par.nsf.gov/servlets/purl/10391043)",
+    "doi_or_url": "https://doi.org/10.1021/acsnano.8b05038",
+    "covers": "EC 717-720 ring deformation assignment"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Commercial LP30. The source lists the band positions as 'typical peaks for DMC and EC' without per-band assignments; labels other than 741 (PF6-) are added from the other cited sources and are tentative where noted. Commercial LP30 shows a fluorescence background at 532 nm that grows with electrolyte age. Diagnostic: 893/904 (free vs Li+-EC), 741 PF6-, 1750 (DMC C=O) vs 1777/1808 (EC C=O).",
+  "confidence": "medium"
+ },
+ {
+  "name": "Tetraglyme Li+ complex [Li(G4)]+ (Li salt in TEGDME)",
+  "formula": "[Li(C10H22O5)]+",
+  "cas": "",
+  "cls": "electrolyte species",
+  "tags": [
+   "TEGDME",
+   "G4",
+   "tetraglyme",
+   "Li+ solvation",
+   "glyme"
+  ],
+  "laser_nm": 785,
+  "peaks": [
+   {
+    "position": 868,
+    "intensity": 0,
+    "width": 0,
+    "label": "breathing mode of the crown-ether-like [Li(G4)]+ complex; DIAGNOSTIC, grows with Li salt concentration"
+   },
+   {
+    "position": 1471,
+    "intensity": 0,
+    "width": 0,
+    "label": "G4 CH2 bending/scissoring; used as internal reference (solvent band)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Fawdon J., Ihli J., La Mantia F., Pasta M., Characterising lithium-ion electrolytes via operando Raman microspectroscopy, Nat. Commun. 2021, 12, 4053",
+    "doi_or_url": "https://doi.org/10.1038/s41467-021-24297-0",
+    "covers": "868 [Li(G4)]+ breathing, 1471 G4 CH2 bend, 717 FSI- S-N-S (LiFSI in G4, 785 nm)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Solution species in LiFSI/tetraglyme. Free tetraglyme band positions were not confirmed from an opened source; only the complex breathing mode and the reference CH2 band are listed.",
+  "confidence": "medium"
+ }
+]
