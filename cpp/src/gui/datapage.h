@@ -35,6 +35,7 @@
 
 class QCheckBox;
 class QComboBox;
+class QPushButton;
 class QLabel;
 class QListWidget;
 class QListWidgetItem;
@@ -90,6 +91,9 @@ public:
     void removeSelected();
     void clear();
     int currentRow() const;
+    QPushButton* addToLibraryButton() const { return m_addLibBtn; }
+    int libraryCandidate(bool ask);        // row "Add to library…" adds (-1: none / cancelled)
+    void addToLibraryDialog();
     void setCurrentRow(int row);
     std::vector<int> tickedRows() const;
 
@@ -249,7 +253,8 @@ private:
     QComboBox* m_mode = nullptr;
     QComboBox* m_norm = nullptr;
     QComboBox* m_baseline = nullptr;           // "measure" = the Measure page's method, else a method key
-    QDoubleSpinBox* m_strength = nullptr;      // used when a method is chosen on this page
+    QDoubleSpinBox* m_strength = nullptr;
+    QPushButton* m_addLibBtn = nullptr;      // used when a method is chosen on this page
     QSpinBox* m_fitMin = nullptr;              // baseline fit lower end (cm-1)
     QString m_lastBaseline = QStringLiteral("measure");   // restored by setBaselineCorrection(true)
     void saveBaselineSettings() const;     // method, strength and fit start persist (QSettings)

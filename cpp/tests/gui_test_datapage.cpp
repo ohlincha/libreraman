@@ -2,6 +2,7 @@
 // stacked, heat map), normalisation, difference, calculator, peak table, fitting, list management and
 // export (files re-readable with fileio::read). Runs offscreen.
 #include "gui/datapage.h"
+#include "gui/page.h"
 #include "gui/datapagehost.h"
 #include "gui/plotwidget.h"
 #include "gui/theme.h"
@@ -14,6 +15,7 @@
 #include <QFileInfo>
 #include <QListWidget>
 #include <QMenu>
+#include <QPushButton>
 #include <QSettings>
 #include <QSignalSpy>
 #include <QStandardPaths>
@@ -102,6 +104,7 @@ private slots:
     void exportFiles();
     void processingDescription();
     void baselineSettingsRemembered();
+    void addToLibraryChoice();
 };
 
 void GuiTestDataPage::initTestCase() {
@@ -792,6 +795,34 @@ void GuiTestDataPage::baselineSettingsRemembered() {
     QCOMPARE(q.baselineStrength(), 7.5);
     QCOMPARE(q.baselineFitMin(), 0.0);
     QCOMPARE(q.settings().baseline, QStringLiteral("snip"));
+}
+
+// Add to library…: a button next to Calculator…; one ticked spectrum is added directly, with several the
+// current one is preselected in a list (here without dialogs: the current ticked one).
+void GuiTestDataPage::addToLibraryChoice() {
+    DataPage p;
+    p.setMessagesEnabled(false);
+    QVERIFY(!p.addToLibraryButton()->isEnabled());
+    QCOMPARE(p.libraryCandidate(false), -1);
+    for (const char* n : {"A", "B"}) {
+        lr::fileio::DataSpectrum d;
+        d.name = QString::fromLatin1(n);
+        for (int i = 0; i < 200; ++i) d.x.push_back(200 + 10 * i), d.y.push_back(100 + i % 7);
+        p.addSpectrum(d);
+    }
+    QVERIFY(p.addToLibraryButton()->isEnabled());
+    QSignalSpy spy(&p, &DataPage::addToLibraryRequested);
+    p.setTicked(0, true);
+    p.setTicked(1, false);
+    QCOMPARE(p.libraryCandidate(false), 0);                 // one ticked: that one
+    p.setTicked(1, true);
+    p.setCurrentRow(1);
+    QCOMPARE(p.libraryCandidate(false), 1);                 // several: the current one is preselected
+    lr::gui::setDialogsEnabled(false);                      // no list to choose from in the test
+    p.addToLibraryDialog();
+    lr::gui::setDialogsEnabled(true);
+    QCOMPARE(spy.count(), 1);
+    QCOMPARE(spy[0][0].value<lr::fileio::DataSpectrum>().name, QStringLiteral("B"));
 }
 
 QTEST_MAIN(GuiTestDataPage)

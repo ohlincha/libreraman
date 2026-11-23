@@ -431,6 +431,7 @@ void GuiTestMainWindow::measureCurveToggles() {
     MeasurePage* m = m_win->measurePage();
     QVERIFY(m->showBaselineBox()->isVisible());
     QVERIFY(m->showEarlierBox()->isVisible());
+    QVERIFY(m->addToLibraryButton()->isVisible());     // a plain button in the Last spectrum box, not only in ⋯
     const bool was = m->showEarlierBox()->isChecked();
     m->showEarlierBox()->setChecked(!was);
     QCOMPARE(QSettings().value(QStringLiteral("measure/showEarlier")).toBool(), !was);

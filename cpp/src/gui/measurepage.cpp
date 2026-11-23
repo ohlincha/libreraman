@@ -281,6 +281,11 @@ MeasurePage::MeasurePage(Controller* ctl, QWidget* parent) : Page(parent), m_ctl
     auto* timeRow = new QHBoxLayout;
     timeRow->setContentsMargins(0, 0, 0, 0);
     timeRow->addWidget(m_lblTime, 1);
+    m_addLibBtn = new QPushButton(QStringLiteral("Add to library…"));
+    m_addLibBtn->setToolTip(QStringLiteral("Store the last spectrum in your spectral library (Library area)"));
+    m_addLibBtn->setEnabled(false);
+    connect(m_addLibBtn, &QPushButton::clicked, this, &MeasurePage::addLastToLibrary);
+    timeRow->addWidget(m_addLibBtn);
     timeRow->addWidget(m_moreBtn);
     f->addRow(QStringLiteral("Time"), timeRow);
     f->addRow(QStringLiteral("Settings"), m_lblSet);
@@ -788,6 +793,7 @@ void MeasurePage::updateEnabled() {
     const bool series = m_busy && m_ctl && m_ctl->isSeriesRunning();
     m_btnPause->setEnabled(series);
     m_btnClear->setEnabled(!m_busy);
+    m_addLibBtn->setEnabled(!m_history.empty());
     if (!series && m_btnPause->isChecked()) {
         const QSignalBlocker b(m_btnPause);
         m_btnPause->setChecked(false);
@@ -871,6 +877,7 @@ double MeasurePage::trendTime(const lr::Spectrum& sp) const {
 void MeasurePage::addSpectrum(const lr::Spectrum& sp) {
     const bool first = m_history.empty();
     m_history.push_back(sp);
+    m_addLibBtn->setEnabled(true);
     const Vec& x = sp.shift;
     {
         auto [y, base] = processSafe(sp, processingSettings());
@@ -1040,6 +1047,7 @@ void MeasurePage::addLastToLibrary() {
 
 void MeasurePage::clearAll() {
     m_history.clear();
+    m_addLibBtn->setEnabled(false);
     m_processed.clear();
     m_trend.clear();
     m_lastPeaks.clear();

@@ -54,7 +54,8 @@ The dashboard's *Fluorescence* line mentions a dominant fluorescence background 
 high as the strongest band, e.g. ZnS); hover it for advice. The default *arPLS* baseline handles such samples.
 
 Spectra are saved automatically (*Saved in* shows the folder); a series is saved as a folder with one CSV per spectrum plus `series.csv`.
-The **⋯** menu has *Clear* and *Add to library…*.
+**Add to library…** in the *Last spectrum* box stores the newest spectrum in the library; the **⋯** menu
+has *Clear*.
 
 ## Data
 
@@ -88,6 +89,7 @@ Open spectra (CSV, TXT, SPC, JCAMP-DX, vendor files) and compare them: overlay, 
   a bar for details). The peak table then lists possible assignments for every peak, most specific first, and
   the peak CSV export includes them. Ranges are typical values; positions shift with phase, hydrogen bonding
   and neighbouring groups. The table is `cpp/resources/band_assignments.csv`.
+- **Add to library…** (next to *Calculator…*): the ticked spectrum; with several ticked you choose which.
 - **Export:** ticked spectra as CSV, JCAMP-DX (one or multi-block), SPC or one table on a common axis; the
   peak table as CSV; the plot as PNG or SVG.
 

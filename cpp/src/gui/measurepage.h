@@ -85,6 +85,7 @@ public:
     PlotWidget* trendPlot() const { return m_tplot; }
     QSpinBox* bandBox() const { return m_band; }
     QToolButton* moreButton() const { return m_moreBtn; }   // "⋯" menu of the Last spectrum panel
+    QPushButton* addToLibraryButton() const { return m_addLibBtn; }
     QMenu* moreMenu() const { return m_moreMenu; }
     QLabel* signalLabel() const { return m_fillPct; }         // "37 %" next to the Signal bar
     QToolButton* processingToggle() const { return m_procToggle; }
@@ -180,6 +181,7 @@ private:
     QProgressBar* m_fill;
     QLabel* m_fillPct;
     QToolButton* m_moreBtn;
+    QPushButton* m_addLibBtn = nullptr;
     QMenu* m_moreMenu;
     QToolButton* m_procToggle;
     QWidget* m_procBody;

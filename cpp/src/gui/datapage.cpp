@@ -1,4 +1,5 @@
 #include "datapage.h"
+#include "page.h"
 
 #include "bandstrip.h"
 #include "plotwidget.h"
@@ -20,6 +21,7 @@
 #include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QFileDialog>
+#include <QInputDialog>
 #include <QFileInfo>
 #include <QFormLayout>
 #include <QHBoxLayout>
@@ -340,6 +342,12 @@ void DataPage::build() {
     calc->setToolTip(tr("<p>New spectrum = a·A + b·B + c (scaling, offset, weighted difference)</p>"));
     connect(calc, &QPushButton::clicked, this, &DataPage::calculatorDialog);
     bar->addWidget(calc);
+    m_addLibBtn = new QPushButton(tr("Add to library…"));
+    m_addLibBtn->setToolTip(tr("<p>Store a spectrum in your spectral library (Library area). With several ticked "
+                               "spectra you choose which.</p>"));
+    m_addLibBtn->setEnabled(false);
+    connect(m_addLibBtn, &QPushButton::clicked, this, &DataPage::addToLibraryDialog);
+    bar->addWidget(m_addLibBtn);
     auto* exp = new QToolButton;
     exp->setText(tr("Export ▾"));
     exp->setPopupMode(QToolButton::InstantPopup);
@@ -695,6 +703,30 @@ void DataPage::clear() {
 
 int DataPage::currentRow() const { return m_list->currentRow(); }
 
+// Add to library…: the one ticked spectrum, or (several ticked) the one chosen from a list with the current
+// one preselected; none ticked: the current one. Without dialogs (tests): the current ticked one, else the first.
+int DataPage::libraryCandidate(bool ask) {
+    std::vector<int> rows = tickedRows();
+    const int cur = currentRow();
+    if (rows.empty()) return cur >= 0 && cur < count() ? cur : -1;
+    if (rows.size() == 1) return rows[0];
+    int pre = 0;
+    for (size_t i = 0; i < rows.size(); ++i)
+        if (rows[i] == cur) pre = int(i);
+    if (!ask) return rows[size_t(pre)];
+    QStringList names;
+    for (int r : rows) names << m_entries[size_t(r)].sp.name;
+    bool ok = false;
+    const QString pick = QInputDialog::getItem(this, tr("Add to library"), tr("Spectrum to add:"), names, pre, false, &ok);
+    if (!ok) return -1;
+    return rows[size_t(names.indexOf(pick))];
+}
+
+void DataPage::addToLibraryDialog() {
+    const int r = libraryCandidate(dialogsEnabled());
+    if (r >= 0) emit addToLibraryRequested(m_entries[size_t(r)].sp);
+}
+
 void DataPage::setCurrentRow(int row) { m_list->setCurrentRow(row, QItemSelectionModel::ClearAndSelect); }
 
 std::vector<int> DataPage::tickedRows() const {
@@ -814,6 +846,7 @@ void DataPage::updateSwatches() {
 }
 
 void DataPage::redraw() {
+    m_addLibBtn->setEnabled(count() > 0);
     if (m_batch) {
         m_dirty = true;
         return;
