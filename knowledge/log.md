@@ -8,3 +8,4 @@ title: Knowledge bundle log
 - 2026-11-23: #4 decided (snip4 for matching and peak tables), #8 decided (Python frozen); #5 fit start adjustable, #6 Data baseline remembered, #7 sample name remembered/asked.
 - 2026-11-23: Linux desktop icon (asked once, File menu); QSettings in tests needs an organization name on Windows/macOS.
 - 2026-11-23: Measure page baseline method/strength/show moved above the plot (hidden in collapsed Processing on laptop screens).
+- 2026-11-23: default baseline arPLS 6 (Measure, Data, matching, peak tables); polynomial control = order; band-survival test.

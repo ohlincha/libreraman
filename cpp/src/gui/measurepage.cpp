@@ -521,15 +521,15 @@ QWidget* MeasurePage::buildSettingsPanel() {
     m_baseline = new QComboBox;
     int snip = 0;
     for (const auto& [key, desc] : lr::processing::baselines()) {
-        if (key == QLatin1String("snip4"))
+        if (key == QLatin1String("arpls"))
             snip = m_baseline->count();
         m_baseline->addItem(desc, key);
     }
     m_baseline->setCurrentIndex(snip);
-    m_baseline->setToolTip(QStringLiteral("<p>SNIP 4th order (default) follows curved fluorescence backgrounds (ZnS, "
-                                          "minerals); classic SNIP suits flat backgrounds; polynomial for single "
-                                          "spectra; AsLS/arPLS/airPLS when you are willing to adjust the strength. "
-                                          "Baselines are fitted above 150 cm⁻¹ only.</p>"));
+    m_baseline->setToolTip(QStringLiteral("<p>arPLS (default) suits clean and fluorescent samples alike (CCl₄, ZnS); "
+                                          "polynomial order 1 (straight line) for clean samples on a flat or sloping "
+                                          "background; SNIP 4th order and ALS leave part of a fluorescence dome under "
+                                          "the bands. Baselines are fitted above 150 cm⁻¹ only.</p>"));
     m_normalise = new QComboBox;
     m_normalise->addItems({QStringLiteral("none"), QStringLiteral("max"), QStringLiteral("area")});
     m_derivative = new QComboBox;
@@ -537,7 +537,7 @@ QWidget* MeasurePage::buildSettingsPanel() {
     m_derivative->setToolTip(QStringLiteral("Savitzky–Golay derivative (after baseline correction)"));
     m_strength = new QSlider(Qt::Horizontal);
     m_strength->setRange(0, 100);
-    m_strength->setValue(50);
+    m_strength->setValue(60);
     m_strength->setToolTip(QStringLiteral("Baseline stiffness: larger = smoother baseline"));
     m_strength->setMaximumWidth(120);
     m_baseline->setSizeAdjustPolicy(QComboBox::AdjustToContents);
@@ -572,8 +572,31 @@ QWidget* MeasurePage::buildSettingsPanel() {
     m_plotBar->addWidget(new QLabel(QStringLiteral("<b>Baseline</b>")));
     m_plotBar->addWidget(m_baseline);
     m_plotBar->addSpacing(8);
-    m_plotBar->addWidget(new QLabel(QStringLiteral("strength")));
+    m_strengthLabel = new QLabel(QStringLiteral("strength"));
+    m_plotBar->addWidget(m_strengthLabel);
     m_plotBar->addWidget(m_strength);
+    // polynomial: the slider is the order (1–10; processing strength = order − 1)
+    auto strengthMode = [this](bool reset) {
+        const bool poly = m_baseline->currentData().toString() == QLatin1String("polynomial");
+        const QSignalBlocker b(m_strength);
+        if (poly && m_strength->maximum() != 9) {
+            m_strength->setRange(0, 9);
+            m_strength->setPageStep(1);
+            if (reset) m_strength->setValue(0);
+        } else if (!poly && m_strength->maximum() != 100) {
+            m_strength->setRange(0, 100);
+            m_strength->setPageStep(10);
+            if (reset) m_strength->setValue(60);
+        }
+        m_strengthLabel->setText(poly ? QStringLiteral("order %1").arg(m_strength->value() + 1) : QStringLiteral("strength"));
+        m_strength->setToolTip(poly ? QStringLiteral("Polynomial order: 1 = straight line; higher orders bend more")
+                                    : QStringLiteral("Baseline stiffness: larger = smoother baseline"));
+    };
+    connect(m_baseline, &QComboBox::currentIndexChanged, this, [this, strengthMode] {
+        strengthMode(true);
+        processingChanged();                            // with the reset slider
+    });
+    connect(m_strength, &QSlider::valueChanged, this, [strengthMode] { strengthMode(false); });
     m_plotBar->addSpacing(16);
     m_plotBar->addWidget(new QLabel(QStringLiteral("show")));
     m_plotBar->addLayout(shrow);
@@ -708,7 +731,8 @@ lr::SeriesSettings MeasurePage::seriesSettings() const {
 lr::processing::Settings MeasurePage::processingSettings() const {
     lr::processing::Settings s;
     s.baseline = m_baseline->currentData().toString();
-    s.strength = m_strength->value() / 10.0;
+    s.strength = s.baseline == QLatin1String("polynomial") ? std::min(m_strength->value(), 9)   // order − 1
+                                                           : m_strength->value() / 10.0;
     s.despike = m_despike->isChecked();
     s.smooth = m_smoothing->isChecked();
     s.intensity = m_intensity->isChecked();
@@ -898,7 +922,7 @@ void MeasurePage::addSpectrum(const lr::Spectrum& sp) {
                             : fluo ? QStringLiteral("background ≈ %1× the strongest band").arg(r, 0, 'f', r < 10 ? 1 : 0)
                                    : QStringLiteral("low"));
         m_lblFluor->setToolTip(fluo ? QStringLiteral("<p>A broad fluorescence background dominates the spectrum. "
-                                                     "The <i>SNIP, 4th order</i> baseline handles it best. It often "
+                                                     "The <i>arPLS</i> baseline (default) handles it best. It often "
                                                      "fades with longer laser exposure (photobleaching).</p>")
                                     : QString());
     }

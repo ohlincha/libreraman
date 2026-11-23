@@ -3,7 +3,7 @@
 //
 // Full-spectrum search: query and library spectra get the same preprocessing - linear resampling onto a
 // common grid (multiples of `step` cm^-1, so any two prepared spectra share grid points), baseline removal
-// (processing::baseline, SNIP 4th order by default), optional smoothing and Savitzky-Golay derivative. They are
+// (processing::baseline, arPLS strength 6 by default), optional smoothing and Savitzky-Golay derivative. They are
 // compared over their overlapping range with the hit quality index
 //     HQI = max(r, 0)^2,  r = Pearson correlation of the two mean-centred vectors        (0..1)
 // which is independent of scale and offset (normalisation is implicit). Entries whose overlap is shorter
@@ -33,8 +33,8 @@ namespace lr::match {
 struct Preprocess {
     double step = 2.0;                 // grid spacing (cm^-1)
     double xmin = 150, xmax = 3500;    // analysed range (intersected with the data)
-    QString baseline = "snip4";        // processing::baseline method ("none" = off)
-    double strength = 5.0;             // 0..10
+    QString baseline = "arpls";        // processing::baseline method ("none" = off)
+    double strength = 6.0;             // 0..10
     int smoothWindow = 0;              // Savitzky-Golay smoothing on the grid (odd points; 0 = off)
     int derivative = 0;                // 0, 1 or 2 (Savitzky-Golay, order 3)
     int derivWindow = 11;              // points
@@ -58,7 +58,7 @@ Prepared prepare(const Vec& x, const Vec& y, const Preprocess& p = {});
 double hqi(const Prepared& a, const Prepared& b, double* lo = nullptr, double* hi = nullptr);
 double hqi(const Vec& a, const Vec& b);                 // equal-length vectors
 
-// Peaks of a spectrum for peak search: SNIP 4th-order baseline, peaks::pick(snr) above 50 cm^-1, the maxPeaks highest,
+// Peaks of a spectrum for peak search: arPLS (strength 6) baseline, peaks::pick(snr) above 50 cm^-1, the maxPeaks highest,
 // relative heights.
 std::vector<library::PeakEntry> pickPeaks(const Vec& x, const Vec& y, double snr = 5.0, int maxPeaks = 40);
 struct PeakScore {

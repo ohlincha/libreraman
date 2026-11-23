@@ -580,13 +580,20 @@ private slots:
         QVERIFY(std::abs(match::hqi(d, d) - 1.0) < 1e-12);
     }
 
-    // Issue #4: a fluorescence background (a dome as high as the strongest band) on a fresh measurement. With
-    // classic SNIP every sample was matched as ZnS; SNIP 4th order (the default) still finds the right one.
-    // Issue #4: a library whose peak tables were picked on classic SNIP is re-picked once on SNIP 4th order;
-    // an edited table is kept.
+    // Issue #4: a library whose peak tables were picked automatically with an older default (classic SNIP up to
+    // 0.2.4, nothing recorded; SNIP 4th order in 0.3.0/0.3.1, "snip4") is re-picked once with the current one
+    // (arPLS 6); an edited table is kept.
+    void upgradePeakTables_data() {
+        QTest::addColumn<QString>("method");
+        QTest::addColumn<QString>("marker");
+        QTest::newRow("<= 0.2.4 (classic SNIP)") << "snip" << "";
+        QTest::newRow("0.3.0/0.3.1 (snip4)") << "snip4" << "snip4";
+    }
     void upgradePeakTables() {
-        auto classic = [](const Vec& x, const Vec& y) {     // the old library::autoPeaks
-            const Vec b = processing::baseline(x, y, "snip", 5.0);
+        QFETCH(QString, method);
+        QFETCH(QString, marker);
+        auto older = [&method](const Vec& x, const Vec& y) {     // the old library::autoPeaks
+            const Vec b = processing::baseline(x, y, method, 5.0);
             Vec yc(y.size());
             for (size_t i = 0; i < y.size(); ++i) yc[i] = y[i] - b[i];
             auto pk = peaks::pick(x, yc, 5.0, 2.0, false, 50.0);
@@ -598,27 +605,27 @@ private slots:
             std::sort(out.begin(), out.end(), [](const auto& a, const auto& c) { return a.position < c.position; });
             return out;
         };
-        const QString path = file("upgrade.sqlite");
+        const QString path = file("upgrade-" + method + ".sqlite");
         auto [x, y] = simulatorSpectrum("zinc sulfide");       // fluorescent: the two methods differ
         qint64 autoId = 0, editedId = 0;
         {
             Library lib;
             lib.open(path);
-            QCOMPARE(lib.info("peak_baseline"), QStringLiteral("snip4"));     // new files are marked
+            QCOMPARE(lib.info("peak_baseline"), QStringLiteral("arpls:6"));   // new files are marked
             Entry e;
             e.name = "ZnS old";
             e.spectra.push_back({0, "raw", false, x, y});
-            e.peaks = classic(x, y);
+            e.peaks = older(x, y);
             QVERIFY(e.peaks.size() > 1);
             autoId = lib.add(e);
             e.name = "ZnS edited";
             e.peaks = {{348.0, 1.0, 10.0, "ZnS LO"}};
             editedId = lib.add(e);
-            lib.setInfo("peak_baseline", "");                   // as written by LibreRamen <= 0.2.4
+            lib.setInfo("peak_baseline", marker);               // as written by the older version
         }
         Library lib;
         lib.open(path);
-        QCOMPARE(lib.info("peak_baseline"), QStringLiteral("snip4"));
+        QCOMPARE(lib.info("peak_baseline"), QStringLiteral("arpls:6"));
         const auto now = lib.get(autoId)->peaks;
         const auto want = match::pickPeaks(x, y);
         QCOMPARE(now.size(), want.size());
@@ -633,7 +640,7 @@ private slots:
         lib.open(file("fluor.sqlite"));
         createDemo(lib);
         match::Matcher m;
-        QCOMPARE(m.preprocess().baseline, QStringLiteral("snip4"));
+        QCOMPARE(m.preprocess().baseline, QStringLiteral("arpls"));
         m.load(lib);
         auto sim = simulator();
         for (const QString& sample : {QStringLiteral("carbon tetrachloride"), QStringLiteral("chloroform"),
@@ -679,7 +686,7 @@ private slots:
             const Spectrum sp = sim->acquire(o);
             hits = m.search(sp.shift, sp.intensity, 5);
             QCOMPARE(hits[0].name.toLower(), sample);
-            // snip4 (default) follows broad bands a little, so noisy water/ZnS score ~0.85-0.93, still far ahead
+            // arPLS 6 (default) follows broad bands a little, so noisy water/ZnS score ~0.9, still far ahead
             QVERIFY2(hits[0].score > 0.8, qPrintable(QString("%1: HQI %2").arg(sample).arg(hits[0].score)));
             QVERIFY2(hits[1].score < hits[0].score - 0.1,
                      qPrintable(QString("%1: runner-up %2 %3").arg(sample, hits[1].name).arg(hits[1].score)));

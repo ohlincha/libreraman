@@ -15,5 +15,5 @@ would otherwise live only in a chat or a head; record changes in [log.md](log.md
 - Formats: [spectrum CSV](formats/spectrum-csv.md)
 - Build: [toolchain and tests](build/toolchain.md)
 - Decisions: [Python package unmaintained](decisions/2026-11-23-python-unmaintained.md),
-  [532 nm only](decisions/2026-11-23-532-only.md), [SNIP 4th order default](decisions/2026-11-23-snip4-default.md),
-  [snip4 for library matching](decisions/2026-11-23-snip4-matching.md)
+  [532 nm only](decisions/2026-11-23-532-only.md), [arPLS 6 default](decisions/2026-11-23-arpls-default.md) (supersedes [SNIP 4th order default](decisions/2026-11-23-snip4-default.md),
+  [snip4 for library matching](decisions/2026-11-23-snip4-matching.md))

@@ -198,6 +198,7 @@ private:
     QLabel* m_minLabel;
     QComboBox *m_baseline, *m_normalise, *m_derivative;
     QSlider* m_strength;
+    QLabel* m_strengthLabel = nullptr;
     QHBoxLayout* m_plotBar = nullptr;                // baseline and display above the plot
     QCheckBox *m_despike, *m_smoothing, *m_intensity;
     QCheckBox *m_showBaseline = nullptr, *m_showEarlier = nullptr;   // strip above the plot

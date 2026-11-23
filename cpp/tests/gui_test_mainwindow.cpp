@@ -134,7 +134,7 @@ void GuiTestMainWindow::windowAndPages() {
     QCOMPARE(g_recorder->ctx.controller, m_ctl);
     QCOMPARE(g_recorder->controller(), m_ctl);
     QVERIFY(g_recorder->ctx.processing);
-    QCOMPARE(g_recorder->ctx.processing().baseline, QStringLiteral("snip4"));   // Measure page default
+    QCOMPARE(g_recorder->ctx.processing().baseline, QStringLiteral("arpls"));   // Measure page default
     m_win->showArea(2);
     QCOMPARE(m_win->currentArea(), 2);
     QCOMPARE(g_recorder->activations, 1);

@@ -1,6 +1,6 @@
 # LibreRamen — quick manual
 
-This covers the desktop application (version 0.3.1). For installation see the [README](../README.md).
+This covers the desktop application (version 0.3.2). For installation see the [README](../README.md).
 
 ## The window
 
@@ -46,12 +46,12 @@ when you change the sample.
 
 **Baseline** (the strip above the plot): the method, its strength, and whether the plot shows the raw spectrum,
 the corrected one or both (the dashed line is the baseline), and whether the baseline and the earlier spectra
-of the same sample (faded) are drawn. *SNIP, 4th order* is the default. Cosmic-ray
+of the same sample (faded) are drawn. *arPLS* (strength 6) is the default; for *polynomial* the control is the order (1 = straight line). Cosmic-ray
 removal, smoothing, intensity correction, normalisation and derivative are under *Processing* in the right
 column.
 
 The dashboard's *Fluorescence* line mentions a dominant fluorescence background (background at least as
-high as the strongest band, e.g. ZnS); hover it for advice. Use the *SNIP, 4th order* baseline for such samples.
+high as the strongest band, e.g. ZnS); hover it for advice. The default *arPLS* baseline handles such samples.
 
 Spectra are saved automatically (*Saved in* shows the folder); a series is saved as a folder with one CSV per spectrum plus `series.csv`.
 The **⋯** menu has *Clear* and *Add to library…*.
@@ -67,11 +67,14 @@ Open spectra (CSV, TXT, SPC, JCAMP-DX, vendor files) and compare them: overlay, 
 
   | Method | Use for |
   |---|---|
-  | SNIP, 4th order (Measure default) | curved fluorescence backgrounds: ZnS, minerals, coloured samples |
-  | SNIP (classic) | flat or gently sloping backgrounds; cuts into dome-shaped fluorescence |
-  | ALS, arPLS, airPLS | general purpose; tune the strength if bands are clipped or the baseline wanders |
-  | Modified polynomial | single spectra with a smooth background |
-  | Rolling ball | narrow bands on a slowly varying background |
+  | arPLS (default, strength 6) | clean and fluorescent samples alike (CCl₄, ZnS); keeps band areas within a few % |
+  | Polynomial, order 1 (straight line) | clean samples on a flat or sloping background; the simplest to report |
+  | Polynomial, higher order | smooth curved backgrounds; higher orders can cut into broad bands |
+  | Rolling ball | narrow bands on a flat background; cannot follow fluorescence |
+  | SNIP, SNIP 4th order, ALS, airPLS | for comparison; on fluorescent samples they leave part of the background under the bands |
+
+  On a synthetic ZnS spectrum with a known background, arPLS kept the band areas within ~10 %; SNIP 4th order
+  (the default up to 0.3.1) inflated them by 30–160 % and cut a quarter off the 218 cm⁻¹ band of CCl₄.
 
   Baselines are fitted from the shift in *fit from* upwards (default 150 cm⁻¹): below it the laser filter cuts
   the signal, and that edge would otherwise pull the baseline down beside low-wavenumber bands (ZnS 256/348
@@ -92,10 +95,10 @@ Open spectra (CSV, TXT, SPC, JCAMP-DX, vendor files) and compare them: overlay, 
 
 A spectral library is an SQLite file (**New library…**, **Open…**). Add spectra from Data or Measure, from
 files, or import a RRUFF folder. Select a spectrum and press **Match** to rank the library entries against
-it; *Filters* narrow the search. Matching removes the baseline with *SNIP, 4th order* by default, so fluorescent
+it; *Filters* narrow the search. Matching removes the baseline with *arPLS* by default, so fluorescent
 samples are still matched to clean reference spectra (classic SNIP left part of the fluorescence behind and
-matched them to the wrong entry). Peak tables of libraries made with LibreRamen 0.2.4 or older are re-picked
-the same way the first time the library is opened for writing; edited peak tables are kept.
+matched them to the wrong entry). Peak tables picked automatically by an older version (0.3.1 or older) are
+re-picked the same way the first time the library is opened for writing; edited peak tables are kept.
 
 ## Analysis
 

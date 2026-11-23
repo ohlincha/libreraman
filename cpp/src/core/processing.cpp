@@ -301,7 +301,7 @@ const std::vector<std::pair<QString, QString>>& baselines() {
         {"none", "No baseline correction"},
         {"als", "Asymmetric least squares (Eilers)"},
         {"arpls", "Asymmetrically reweighted penalized least squares"},
-        {"polynomial", "Modified polynomial (iterative)"},
+        {"polynomial", "Polynomial (iterative; order 1 = straight line)"},
         {"rolling_ball", "Rolling ball"},
         {"snip", "SNIP (statistics-sensitive non-linear iterative peak clipping)"},
         {"snip4", "SNIP, 4th order, decreasing window (curved/fluorescent backgrounds)"},

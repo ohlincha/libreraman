@@ -768,11 +768,11 @@ void GuiTestDataPage::processingDescription() {
     DataPage p;
     p.setMessagesEnabled(false);
     QCOMPARE(p.describeProcessing(),
-             QStringLiteral("baseline=snip4 strength=5.0 despike=False smooth=False normalize=none"));
+             QStringLiteral("baseline=arpls strength=6.0 despike=False smooth=False normalize=none"));
     p.setBaselineCorrection(false);
     p.setNormalisation("area");
     QCOMPARE(p.describeProcessing(),
-             QStringLiteral("baseline=none strength=5.0 despike=False smooth=False normalize=area"));
+             QStringLiteral("baseline=none strength=6.0 despike=False smooth=False normalize=area"));
 }
 
 // #6: the page's baseline method, strength and fit start survive a restart; #5: fit start reaches the settings.

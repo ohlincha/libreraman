@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <QJsonObject>
 #include <QtTest>
+#include <cstdint>
 
 #include "core/errors.h"
 #include "core/processing.h"
@@ -134,6 +135,58 @@ private slots:
         for (const char* m : {"snip4", "als", "arpls", "airpls"})
             QVERIFY2(residual(m) < 1500, qPrintable(QString("%1: %2").arg(m).arg(residual(m))));
         QVERIFY(residual("snip") > 5000);
+    }
+
+    // The default baseline must keep the bands: on CCl4 (no fluorescence, strong bands just above the 150 cm-1 fit
+    // start) the baseline under each band stays below 2 % of its height; on a synthetic ZnS-like spectrum (bands on
+    // a fluorescence dome 4.5x the strongest band, known background) the 350 cm-1 band area is within 10 %.
+    // SNIP 4th order, the previous default, cut 27 % off the CCl4 218 band and inflated ZnS bands by 30-160 %.
+    void baselineKeepsBands() {
+        const Vec y = spectrum("carbon tetrachloride");
+        auto under = [&](const QString& m, double strength, double band) {
+            const Vec b = processing::baseline(x, y, m, strength);
+            Vec ref;
+            for (size_t i = 0; i < x.size(); ++i)
+                if (x[i] > 1000 && x[i] < 1400) ref.push_back(y[i]);
+            std::nth_element(ref.begin(), ref.begin() + long(ref.size() / 2), ref.end());
+            const double flat = ref[ref.size() / 2];
+            double peak = 0;
+            size_t at = 0;
+            for (size_t i = 0; i < x.size(); ++i)
+                if (std::abs(x[i] - band) < 12 && y[i] > peak) peak = y[i], at = i;
+            return (b[at] - flat) / (peak - flat);
+        };
+        for (double band : {218.0, 314.0, 459.0, 776.0})
+            QVERIFY2(under("arpls", 6.0, band) < 0.02, qPrintable(QString("%1: %2").arg(band).arg(under("arpls", 6.0, band))));
+        QVERIFY(under("snip4", 5.0, 218) > 0.1);
+
+        Vec zx, zy, truth;
+        std::uint32_t st = 7;
+        auto uni = [&st] {
+            st = st * 1664525u + 1013904223u;
+            return (st + 0.5) / 4294967296.0;
+        };
+        auto band = [](double s, double c, double h, double w) { return h * std::exp(-0.5 * std::pow((s - c) / (w / 2.3548), 2)); };
+        for (double s = 60; s <= 3600; s += 1.7) {
+            double bg = 18000 * std::exp(-0.5 * std::pow((s - 1300) / 1100, 2)) + 3000 * std::exp(-s / 900.0);
+            double b = band(s, 275, 1200, 14) + band(s, 350, 4000, 12) + band(s, 670, 900, 25);
+            if (s < 120) bg *= std::max(0.0, (s - 60) / 60.0), b *= std::max(0.0, (s - 60) / 60.0);
+            const double v = bg + b;
+            zx.push_back(s);
+            zy.push_back(v + std::sqrt(std::max(v, 1.0)) * std::sqrt(-2 * std::log(uni())) * std::cos(2 * M_PI * uni()));
+            truth.push_back(b);
+        }
+        auto area = [&](const Vec& v) {
+            double a = 0;
+            for (size_t i = 1; i < zx.size(); ++i)
+                if (zx[i] > 320 && zx[i] < 390) a += v[i] * (zx[i] - zx[i - 1]);
+            return a;
+        };
+        const Vec zb = processing::baseline(zx, zy, "arpls", 6.0);
+        Vec cor(zy.size());
+        for (size_t i = 0; i < zy.size(); ++i) cor[i] = zy[i] - zb[i];
+        const double err = area(cor) / area(truth) - 1;
+        QVERIFY2(std::abs(err) < 0.10, qPrintable(QString::number(err)));
     }
 
     void despike() {

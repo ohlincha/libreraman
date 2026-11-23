@@ -1,7 +1,7 @@
 ---
 type: Method
 title: Baseline correction
-description: Methods, the 150 cm-1 fit range, and why SNIP 4th order is the default.
+description: Methods, the 150 cm-1 fit range, and why arPLS (strength 6) is the default.
 resource: cpp/src/core/processing.cpp
 tags: [processing]
 timestamp: 2026-11-23
@@ -26,3 +26,10 @@ SNIP).
   fluorescence dome as high as the strongest band, classic SNIP matched every sample as ZnS; snip4 found all.
   On clean noisy spectra snip4 scores are lower (water ~0.93, ZnS ~0.85 vs ~0.99) but still far ahead.
   Libraries record `peak_baseline` in their info table; older automatic peak tables are re-picked once.
+
+## 2026-11-23: default changed to arPLS 6
+
+snip4 inflates bands on fluorescent samples and cuts into low bands of clean ones (CCl4 218 cm-1: 27 %).
+arPLS 6 keeps bands within a few % on both and matches the library correctly; see
+[decision](../decisions/2026-11-23-arpls-default.md). The statements above about snip4 being the default are
+superseded.

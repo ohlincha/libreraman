@@ -118,14 +118,16 @@ QString fmt(double v) { return QString::number(v, 'g', 12); }
 // Peaks below this shift are not picked (laser line, notch-filter edge, anti-Stokes side).
 constexpr double kMinPeakShift = 50.0;
 
-// Baseline of the automatic peak tables. Recorded in the info table ("peak_baseline"); tables picked with an
-// older method are re-picked once when the library is opened for writing (issue #4).
-const QString kPeakBaseline = QStringLiteral("snip4");
+// Baseline of the automatic peak tables, recorded in info 'peak_baseline' as "method:strength" (older files:
+// "snip4" = 0.3.0/0.3.1, nothing = classic SNIP, both at strength 5). Tables picked with an older setting are
+// re-picked once when the library is opened for writing (issue #4); edited tables are kept.
+const QString kPeakBaseline = QStringLiteral("arpls:6");
 
-// Peaks of a spectrum for the peak table: SNIP 4th-order baseline, noise-based picking, relative heights.
-std::vector<PeakEntry> autoPeaks(const Vec& x, const Vec& y, const QString& method = kPeakBaseline) {
+// Peaks of a spectrum for the peak table: arPLS baseline (kPeakBaseline), noise-based picking, relative heights.
+std::vector<PeakEntry> autoPeaks(const Vec& x, const Vec& y, const QString& spec = kPeakBaseline) {
     if (x.size() < 16) return {};
-    Vec base = processing::baseline(x, y, method, 5.0);
+    const QStringList ms = (spec.isEmpty() ? QStringLiteral("snip") : spec).split(QLatin1Char(':'));
+    Vec base = processing::baseline(x, y, ms[0], ms.size() > 1 ? ms[1].toDouble() : 5.0);
     Vec yc(y.size());
     for (size_t i = 0; i < y.size(); ++i) yc[i] = y[i] - base[i];
     std::vector<peaks::Peak> pk = peaks::pick(x, yc, 5.0, 2.0, false, kMinPeakShift);
@@ -335,7 +337,10 @@ struct Library::Impl {
     // record the method. Read-only files keep their tables.
     void upgradePeaks() {
         if (readOnly) return;
-        if (scalar("SELECT value FROM info WHERE key = 'peak_baseline'").toString() == kPeakBaseline) return;
+        // peak tables picked automatically with the previous default (none recorded: classic SNIP, <= 0.2.4;
+        // "snip4": 0.3.x) are re-picked with the current one; edited tables are kept
+        const QString prev = scalar("SELECT value FROM info WHERE key = 'peak_baseline'").toString();
+        if (prev == kPeakBaseline) return;
         Tx tx(*this);
         std::vector<qint64> ids;
         for (QSqlQuery q = exec("SELECT id FROM entries"); q.next();) ids.push_back(q.value(0).toLongLong());
@@ -358,7 +363,7 @@ struct Library::Impl {
                 stored.push_back({qp.value(0).toDouble(), qp.value(1).toDouble(), qp.value(2).toDouble(),
                                   qp.value(3).toString()});
             qp.finish();
-            const std::vector<PeakEntry> old = autoPeaks(x, y, QStringLiteral("snip"));
+            const std::vector<PeakEntry> old = autoPeaks(x, y, prev);
             bool automatic = !stored.empty() && stored.size() == old.size();
             for (size_t i = 0; automatic && i < old.size(); ++i)
                 automatic = stored[i].label.isEmpty() && same(stored[i].position, old[i].position, 1e-9) &&

@@ -252,7 +252,8 @@ private:
     QDoubleSpinBox* m_strength = nullptr;      // used when a method is chosen on this page
     QSpinBox* m_fitMin = nullptr;              // baseline fit lower end (cm-1)
     QString m_lastBaseline = QStringLiteral("measure");   // restored by setBaselineCorrection(true)
-    void saveBaselineSettings() const;         // method, strength and fit start persist (QSettings)
+    void saveBaselineSettings() const;     // method, strength and fit start persist (QSettings)
+    void strengthMode(bool reset);         // polynomial: the control is the order
     QCheckBox* m_diff = nullptr;
     QSlider* m_offset = nullptr;
     QSlider* m_angle = nullptr;                 // stacked: sideways shift per trace (pseudo-3D waterfall)

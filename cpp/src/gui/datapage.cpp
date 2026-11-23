@@ -158,9 +158,9 @@ QString signedTerm(double k) {                  // " + 2·" / " − 0.5·" (Pyth
 // ============================================================================================== set-up
 DataPage::DataPage(QWidget* parent) : QWidget(parent) {
     m_settingsFn = [] {
-        processing::Settings s;            // Measure page defaults: SNIP 4th order, strength 5 (slider 50)
-        s.baseline = QStringLiteral("snip4");
-        s.strength = 5.0;
+        processing::Settings s;            // Measure page defaults: arPLS, strength 6 (slider 60)
+        s.baseline = QStringLiteral("arpls");
+        s.strength = 6.0;
         return s;
     };
     build();
@@ -237,20 +237,21 @@ void DataPage::build() {
     m_baseline->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
     m_baseline->setMinimumContentsLength(14);
     m_baseline->setToolTip(tr("<p>Baseline correction. <i>as Measure page</i> uses the Measure page's method and "
-                              "strength. SNIP 4th order follows curved fluorescence backgrounds (ZnS, minerals); "
-                              "classic SNIP suits flat ones. Baselines are fitted from the shift set under "
+                              "strength. arPLS (the default) suits clean and fluorescent samples (CCl₄, ZnS); a polynomial of "
+                              "order 1 (straight line) suits clean samples on a flat or sloping background. Baselines are fitted from the shift set under "
                               "<i>fit from</i> (150 cm⁻¹: below it the instrument's edge filter cuts the "
                               "signal).</p>"));
     m_strength = new QDoubleSpinBox;
     m_strength->setRange(0.0, 10.0);
     m_strength->setSingleStep(0.5);
     m_strength->setDecimals(1);
-    m_strength->setValue(5.0);
+    m_strength->setValue(6.0);
     m_strength->setEnabled(false);
     m_strength->setToolTip(tr("<p>Baseline stiffness 0–10: larger = smoother baseline</p>"));
     connect(m_baseline, qOverload<int>(&QComboBox::currentIndexChanged), this, [this] {
         const QString k = baselineMethod();
         if (k != QLatin1String("none")) m_lastBaseline = k;
+        strengthMode(true);
         m_strength->setEnabled(k != QLatin1String("measure") && k != QLatin1String("none"));
         m_fitMin->setEnabled(k != QLatin1String("none"));
         saveBaselineSettings();
@@ -360,7 +361,8 @@ void DataPage::build() {
         const QSignalBlocker b1(m_baseline), b2(m_strength), b3(m_fitMin);
         const QSettings st;
         setBaselineMethod(st.value(QLatin1String(kBaselineKey), QStringLiteral("measure")).toString());
-        m_strength->setValue(st.value(QLatin1String(kStrengthKey), 5.0).toDouble());
+        strengthMode(false);
+        m_strength->setValue(st.value(QLatin1String(kStrengthKey), m_strength->value()).toDouble());
         m_fitMin->setValue(st.value(QLatin1String(kFitMinKey), int(processing::kBaselineFitMin)).toInt());
         const QString k = baselineMethod();
         if (k != QLatin1String("none")) m_lastBaseline = k;
@@ -713,6 +715,30 @@ void DataPage::setBaselineMethod(const QString& key) {
 }
 QString DataPage::baselineMethod() const { return m_baseline->currentData().toString(); }
 void DataPage::setBaselineStrength(double s) { m_strength->setValue(s); }
+
+// The polynomial's control is its order (1–10, whole numbers; processing strength = order − 1); the other
+// methods' is the strength 0–10. reset: put the new mode's default in (method changed by the user).
+void DataPage::strengthMode(bool reset) {
+    const bool poly = baselineMethod() == QLatin1String("polynomial");
+    if (poly == (m_strength->prefix() == tr("order "))) return;
+    const QSignalBlocker b(m_strength);
+    if (poly) {
+        m_strength->setDecimals(0);
+        m_strength->setRange(1, 10);
+        m_strength->setSingleStep(1);
+        m_strength->setPrefix(tr("order "));
+        m_strength->setToolTip(tr("<p>Polynomial order: 1 = straight line (offset and slope). Higher orders bend "
+                                  "more and can cut into broad bands.</p>"));
+        if (reset) m_strength->setValue(1);
+    } else {
+        m_strength->setPrefix(QString());
+        m_strength->setDecimals(1);
+        m_strength->setRange(0.0, 10.0);
+        m_strength->setSingleStep(0.5);
+        m_strength->setToolTip(tr("<p>Baseline stiffness 0–10: larger = smoother baseline</p>"));
+        if (reset) m_strength->setValue(6.0);
+    }
+}
 double DataPage::baselineStrength() const { return m_strength->value(); }
 void DataPage::setBaselineFitMin(double cm) { m_fitMin->setValue(int(std::lround(cm))); }
 double DataPage::baselineFitMin() const { return m_fitMin->value(); }
@@ -741,7 +767,7 @@ processing::Settings DataPage::settings() const {
     const QString k = baselineMethod();
     if (k != QLatin1String("measure")) {
         s.baseline = k;
-        s.strength = m_strength->value();
+        s.strength = k == QLatin1String("polynomial") ? m_strength->value() - 1 : m_strength->value();   // order
     }
     s.fitMin = m_fitMin->value();
     s.intensity = m_intensity->isChecked();
