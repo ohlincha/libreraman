@@ -10,7 +10,7 @@ Format: [OKF v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree
 Markdown file, YAML frontmatter (`type` required), plain links between files. Add a file when a fact or decision
 would otherwise live only in a chat or a head; record changes in [log.md](log.md).
 
-- Instrument: [Cora 5000](instrument/cora-5000.md); other lab instruments and PCs: [lab](lab/index.md)
+- Instrument: [Cora 5000](instrument/cora-5000.md); other lab instruments and PCs: shared bundle in the parent folder (`../knowledge/`, outside this repo)
 - Processing: [baselines](processing/baselines.md), [intensity response](processing/intensity-response.md)
 - Formats: [spectrum CSV](formats/spectrum-csv.md)
 - Build: [toolchain and tests](build/toolchain.md)
