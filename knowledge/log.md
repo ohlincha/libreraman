@@ -9,3 +9,4 @@ title: Knowledge bundle log
 - 2026-11-23: Linux desktop icon (asked once, File menu); QSettings in tests needs an organization name on Windows/macOS.
 - 2026-11-23: Measure page baseline method/strength/show moved above the plot (hidden in collapsed Processing on laptop screens).
 - 2026-11-23: default baseline arPLS 6 (Measure, Data, matching, peak tables); polynomial control = order; band-survival test.
+- 2026-11-23: shipped reference library (resources/reference, 33 battery materials, literature band lists with DOIs); RRUFF not redistributable.

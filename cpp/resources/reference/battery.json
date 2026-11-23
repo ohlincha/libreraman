@@ -1,0 +1,2454 @@
+[
+ {
+  "name": "Lithium iron phosphate (LFP)",
+  "formula": "LiFePO4",
+  "cas": "",
+  "cls": "battery cathode",
+  "tags": [
+   "LFP",
+   "olivine",
+   "triphylite"
+  ],
+  "laser_nm": 514.5,
+  "peaks": [
+   {
+    "position": 949,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "PO4 ν1 symmetric stretch (Ag); 950 cm-1 in Molecules 2019 at 532 nm"
+   },
+   {
+    "position": 995,
+    "intensity": 0,
+    "width": 0,
+    "label": "PO4 ν3 antisymmetric stretch"
+   },
+   {
+    "position": 1067,
+    "intensity": 0,
+    "width": 0,
+    "label": "PO4 ν3 antisymmetric stretch (Ag)"
+   },
+   {
+    "position": 162,
+    "intensity": 0,
+    "width": 0,
+    "label": "Ag T(PO4)+T(Fe) external"
+   },
+   {
+    "position": 211,
+    "intensity": 0,
+    "width": 0,
+    "label": "B1g L(PO4) external"
+   },
+   {
+    "position": 238,
+    "intensity": 0,
+    "width": 0,
+    "label": "B1g L(PO4)+T(Fe)"
+   },
+   {
+    "position": 265,
+    "intensity": 0,
+    "width": 0,
+    "label": "Ag L(PO4)+T(Fe)"
+   },
+   {
+    "position": 344,
+    "intensity": 0,
+    "width": 0,
+    "label": "Ag L(PO4)+T(Fe)"
+   },
+   {
+    "position": 451,
+    "intensity": 0,
+    "width": 0,
+    "label": "B1g PO4 ν2 bend"
+   },
+   {
+    "position": 568,
+    "intensity": 0,
+    "width": 0,
+    "label": "Ag PO4 ν4 bend"
+   },
+   {
+    "position": 594,
+    "intensity": 0,
+    "width": 0,
+    "label": "B1g/B2g PO4 ν4 bend"
+   },
+   {
+    "position": 634,
+    "intensity": 0,
+    "width": 0,
+    "label": "Ag PO4 ν4 bend"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Wu J. et al., Nanotechnology 2013, 24, 424009",
+    "doi_or_url": "https://doi.org/10.1088/0957-4484/24/42/424009",
+    "covers": "949, 995, 1067 (measured, 514.5 nm)"
+   },
+   {
+    "ref": "Investigation of the Phase Transition Mechanism in LiFePO4 Cathode Using In Situ Raman Spectroscopy and 2D Correlation Spectroscopy, Molecules 2019, 24, 291",
+    "doi_or_url": "https://doi.org/10.3390/molecules24020291",
+    "covers": "950 cm-1 ν1 at 532 nm; strongest band"
+   },
+   {
+    "ref": "Núñez Valdez M. et al., Evidence for a pressure-induced spin transition in olivine-type LiFePO4 triphylite (arXiv:1801.02953; Phys. Rev. B 2018)",
+    "doi_or_url": "https://arxiv.org/abs/1801.02953",
+    "covers": "162-634 cm-1 external and bending modes (zero-pressure intercepts of DAC fits, powder sample A)"
+   }
+  ],
+  "rruff_id": "R050257, R050366, R050424, R050494, R050624, R100156 (triphylite; IDs from archived RRUFF page, Raman availability not verified)",
+  "notes": "ν1 is the strongest band (Núñez Valdez; Molecules 2019). Low-frequency modes are zero-pressure fit intercepts from a diamond-anvil study; their ν1 intercept is 958 cm-1 vs 949-951 at ambient elsewhere, so these may be offset by a few cm-1. Carbon coating gives strong D/G bands (~1350/1600) that often dominate. Laser-sensitive: heating produces FePO4-like/Fe2O3 features; a 1003 cm-1 band is reported for laser-damaged/disordered FePO4.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Iron phosphate, heterosite-type (delithiated LFP)",
+  "formula": "FePO4",
+  "cas": "",
+  "cls": "battery cathode",
+  "tags": [
+   "FePO4",
+   "delithiated LFP",
+   "olivine",
+   "charged LFP"
+  ],
+  "laser_nm": 514.5,
+  "peaks": [
+   {
+    "position": 959,
+    "intensity": 0,
+    "width": 0,
+    "label": "PO4 ν1 symmetric stretch (960-961 cm-1 in other reports)"
+   },
+   {
+    "position": 908,
+    "intensity": 0,
+    "width": 0,
+    "label": "PO4 stretch"
+   },
+   {
+    "position": 1068,
+    "intensity": 0,
+    "width": 0,
+    "label": "PO4 ν3 stretch"
+   },
+   {
+    "position": 1126,
+    "intensity": 0,
+    "width": 0,
+    "label": "PO4 ν3 stretch"
+   },
+   {
+    "position": 487,
+    "intensity": 0,
+    "width": 0,
+    "label": "PO4 bend"
+   },
+   {
+    "position": 588,
+    "intensity": 0,
+    "width": 0,
+    "label": "PO4 bend"
+   },
+   {
+    "position": 655,
+    "intensity": 0,
+    "width": 0,
+    "label": "PO4 bend"
+   },
+   {
+    "position": 691,
+    "intensity": 0,
+    "width": 0,
+    "label": "PO4 bend"
+   },
+   {
+    "position": 175,
+    "intensity": 0,
+    "width": 0,
+    "label": "external mode"
+   },
+   {
+    "position": 244,
+    "intensity": 0,
+    "width": 0,
+    "label": "external mode"
+   },
+   {
+    "position": 305,
+    "intensity": 0,
+    "width": 0,
+    "label": "external mode"
+   },
+   {
+    "position": 335,
+    "intensity": 0,
+    "width": 0,
+    "label": "external mode"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Wu J. et al., Nanotechnology 2013, 24, 424009",
+    "doi_or_url": "https://doi.org/10.1088/0957-4484/24/42/424009",
+    "covers": "all bands (electrochemically delithiated, 514.5 nm)"
+   },
+   {
+    "ref": "Investigation of the Phase Transition Mechanism in LiFePO4 Cathode Using In Situ Raman Spectroscopy and 2D Correlation Spectroscopy, Molecules 2019, 24, 291",
+    "doi_or_url": "https://doi.org/10.3390/molecules24020291",
+    "covers": "960 and 1020-1130 cm-1 FePO4 PO4 stretching at 532 nm"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Positions from electrochemically delithiated LFP charged to 4.3 V, stated to agree with chemically delithiated FePO4. The 950 (LFP) vs 959-961 (FePO4) ν1 pair is used to track state of charge. Relative intensities not given. Not the same as amorphous or hydrated FePO4.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Lithium cobalt oxide (LCO)",
+  "formula": "LiCoO2",
+  "cas": "",
+  "cls": "battery cathode",
+  "tags": [
+   "LCO",
+   "layered",
+   "R-3m"
+  ],
+  "laser_nm": 515,
+  "peaks": [
+   {
+    "position": 595,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "A1g Co-O stretch"
+   },
+   {
+    "position": 486,
+    "intensity": 0.61,
+    "width": 0,
+    "label": "Eg O-Co-O bend"
+   },
+   {
+    "position": 980,
+    "intensity": 0,
+    "width": 0,
+    "label": "2Eg overtone (weak, resonance-enhanced)"
+   },
+   {
+    "position": 1070,
+    "intensity": 0,
+    "width": 0,
+    "label": "A1g+Eg combination / 2Eu (weak)"
+   },
+   {
+    "position": 1167,
+    "intensity": 0,
+    "width": 0,
+    "label": "2A1g / A2u x Eu overtone (weak at visible excitation)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Heber M., Hofmann K., Hess C., Batteries 2022, 8, 10",
+    "doi_or_url": "https://doi.org/10.3390/batteries8020010",
+    "covers": "all bands; A1g/Eg peak-height ratio 1.65 at 515 nm (0.5 at 633 nm)"
+   },
+   {
+    "ref": "Flores E., Novák P., Berg E.J., Front. Energy Res. 2018, 6, 82",
+    "doi_or_url": "https://doi.org/10.3389/fenrg.2018.00082",
+    "covers": "486 Eg / 596 A1g confirmation (632.8 nm)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Eg/A1g intensity ratio depends strongly on excitation wavelength (A1g/Eg = 1.65 at 515 nm but 0.5 at 633 nm) and on polarisation/orientation; intensities here are for 515 nm. Bands weaken and broaden on delithiation (metallic Li<0.75CoO2).",
+  "confidence": "high"
+ },
+ {
+  "name": "NMC111 (lithium nickel manganese cobalt oxide 1:1:1)",
+  "formula": "LiNi1/3Mn1/3Co1/3O2",
+  "cas": "",
+  "cls": "battery cathode",
+  "tags": [
+   "NMC111",
+   "NCM111",
+   "NMC333",
+   "layered"
+  ],
+  "laser_nm": 515,
+  "peaks": [
+   {
+    "position": 597,
+    "intensity": 0,
+    "width": 0,
+    "label": "A1g (Co-O related) main band"
+   },
+   {
+    "position": 494,
+    "intensity": 0,
+    "width": 0,
+    "label": "Eg (Co-related)"
+   },
+   {
+    "position": 630,
+    "intensity": 0,
+    "width": 0,
+    "label": "shoulder, Mn-related (>600 cm-1)"
+   },
+   {
+    "position": 560,
+    "intensity": 0,
+    "width": 0,
+    "label": "shoulder (515 nm)"
+   },
+   {
+    "position": 380,
+    "intensity": 0,
+    "width": 0,
+    "label": "weak band"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Heber M., Hofmann K., Hess C., Batteries 2022, 8, 10",
+    "doi_or_url": "https://doi.org/10.3390/batteries8020010",
+    "covers": "all positions (515 nm)"
+   },
+   {
+    "ref": "Flores E., Novák P., Berg E.J., Front. Energy Res. 2018, 6, 82",
+    "doi_or_url": "https://doi.org/10.3389/fenrg.2018.00082",
+    "covers": "envelope with bands at ~400, 485, 610 cm-1 (632.8 nm), broad overlapping"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Broad overlapping envelope, not resolvable into a unique Eg/A1g pair; Flores et al. give ~400, 485, 610 cm-1, Heber et al. ~494, 597, 630 (+380, 560 shoulder). Literature associates ~470 with Ni, ~530 with Ni/Mn, >600 with Mn. Ratios change with laser wavelength and SOC.",
+  "confidence": "medium"
+ },
+ {
+  "name": "NMC622 (lithium nickel manganese cobalt oxide 6:2:2)",
+  "formula": "LiNi0.6Mn0.2Co0.2O2",
+  "cas": "",
+  "cls": "battery cathode",
+  "tags": [
+   "NMC622",
+   "NCM622",
+   "Ni-rich",
+   "layered"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 495,
+    "intensity": 0,
+    "width": 0,
+    "label": "Eg O-M-O bend"
+   },
+   {
+    "position": 535,
+    "intensity": 0,
+    "width": 0,
+    "label": "A1g M-O stretch"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "High Lithium Ion Transport Through rGO-Wrapped LiNi0.6Co0.2Mn0.2O2 Cathode Material for High-Rate Capable Lithium Ion Batteries, Front. Chem. 2019 (PMC6546928)",
+    "doi_or_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6546928/",
+    "covers": "495 / 535 cm-1 (NCM/rGO composite)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Only one source read with numbers, measured on an rGO-wrapped composite; laser not recorded. Other reports (not verified here) put A1g of NMC622 near 570-609 cm-1. Treat as indicative only; broad Ni-rich envelope ~480-600 cm-1.",
+  "confidence": "low"
+ },
+ {
+  "name": "NMC811 (lithium nickel manganese cobalt oxide 8:1:1)",
+  "formula": "LiNi0.8Mn0.1Co0.1O2",
+  "cas": "",
+  "cls": "battery cathode",
+  "tags": [
+   "NMC811",
+   "NCM811",
+   "Ni-rich",
+   "layered"
+  ],
+  "laser_nm": 632.8,
+  "peaks": [
+   {
+    "position": 500,
+    "intensity": 0,
+    "width": 0,
+    "label": "Eg (broad envelope)"
+   },
+   {
+    "position": 558,
+    "intensity": 0,
+    "width": 0,
+    "label": "A1g (broad envelope)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Flores E., Novák P., Berg E.J., Front. Energy Res. 2018, 6, 82",
+    "doi_or_url": "https://doi.org/10.3389/fenrg.2018.00082",
+    "covers": "500 and 558 cm-1 (review statement, citing Saavedra-Arias et al. ECS Trans. 2009)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Pristine NMC811 shows an initially broad two-band envelope centred ~500 and 558 cm-1 that grows, sharpens and red-shifts on delithiation; spectra resemble NCA. Secondary source (review); weak scatterer.",
+  "confidence": "low"
+ },
+ {
+  "name": "NCA (lithium nickel cobalt aluminium oxide)",
+  "formula": "LiNi0.8Co0.15Al0.05O2",
+  "cas": "",
+  "cls": "battery cathode",
+  "tags": [
+   "NCA",
+   "Ni-rich",
+   "layered"
+  ],
+  "laser_nm": 632.8,
+  "peaks": [
+   {
+    "position": 485,
+    "intensity": 0,
+    "width": 0,
+    "label": "Eg"
+   },
+   {
+    "position": 560,
+    "intensity": 0,
+    "width": 0,
+    "label": "A1g"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Flores E., Novák P., Berg E.J., Front. Energy Res. 2018, 6, 82",
+    "doi_or_url": "https://doi.org/10.3389/fenrg.2018.00082",
+    "covers": "485 / 560 cm-1 (pristine)"
+   },
+   {
+    "ref": "Julien C.M., Mauger A., Int. J. Mol. Sci. 2025, 26, 11879",
+    "doi_or_url": "https://doi.org/10.3390/ijms262411879",
+    "covers": "475 / 550 cm-1 bands used for SOC mapping at 532 nm (Kostecki group)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Two broad bands; 475/550 cm-1 quoted for 532 nm SOC mapping vs 485/560 in Flores et al. (spread ~10 cm-1). Bands intensify on delithiation; new bands >600 cm-1 at high SOC. Weak scatterer.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Lithium manganese oxide spinel (LMO)",
+  "formula": "LiMn2O4",
+  "cas": "",
+  "cls": "battery cathode",
+  "tags": [
+   "LMO",
+   "spinel",
+   "Fd-3m"
+  ],
+  "laser_nm": 532,
+  "peaks": [
+   {
+    "position": 627,
+    "intensity": 0,
+    "width": 0,
+    "label": "A1g Mn-O stretch (MnO6), strongest/main band"
+   },
+   {
+    "position": 583,
+    "intensity": 0,
+    "width": 0,
+    "label": "F2g(3)"
+   },
+   {
+    "position": 482,
+    "intensity": 0,
+    "width": 0,
+    "label": "F2g(2)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Ex Situ Raman Mapping of LiMn2O4 Electrodes Cycled in Lithium-Ion Batteries, ACS Omega 2024, 9, 30381-30391",
+    "doi_or_url": "https://doi.org/10.1021/acsomega.4c01480",
+    "covers": "all bands (532 nm)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "A1g shifts to ~635 cm-1 in Li-rich Li1+zMn2O4. Very laser-sensitive: heating forms Mn3O4 (~650 cm-1). On charge, F2g(3) splits (597/580) and the spectrum evolves to λ-MnO2 (see separate entry). Intensities in source not tabulated in main text (Table S2 in SI).",
+  "confidence": "medium"
+ },
+ {
+  "name": "λ-MnO2 (fully delithiated LMO)",
+  "formula": "MnO2",
+  "cas": "",
+  "cls": "battery cathode",
+  "tags": [
+   "lambda-MnO2",
+   "charged LMO",
+   "spinel"
+  ],
+  "laser_nm": 532,
+  "peaks": [
+   {
+    "position": 588,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "A1g main line"
+   },
+   {
+    "position": 495,
+    "intensity": 0,
+    "width": 0,
+    "label": "F2g"
+   },
+   {
+    "position": 460,
+    "intensity": 0,
+    "width": 0,
+    "label": "Eg"
+   },
+   {
+    "position": 640,
+    "intensity": 0,
+    "width": 0,
+    "label": "F2g minor"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Ex Situ Raman Mapping of LiMn2O4 Electrodes Cycled in Lithium-Ion Batteries, ACS Omega 2024, 9, 30381-30391",
+    "doi_or_url": "https://doi.org/10.1021/acsomega.4c01480",
+    "covers": "all bands"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Electrode charged to 4.5 V; 'main line' A1g 588 cm-1, others described as small/minor.",
+  "confidence": "medium"
+ },
+ {
+  "name": "High-voltage spinel LNMO",
+  "formula": "LiNi0.5Mn1.5O4",
+  "cas": "",
+  "cls": "battery cathode",
+  "tags": [
+   "LNMO",
+   "spinel",
+   "high-voltage"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 633,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "A1g symmetric Mn-O stretch (strong)"
+   },
+   {
+    "position": 593,
+    "intensity": 0,
+    "width": 0,
+    "label": "F2g(1) component (split in ordered P4332)"
+   },
+   {
+    "position": 612,
+    "intensity": 0,
+    "width": 0,
+    "label": "F2g(1) component (split in ordered P4332)"
+   },
+   {
+    "position": 482,
+    "intensity": 0,
+    "width": 0,
+    "label": "Ni-O stretch"
+   },
+   {
+    "position": 390,
+    "intensity": 0,
+    "width": 0,
+    "label": "Ni-O stretch"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Lee J., Dupre N., Avdeev M., Kang B., Sci. Rep. 2017, 7, 6728",
+    "doi_or_url": "https://doi.org/10.1038/s41598-017-07139-2",
+    "covers": "all bands"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Splitting of F2g(1) at 593/612 cm-1 and sharper bands indicate Ni/Mn ordering (P4332); disordered Fd-3m shows unsplit, broader bands. Additional low-frequency bands of the ordered phase not confirmed here. Laser not recorded.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Lithium manganese oxide, layered (Li2MnO3)",
+  "formula": "Li2MnO3",
+  "cas": "",
+  "cls": "battery cathode",
+  "tags": [
+   "Li2MnO3",
+   "Li-rich",
+   "C2/m",
+   "LMR component"
+  ],
+  "laser_nm": 514.5,
+  "peaks": [
+   {
+    "position": 616,
+    "intensity": 0,
+    "width": 0,
+    "label": "Ag Mn-O stretch (MnO6), strong high-frequency band"
+   },
+   {
+    "position": 574,
+    "intensity": 0,
+    "width": 0,
+    "label": "Ag/Bg"
+   },
+   {
+    "position": 501,
+    "intensity": 0,
+    "width": 0,
+    "label": "Ag/Bg"
+   },
+   {
+    "position": 442,
+    "intensity": 0,
+    "width": 0,
+    "label": "Bg"
+   },
+   {
+    "position": 419,
+    "intensity": 0,
+    "width": 0,
+    "label": "Ag"
+   },
+   {
+    "position": 374,
+    "intensity": 0,
+    "width": 0,
+    "label": "Ag"
+   },
+   {
+    "position": 335,
+    "intensity": 0,
+    "width": 0,
+    "label": "Bg"
+   },
+   {
+    "position": 250,
+    "intensity": 0,
+    "width": 0,
+    "label": "Bg, Li-O related"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Pulido R. et al., Phonon Structure, Infra-Red and Raman Spectra of Li2MnO3 by First-Principles Calculations, Materials 2022, 15, 6237",
+    "doi_or_url": "https://doi.org/10.3390/ma15186237",
+    "covers": "all bands (experimental, 514.5 nm; DFPT symmetry)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Paper's Table 3 also lists experimental 309 and 324 cm-1 (Bg). Strong bands at high frequency (Mn-O), weak low-frequency Li-O bands; exact relative intensities not stated. In Li-rich NMC (LMR) composites, 562 and <450 cm-1 bands are attributed to Li2MnO3 (Ruther et al. J. Electrochem. Soc. 2015, 162, A98).",
+  "confidence": "medium"
+ },
+ {
+  "name": "Lithium carbonate",
+  "formula": "Li2CO3",
+  "cas": "",
+  "cls": "SEI / decomposition product",
+  "tags": [
+   "Li2CO3",
+   "SEI",
+   "zabuyelite",
+   "carbonate"
+  ],
+  "laser_nm": 488,
+  "peaks": [
+   {
+    "position": 1090,
+    "intensity": 0,
+    "width": 0,
+    "label": "νs(CO3) symmetric stretch (ν1)"
+   },
+   {
+    "position": 1459,
+    "intensity": 0,
+    "width": 0,
+    "label": "νa(CO) antisymmetric stretch"
+   },
+   {
+    "position": 748,
+    "intensity": 0,
+    "width": 0,
+    "label": "δ(CO3) in-plane bend (ν4)"
+   },
+   {
+    "position": 710,
+    "intensity": 0,
+    "width": 0,
+    "label": "δ(CO3) in-plane bend (ν4)"
+   },
+   {
+    "position": 97,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "lattice CO3 translation/rotation (VS)"
+   },
+   {
+    "position": 128,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "lattice (M)"
+   },
+   {
+    "position": 156,
+    "intensity": 0.7,
+    "width": 0,
+    "label": "lattice (S)"
+   },
+   {
+    "position": 194,
+    "intensity": 0.7,
+    "width": 0,
+    "label": "lattice (S)"
+   },
+   {
+    "position": 274,
+    "intensity": 0.15,
+    "width": 0,
+    "label": "lattice (W)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Karapin-Springorum L. et al., An infrared, Raman, and X-ray database of battery interphase components, Sci. Data 2025, 12, 33 (data: Dryad doi:10.5061/dryad.v15dv421w, CC0)",
+    "doi_or_url": "https://doi.org/10.1038/s41597-024-04236-6",
+    "covers": "710, 748, 1090, 1459 (Table 5, 488 nm) and 128, 156, 194, 274 (text)"
+   },
+   {
+    "ref": "Jones W.B., Darvin J.R., Fessler K.A.S., O'Rourke P.E., Isotopic Signatures of Lithium Carbonate and Lithium Hydroxide Monohydrate Measured Using Raman Spectroscopy, Appl. Spectrosc. 2022 (accepted manuscript OSTI 1898098)",
+    "doi_or_url": "https://doi.org/10.1177/00037028221131039",
+    "covers": "97 cm-1 and qualitative strengths of lattice bands (literature column, 785 nm)"
+   }
+  ],
+  "rruff_id": "R100211 (zabuyelite; ID from archived RRUFF page, Raman availability not verified)",
+  "notes": "Intensities are only the relative strengths of the lattice bands below 300 cm-1 (VS/S/M/W mapped to 1.0/0.7/0.4/0.15) from Jones et al.; relation to the 1090 band not stated, so that band is 0 (unknown) although usually dominant. Jones et al.'s own fitted positions sit ~3-6 cm-1 higher (e.g. 1095.7). Raman spectra in the Sci. Data Dryad set are CC0.",
+  "confidence": "high"
+ },
+ {
+  "name": "Lithium hexafluorophosphate (solid salt)",
+  "formula": "LiPF6",
+  "cas": "",
+  "cls": "electrolyte salt",
+  "tags": [
+   "LiPF6",
+   "PF6-",
+   "salt"
+  ],
+  "laser_nm": 488,
+  "peaks": [
+   {
+    "position": 771,
+    "intensity": 0,
+    "width": 0,
+    "label": "ν1(A1g) P-F symmetric stretch"
+   },
+   {
+    "position": 475,
+    "intensity": 0,
+    "width": 0,
+    "label": "ν2(Eg)"
+   },
+   {
+    "position": 561,
+    "intensity": 0,
+    "width": 0,
+    "label": "ν4(T1u)"
+   },
+   {
+    "position": 571,
+    "intensity": 0,
+    "width": 0,
+    "label": "ν5(T2g)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Karapin-Springorum L. et al., An infrared, Raman, and X-ray database of battery interphase components, Sci. Data 2025, 12, 33 (data: Dryad doi:10.5061/dryad.v15dv421w, CC0)",
+    "doi_or_url": "https://doi.org/10.1038/s41597-024-04236-6",
+    "covers": "all bands (Table 8, agrees with Kock et al. at 1064 nm)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Solid salt. In carbonate solutions the PF6- ν1 band lies lower (~740 cm-1) and depends on ion pairing (see salt entries if present). Partial oxidation/hydrolysis shifts bands.",
+  "confidence": "high"
+ },
+ {
+  "name": "Lithium oxide",
+  "formula": "Li2O",
+  "cas": "",
+  "cls": "SEI / decomposition product",
+  "tags": [
+   "Li2O",
+   "SEI"
+  ],
+  "laser_nm": 488,
+  "peaks": [
+   {
+    "position": 523,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "F2g Li-O"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Karapin-Springorum L. et al., An infrared, Raman, and X-ray database of battery interphase components, Sci. Data 2025, 12, 33 (data: Dryad doi:10.5061/dryad.v15dv421w, CC0)",
+    "doi_or_url": "https://doi.org/10.1038/s41597-024-04236-6",
+    "covers": "523 cm-1 (488 and 633 nm); literature spread 515-529 cm-1 (Table 9)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Single first-order band. Reported positions 515 (325 nm), 523 (488, 514.5, 633 nm), 527 (532 nm, Weber et al.), 529 (785 nm). Reacts readily with H2O/CO2 to LiOH/Li2CO3.",
+  "confidence": "high"
+ },
+ {
+  "name": "Lithium fluoride",
+  "formula": "LiF",
+  "cas": "",
+  "cls": "SEI / decomposition product",
+  "tags": [
+   "LiF",
+   "SEI"
+  ],
+  "laser_nm": 0,
+  "peaks": [],
+  "sources": [
+   {
+    "ref": "Karapin-Springorum L. et al., An infrared, Raman, and X-ray database of battery interphase components, Sci. Data 2025, 12, 33 (data: Dryad doi:10.5061/dryad.v15dv421w, CC0)",
+    "doi_or_url": "https://doi.org/10.1038/s41597-024-04236-6",
+    "covers": "Raman not plotted: fluorescence overwhelmed features (488 nm)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "No bands recorded. LiF has the rock-salt structure, which has no first-order Raman-active modes; the Sci. Data database could not show a usable Raman spectrum. Absence of a band does not rule out LiF. (Rock-salt selection rule not separately sourced in this batch.)",
+  "confidence": "medium"
+ },
+ {
+  "name": "Lithium peroxide",
+  "formula": "Li2O2",
+  "cas": "",
+  "cls": "SEI / decomposition product",
+  "tags": [
+   "Li2O2",
+   "Li-O2",
+   "peroxide"
+  ],
+  "laser_nm": 785,
+  "peaks": [
+   {
+    "position": 788,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "O-O stretch (peroxide)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Asadi M. et al., Nature 2018, 555, 502 (author manuscript, NSF PAR)",
+    "doi_or_url": "https://doi.org/10.1038/nature25984",
+    "covers": "788 cm-1"
+   },
+   {
+    "ref": "Zhu Y.G. et al., Nat. Commun. 2017, 8, 14308",
+    "doi_or_url": "https://doi.org/10.1038/ncomms14308",
+    "covers": "~790 cm-1 O-O stretch"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Only the O-O stretch confirmed; weaker low-frequency bands not verified. LiOOH·H2O shows O-O at ~860 cm-1 and H2O2 at 877 cm-1 (Zhu et al.).",
+  "confidence": "high"
+ },
+ {
+  "name": "Lithium hydroxide monohydrate",
+  "formula": "LiOH·H2O",
+  "cas": "",
+  "cls": "SEI / decomposition product",
+  "tags": [
+   "LiOH.H2O",
+   "hydroxide"
+  ],
+  "laser_nm": 785,
+  "peaks": [
+   {
+    "position": 145,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "OH/H2O translation (S)"
+   },
+   {
+    "position": 86,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "OH/H2O translation (M)"
+   },
+   {
+    "position": 96,
+    "intensity": 0.15,
+    "width": 0,
+    "label": "OH/H2O translation (W)"
+   },
+   {
+    "position": 119,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "OH/H2O translation (M)"
+   },
+   {
+    "position": 214,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "OH/H2O translation (M)"
+   },
+   {
+    "position": 248,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "OH/H2O translation (M)"
+   },
+   {
+    "position": 368,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "Li lattice translation (M)"
+   },
+   {
+    "position": 394,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "Li lattice translation (M)"
+   },
+   {
+    "position": 516,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "Li lattice translation (M)"
+   },
+   {
+    "position": 593,
+    "intensity": 0.05,
+    "width": 0,
+    "label": "H2O rotation Bg (VW)"
+   },
+   {
+    "position": 696,
+    "intensity": 0.15,
+    "width": 0,
+    "label": "H2O rotation Bg (W, broad)"
+   },
+   {
+    "position": 841,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "H2O rotation Ag (m)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Jones W.B., Darvin J.R., Fessler K.A.S., O'Rourke P.E., Isotopic Signatures of Lithium Carbonate and Lithium Hydroxide Monohydrate Measured Using Raman Spectroscopy, Appl. Spectrosc. 2022 (accepted manuscript OSTI 1898098)",
+    "doi_or_url": "https://doi.org/10.1177/00037028221131039",
+    "covers": "all bands (literature column for 7Li, after Hase 1981; strengths S/M/W/VW mapped to 1.0/0.4/0.15/0.05)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Natural-abundance (7Li) literature positions; Jones et al.'s own fits are 3-8 cm-1 higher (e.g. 150, 218, 372, 398, 521, 844). Li translation bands shift ~20-25 cm-1 for 6Li. O-H stretch region (>3500 cm-1) not covered by this source. Julien & Mauger (2025) cite LiOH·H2O bands at 398, 263, 219 cm-1 in degraded LFP.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Graphite (HOPG, highly ordered)",
+  "formula": "C",
+  "cas": "",
+  "cls": "battery anode",
+  "tags": [
+   "graphite",
+   "HOPG",
+   "carbon",
+   "anode",
+   "reference"
+  ],
+  "laser_nm": 514,
+  "peaks": [
+   {
+    "position": 1358.4,
+    "intensity": 0,
+    "width": 18.6,
+    "label": "D (defect-activated, weak/absent in perfect HOPG; dispersive)"
+   },
+   {
+    "position": 1583.3,
+    "intensity": 1.0,
+    "width": 6.9,
+    "label": "G (E2g)"
+   },
+   {
+    "position": 2688.4,
+    "intensity": 0.21,
+    "width": 21.4,
+    "label": "2D1 (2D lower component; dispersive)"
+   },
+   {
+    "position": 2728.6,
+    "intensity": 0.42,
+    "width": 17.1,
+    "label": "2D2 (2D main component; dispersive)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Markus et al., arXiv:1505.06857 (2015), Transport, magnetic and vibrational properties of chemically exfoliated few layer graphene, Tables I-II (Grade I HOPG, 514 nm)",
+    "doi_or_url": "https://arxiv.org/abs/1505.06857",
+    "covers": "all positions, FWHM, I2D1/IG=0.21, I2D2/IG=0.42"
+   },
+   {
+    "ref": "Ferrari et al., Phys. Rev. Lett. 2006, 97, 187401",
+    "doi_or_url": "https://arxiv.org/abs/cond-mat/0606284",
+    "covers": "assignments; 2D of bulk graphite = 2D1 + 2D2 at ~1/4 and ~1/2 G height (514 nm); D only at defects/edges"
+   }
+  ],
+  "rruff_id": "R050503, R090047, R120025",
+  "notes": "Values measured at 514 nm, not 532 nm. D and 2D are dispersive (shift up with laser energy), so at 532 nm expect D and 2D slightly lower; not converted here. G is non-dispersive. D intensity not given in source (HOPG D is weak/edge-only), so intensity 0. RRUFF IDs from archived RRUFF mineral page, Raman availability not verified.",
+  "confidence": "high"
+ },
+ {
+  "name": "Graphite (battery grade)",
+  "formula": "C",
+  "cas": "",
+  "cls": "battery anode",
+  "tags": [
+   "graphite",
+   "carbon",
+   "anode",
+   "battery"
+  ],
+  "laser_nm": 638,
+  "peaks": [
+   {
+    "position": 1350,
+    "intensity": 0.23,
+    "width": 0,
+    "label": "D (disorder; ID/IG ~0.2-0.5)"
+   },
+   {
+    "position": 1580,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "G (E2g)"
+   },
+   {
+    "position": 2700,
+    "intensity": 0,
+    "width": 0,
+    "label": "2D (G', asymmetric two-component band in 3D graphite)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Recycled-graphite paper, ChemSusChem 2025 (A Green Process for Effective Direct Recycling and Reuse of Graphite from End-of-Life Li-Ion Batteries Black Mass), Table 1",
+    "doi_or_url": "https://doi.org/10.1002/cssc.202500550",
+    "covers": "ID/IG 0.229-0.435 (638 nm); statement that ID/IG 0.2-0.5 is characteristic of commercial graphites"
+   },
+   {
+    "ref": "Ferrari et al., Phys. Rev. Lett. 2006, 97, 187401",
+    "doi_or_url": "https://arxiv.org/abs/cond-mat/0606284",
+    "covers": "approximate positions G ~1580, D ~1350, 2D ~2700 cm-1 (514 nm)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Approximate band positions only (~ values from Ferrari 2006 at 514 nm); ID/IG from recycled battery graphite at 638 nm (0.229 flotation, 0.234 leached, 0.435 after heat treatment). ID/IG depends on laser wavelength and on sampling (edges vs basal planes). No FWHM found in an opened source. Lithiation shifts/splits G (stage formation) and kills the signal at LiC6.",
+  "confidence": "low"
+ },
+ {
+  "name": "Carbon black (Super C65)",
+  "formula": "C",
+  "cas": "",
+  "cls": "conductive carbon",
+  "tags": [
+   "carbon black",
+   "Super C65",
+   "conductive additive",
+   "disordered carbon"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 1350,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "D (broad)"
+   },
+   {
+    "position": 1580,
+    "intensity": 0.89,
+    "width": 0,
+    "label": "G (broad)"
+   },
+   {
+    "position": 2700,
+    "intensity": 0,
+    "width": 0,
+    "label": "2D (weak, suppressed)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Abbasi et al., ACS Omega 2026, Carbon Material and Electrolyte Composition Effects on the Performance of Prussian White Solid Boosters in Flow Batteries",
+    "doi_or_url": "https://doi.org/10.1021/acsomega.6c04178",
+    "covers": "all bands (approximate positions ~1350/~1580/~2700); ID/IG = 1.120 for C65; ID/IG 1.03-1.18 across YP-80F, YP-50F, Super C65, BP2000"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "laser_nm 0 = excitation wavelength not stated in the main text (probably in SI, not checked). G intensity derived from stated ID/IG = 1.12 (1/1.12 = 0.89). Positions are the source's approximate values. No FWHM found in an opened source; source says D and G are broad. ID/IG of carbon blacks depends strongly on laser wavelength and fitting method. Super P / acetylene black not separately verified.",
+  "confidence": "low"
+ },
+ {
+  "name": "Silicon (crystalline)",
+  "formula": "Si",
+  "cas": "",
+  "cls": "battery anode",
+  "tags": [
+   "silicon",
+   "c-Si",
+   "anode",
+   "calibration"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 520,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "first-order optical phonon (TO/LO) of c-Si (~520-521 cm-1)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Julien & Mauger, Int. J. Mol. Sci. 2025, 26, 11879",
+    "doi_or_url": "https://doi.org/10.3390/ijms262411879",
+    "covers": "~520 cm-1 c-Si band; 521 cm-1 used as calibration line; downshift and low-wavenumber asymmetric broadening in nano-Si (phonon confinement); intensity loss on lithiation"
+   }
+  ],
+  "rruff_id": "R040145, R050145",
+  "notes": "Review gives ~520 cm-1 (and 521 cm-1 for the Si calibration peak). Nanoparticles shift down and broaden asymmetrically; lithiation (amorphization to LixSi) removes the 520 band. Second-order band near 950 cm-1 not verified in an opened source, so omitted. RRUFF IDs from archived RRUFF mineral page, Raman availability not verified.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Lithium titanate spinel (Li4Ti5O12, LTO)",
+  "formula": "Li4Ti5O12",
+  "cas": "",
+  "cls": "battery anode",
+  "tags": [
+   "LTO",
+   "spinel",
+   "titanate",
+   "anode"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 160,
+    "intensity": 0,
+    "width": 0,
+    "label": "O-Li-O bending"
+   },
+   {
+    "position": 234,
+    "intensity": 0,
+    "width": 0,
+    "label": "O-Ti-O bending (F2g)"
+   },
+   {
+    "position": 262,
+    "intensity": 0,
+    "width": 0,
+    "label": "spinel Raman-allowed mode"
+   },
+   {
+    "position": 342,
+    "intensity": 0,
+    "width": 0,
+    "label": "Li-O stretch/bend, LiO6"
+   },
+   {
+    "position": 424,
+    "intensity": 0,
+    "width": 0,
+    "label": "Li-O stretch/bend, LiO4"
+   },
+   {
+    "position": 671,
+    "intensity": 0,
+    "width": 0,
+    "label": "Ti-O stretch, TiO6 (A1g)"
+   },
+   {
+    "position": 748,
+    "intensity": 0,
+    "width": 0,
+    "label": "Ti-O stretch, TiO6 (weak)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Julien & Mauger, Int. J. Mol. Sci. 2025, 26, 11879, section 5.3",
+    "doi_or_url": "https://doi.org/10.3390/ijms262411879",
+    "covers": "all bands and assignments"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Five allowed lines 234, 262, 342, 424, 671 cm-1; 160 and 748 cm-1 also mentioned. 671 cm-1 marked strongest by convention for spinel A1g; the source text does not state relative intensities, so treat 1.0 as assumption (others 0). NOTE: the 358/430 cm-1 LiO4/LiO6 values in this review refer to monoclinic Li2TiO3, NOT to LTO. Laser not stated for the LTO values. Lithiation to Li7Ti5O12 changes the spectrum (Figure 14d of the review). Not cross-checked against a second source. [Coordinator: 671 cm-1 intensity reset to 0 (unknown), since the source gives no intensities.]",
+  "confidence": "medium"
+ },
+ {
+  "name": "Titanium dioxide (anatase)",
+  "formula": "TiO2",
+  "cas": "",
+  "cls": "battery anode",
+  "tags": [
+   "anatase",
+   "TiO2",
+   "titanate",
+   "anode"
+  ],
+  "laser_nm": 532,
+  "peaks": [
+   {
+    "position": 144,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "Eg (143 measured)"
+   },
+   {
+    "position": 197,
+    "intensity": 0,
+    "width": 0,
+    "label": "Eg"
+   },
+   {
+    "position": 399,
+    "intensity": 0,
+    "width": 0,
+    "label": "B1g (395 measured)"
+   },
+   {
+    "position": 516,
+    "intensity": 0,
+    "width": 0,
+    "label": "A1g + B1g (unresolved at RT; 513/519 at 73 K)"
+   },
+   {
+    "position": 639,
+    "intensity": 0,
+    "width": 0,
+    "label": "Eg (636 measured)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Podelinska, Neilande, Pankratova et al., Nanomaterials 2025, 15, 498 (Table: experimental anatase modes from literature; own 532 nm spectra)",
+    "doi_or_url": "https://doi.org/10.3390/nano15070498",
+    "covers": "all bands; literature values 144/197/399/516(515-519)/639; measured (532 nm, 500 C anneal) 143, 197, 395, 517, 636"
+   },
+   {
+    "ref": "Julien & Mauger, Int. J. Mol. Sci. 2025, 26, 11879",
+    "doi_or_url": "https://doi.org/10.3390/ijms262411879",
+    "covers": "144, 403, 516, 639 agree; its 245 (Eg) and 326 (B1g) NOT adopted"
+   }
+  ],
+  "rruff_id": "R060277, R070582, R120013, R120064",
+  "notes": "Positions are the consensus literature values tabulated in Nanomaterials 2025 (PMC11990375); that paper's own 532 nm anatase spectrum gave 143, 197, 395, 517, 636 cm-1. Julien & Mauger 2025 lists 144, 245, 326, 403, 516, 639: the 245 and 326 values conflict with all other tabulated values (197 Eg, 399 B1g) and were dropped; Strongest = 144 Eg (standard for anatase; source calls Eg 144/197/640 prominent, no numeric ratios). Particle size: nano-anatase upshifts/broadens 144 band (phonon confinement). Li insertion (Li0.5TiO2) changes spectrum. RRUFF IDs from archived RRUFF mineral page, Raman availability not verified.",
+  "confidence": "medium"
+ },
+ {
+  "name": "PVDF (alpha phase)",
+  "formula": "(C2H2F2)n",
+  "cas": "",
+  "cls": "binder",
+  "tags": [
+   "PVDF",
+   "polyvinylidene fluoride",
+   "alpha phase",
+   "form II",
+   "binder",
+   "fluoropolymer"
+  ],
+  "laser_nm": 532,
+  "peaks": [
+   {
+    "position": 266,
+    "intensity": 0,
+    "width": 0,
+    "label": "CF2 twist; CF2 wag (alpha), shoulder"
+   },
+   {
+    "position": 286,
+    "intensity": 0,
+    "width": 0,
+    "label": "CF2 twist; CF2 wag (alpha)"
+   },
+   {
+    "position": 363,
+    "intensity": 0,
+    "width": 0,
+    "label": "not assigned"
+   },
+   {
+    "position": 412,
+    "intensity": 0,
+    "width": 0,
+    "label": "CF2 rocking (alpha)"
+   },
+   {
+    "position": 488,
+    "intensity": 0,
+    "width": 0,
+    "label": "CF2 scissoring; CF2 wag"
+   },
+   {
+    "position": 513,
+    "intensity": 0,
+    "width": 0,
+    "label": "CF2 scissoring (labelled alpha in Gryshkov; others treat ~510 as beta marker)"
+   },
+   {
+    "position": 536,
+    "intensity": 0,
+    "width": 0,
+    "label": "CF2 scissoring (alpha)"
+   },
+   {
+    "position": 610,
+    "intensity": 0,
+    "width": 0,
+    "label": "CF2 scissoring; CCC bending (alpha)"
+   },
+   {
+    "position": 768,
+    "intensity": 0,
+    "width": 0,
+    "label": "CF2 scissoring; CCC bending (alpha)"
+   },
+   {
+    "position": 797,
+    "intensity": 0.8,
+    "width": 11.7,
+    "label": "CH2 rocking - alpha-phase marker (794-799 across sources)"
+   },
+   {
+    "position": 878,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-C antisym. str.; CF2 sym. str."
+   },
+   {
+    "position": 1057,
+    "intensity": 0,
+    "width": 0,
+    "label": "CF2 sym. str.; CH2 wag (alpha)"
+   },
+   {
+    "position": 1076,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-C antisym. str.; CF2/CH2 wag, shoulder"
+   },
+   {
+    "position": 1148,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-C antisym. str.; CF2 sym. str. (alpha)"
+   },
+   {
+    "position": 1198,
+    "intensity": 0,
+    "width": 0,
+    "label": "CF2 antisym. str.; CH2 wag (alpha)"
+   },
+   {
+    "position": 1276,
+    "intensity": 0,
+    "width": 0,
+    "label": "CF2 sym. str.; C-C str. (shoulder; beta contribution)"
+   },
+   {
+    "position": 1293,
+    "intensity": 0,
+    "width": 0,
+    "label": "CF2 antisym. str.; CF2 rock (alpha)"
+   },
+   {
+    "position": 1329,
+    "intensity": 0,
+    "width": 0,
+    "label": "combination modes (alpha)"
+   },
+   {
+    "position": 1404,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH2 scissoring/wag; C-C antisym. str."
+   },
+   {
+    "position": 1431,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH2 scissoring; CH2 wag"
+   },
+   {
+    "position": 2980,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH2 sym. str. (alpha); shoulder at 2971"
+   },
+   {
+    "position": 3021,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH2 antisym. str. (alpha)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Gryshkov O. et al., Int. J. Mol. Sci. 2021, 22, 11373 (Table 1, Table 2)",
+    "doi_or_url": "https://doi.org/10.3390/ijms222111373",
+    "covers": "all bands, 797 intensity/FWHM (PVDF pellet, beta/alpha ratio 0.4)"
+   },
+   {
+    "ref": "Riosbaas M.T., Loh K.J., O'Bryan G., Loyola B.R., Proc. SPIE 9061 (2014), In situ phase change characterization of PVDF thin films using Raman spectroscopy",
+    "doi_or_url": "https://www.osti.gov/servlets/purl/1140648",
+    "covers": "794 alpha marker (532 nm)"
+   },
+   {
+    "ref": "Satapathy S. et al., arXiv:0808.0419 (PVDF films from DMSO, annealing)",
+    "doi_or_url": "https://arxiv.org/abs/0808.0419",
+    "covers": "796/799 alpha marker (632.8 nm)"
+   }
+  ],
+  "rruff_id": "",
+  "confidence": "medium",
+  "notes": "Positions are the 'PVDF pellet' column of Gryshkov et al. Table 1 (WITec alpha300RA, 532 nm); this raw PVDF is alpha-rich but not phase-pure (beta/alpha = 0.4), so a weak 839 cm-1 beta band is also present in the real spectrum. Intensity 0.8 and FWHM 11.7 cm-1 for 797 are from Table 2 (min-max normalised spectrum; strongest band not identified, so others left 0). The alpha marker is reported at 794 (Riosbaas 2014, 532 nm), 796-799 (Satapathy, 632.8 nm), 797 (Gryshkov). 513 cm-1: Gryshkov labels it alpha, while Milani 2020 treats ~510 as a beta marker - ambiguous. Phase quantification normally uses I(839)/I(794-797)."
+ },
+ {
+  "name": "PVDF (beta phase)",
+  "formula": "(C2H2F2)n",
+  "cas": "",
+  "cls": "binder",
+  "tags": [
+   "PVDF",
+   "polyvinylidene fluoride",
+   "beta phase",
+   "form I",
+   "electroactive",
+   "binder",
+   "fluoropolymer"
+  ],
+  "laser_nm": 532,
+  "peaks": [
+   {
+    "position": 266,
+    "intensity": 0,
+    "width": 0,
+    "label": "CF2 twist; CF2 wag"
+   },
+   {
+    "position": 412,
+    "intensity": 0,
+    "width": 0,
+    "label": "CF2 rocking"
+   },
+   {
+    "position": 484,
+    "intensity": 0,
+    "width": 0,
+    "label": "CF2 scissoring; CF2 wag (480-488)"
+   },
+   {
+    "position": 511,
+    "intensity": 0,
+    "width": 0,
+    "label": "CF2 bending - beta marker per Milani (A1); 511-513 observed"
+   },
+   {
+    "position": 839,
+    "intensity": 0.8,
+    "width": 13.4,
+    "label": "CH2 rocking + CF2 antisym. str. - main beta-phase marker (839-841)"
+   },
+   {
+    "position": 881,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-C antisym. str.; CF2 sym. str."
+   },
+   {
+    "position": 1077,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-C antisym. str.; CF2/CH2 wag"
+   },
+   {
+    "position": 1170,
+    "intensity": 0,
+    "width": 0,
+    "label": "CF2 antisym. str."
+   },
+   {
+    "position": 1276,
+    "intensity": 0,
+    "width": 0,
+    "label": "CF2 sym. str.; C-C str. - beta marker (1276 PVDF mat; 1286-1288 in P(VDF-TrFE))"
+   },
+   {
+    "position": 1404,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH2 scissoring/wag; C-C antisym. str."
+   },
+   {
+    "position": 1432,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH2 scissoring; CH2 wag (1431-1433)"
+   },
+   {
+    "position": 2970,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH2 sym. str. (shifted from 2976-2980 on alpha-to-beta)"
+   },
+   {
+    "position": 3015,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH2 antisym. str. (shifted from 3021)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Gryshkov O. et al., Int. J. Mol. Sci. 2021, 22, 11373 (Table 1, Table 2)",
+    "doi_or_url": "https://doi.org/10.3390/ijms222111373",
+    "covers": "positions (PVDF electrospun fibre mat column, beta/alpha 2.3), 839 intensity/FWHM, 2970/3015 shifts"
+   },
+   {
+    "ref": "Milani A. et al., RSC Adv. 2020, 10, 37779-37796 (P(VDF-TrFE) nanofibers, IR and Raman; Table 2)",
+    "doi_or_url": "https://doi.org/10.1039/D0RA05478J",
+    "covers": "beta marker identification (511/841/1286), 532 nm"
+   },
+   {
+    "ref": "Riosbaas M.T., Loh K.J., O'Bryan G., Loyola B.R., Proc. SPIE 9061 (2014), In situ phase change characterization of PVDF thin films using Raman spectroscopy",
+    "doi_or_url": "https://www.osti.gov/servlets/purl/1140648",
+    "covers": "839 beta marker (532 nm)"
+   }
+  ],
+  "rruff_id": "",
+  "confidence": "low",
+  "notes": "No open-access Raman table of phase-pure beta-PVDF was found. Positions come from the beta-rich electrospun PVDF fibre mat of Gryshkov et al. (532 nm; beta/alpha = 2.3), keeping only bands not marked alpha-only; that sample still shows a weaker alpha 797 band (rel. int. 0.4). Intensity 0.8 / FWHM 13.4 cm-1 for 839 from their Table 2 (min-max normalised). Beta markers per Milani et al. 2020 (532 nm, on P(VDF-TrFE) 80/20 with DFT for beta-PVDF): ~510, 841, 1286 cm-1; in pure PVDF films the 1276-1286 marker appears at 1276 (Gryshkov). Milani's Raman intensities are DFT-calculated, so not used. 839 vs 841 vs 845 (IR) spread; gamma phase also contributes near 839 (Satapathy)."
+ },
+ {
+  "name": "Sodium carboxymethyl cellulose (CMC)",
+  "formula": "[C6H7O2(OH)3-x(OCH2COONa)x]n",
+  "cas": "",
+  "cls": "binder",
+  "tags": [
+   "CMC",
+   "Na-CMC",
+   "carboxymethyl cellulose",
+   "binder",
+   "water-based binder",
+   "polysaccharide"
+  ],
+  "laser_nm": 1064,
+  "peaks": [
+   {
+    "position": 1095,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-O-C glycosidic str. / ring breathing (shoulder)"
+   },
+   {
+    "position": 1116,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-O-C skeletal str. (amorphous backbone)"
+   },
+   {
+    "position": 1265,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH2 twisting (cellulose II/amorphous backbone)"
+   },
+   {
+    "position": 1330,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH2 wagging adjacent to ether (-CH2OR), medium"
+   },
+   {
+    "position": 1416,
+    "intensity": 0,
+    "width": 0,
+    "label": "COO- symmetric str. (Adar: strong band at 1415)"
+   },
+   {
+    "position": 1464,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH2 bending (shoulder)"
+   },
+   {
+    "position": 1611,
+    "intensity": 0,
+    "width": 0,
+    "label": "COO- antisymmetric str."
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Almlof Ambjornsson H., Schenzel K., Germgard U., BioResources 2013, 8(2), 1918-1932",
+    "doi_or_url": "https://bioresources.cnr.ncsu.edu//BioRes_08/BioRes_08_2_1918_Ambjornsson_SG_CMC_Merceriz_NIR_Raman_3599.pdf",
+    "covers": "all bands (CMC group 3, DS ~0.9-1.05, FT-Raman 1064 nm)"
+   },
+   {
+    "ref": "Adar F., Molecular Spectroscopy Workbench, Spectroscopy, 1 Nov 2016, 'Characterizing modified celluloses using Raman'",
+    "doi_or_url": "https://www.spectroscopyonline.com/view/raman-spectra-modified-celluloses-and-how-they-can-help-characterizing-these-materials",
+    "covers": "corroborates strong 1415 and 1460 shoulder (laser not stated)"
+   }
+  ],
+  "rruff_id": "",
+  "confidence": "low",
+  "notes": "Only the 1700-280 cm-1 marker bands discussed by Ambjornsson et al. (1064 nm FT-Raman, CMC from spruce pulp) were confirmed; no full open-access CMC band table found, so CH stretch (~2900) and low-wavenumber bands are omitted. Backbone bands depend on DS and on whether the backbone is cellulose I, II or amorphous; low-DS CMC with cellulose I backbone shows 380/1095/1120/1295/1338/1477 instead. Adar (2016) assigns the strong 1415 band to CH2 deformation from the substituent, Ambjornsson to COO- sym. str. Relative intensities not given numerically (left 0)."
+ },
+ {
+  "name": "Cellulose I (microcrystalline, Avicel)",
+  "formula": "(C6H10O5)n",
+  "cas": "",
+  "cls": "binder",
+  "tags": [
+   "cellulose",
+   "cellulose I",
+   "microcrystalline cellulose",
+   "Avicel",
+   "separator",
+   "polysaccharide"
+  ],
+  "laser_nm": 1064,
+  "peaks": [
+   {
+    "position": 3350,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 3295,
+    "intensity": 0.05,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 3264,
+    "intensity": 0.05,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2969,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH2 asymmetric stretching (review: 2968/2944)"
+   },
+   {
+    "position": 2947,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2894,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "CH stretching"
+   },
+   {
+    "position": 2871,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2734,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2716,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1476,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "CH2 bending (cellulose I marker, 1477)"
+   },
+   {
+    "position": 1460,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH2 bending"
+   },
+   {
+    "position": 1408,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1380,
+    "intensity": 0.55,
+    "width": 0,
+    "label": "C-C-H, C-O-H, O-C-H bending (review: 1378-1338)"
+   },
+   {
+    "position": 1338,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "C-C-H, C-O-H, O-C-H bending (review: 1378-1338)"
+   },
+   {
+    "position": 1294,
+    "intensity": 0.15,
+    "width": 0,
+    "label": "CH2 twisting mode (cellulose I marker, 1295)"
+   },
+   {
+    "position": 1236,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1201,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1151,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "skeletal deformation (review: 1160)"
+   },
+   {
+    "position": 1120,
+    "intensity": 0.7,
+    "width": 0,
+    "label": "(COC) glycosidic stretching; ring breathing"
+   },
+   {
+    "position": 1096,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "(COC) glycosidic stretching; ring breathing"
+   },
+   {
+    "position": 1058,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-C and C-O (review: 1050-970)"
+   },
+   {
+    "position": 997,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 970,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 898,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "glucose ring deformation (review: 896)"
+   },
+   {
+    "position": 609,
+    "intensity": 0.05,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 595,
+    "intensity": 0.05,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 567,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 520,
+    "intensity": 0.4,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 493,
+    "intensity": 0.25,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 458,
+    "intensity": 0.4,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 436,
+    "intensity": 0.55,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 406,
+    "intensity": 0.05,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 380,
+    "intensity": 0.7,
+    "width": 0,
+    "label": "(CCC),(CO),(CCO) ring deformation (cellulose I marker)"
+   },
+   {
+    "position": 350,
+    "intensity": 0.4,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 331,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 258,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 170,
+    "intensity": 0.25,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 154,
+    "intensity": 0.05,
+    "width": 0,
+    "label": ""
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Agarwal U.P., Front. Plant Sci. 2014, 5, 490 (1064 nm FT-Raman of biomass; Table 3 Avicel polymorphs)",
+    "doi_or_url": "https://doi.org/10.3389/fpls.2014.00490",
+    "covers": "all positions and qualitative intensities (Avicel I column)"
+   },
+   {
+    "ref": "Almlof Ambjornsson H., Schenzel K., Germgard U., BioResources 2013, 8(2), 1918-1932",
+    "doi_or_url": "https://bioresources.cnr.ncsu.edu//BioRes_08/BioRes_08_2_1918_Ambjornsson_SG_CMC_Merceriz_NIR_Raman_3599.pdf",
+    "covers": "assignments of 1477, 1455, 1295, 1120, 1095, 380 markers"
+   },
+   {
+    "ref": "Gieroba B. et al., Int. J. Mol. Sci. 2023, 24, 2630 (review of vibrational spectra of polysaccharides; Raman Table 2, cellulose)",
+    "doi_or_url": "https://doi.org/10.3390/ijms24032630",
+    "covers": "generic region assignments marked (review)"
+   }
+  ],
+  "rruff_id": "",
+  "confidence": "high",
+  "notes": "Positions/intensity labels from Agarwal 2014 Table 3 (Bruker 1064 nm FT-Raman, Avicel PH-101). Qualitative labels mapped: vs=1.0, s=0.7, m-s=0.55, m=0.4, w-m=0.25, w=0.15, vw=0.05, shoulder=0 (unknown). Both 2894 and 1096 are 'vs' (both set 1.0). Assignments: cellulose I/II marker assignments from Ambjornsson 2013 Table 1; region assignments marked '(review)' from Gieroba 2023 Table 2 (which cites a cellulose Raman reference); blank labels = no assignment found in sources read. Same author's Table 1 (Whatman #1 cellulose, Agarwal & Ralph 1997) agrees: 381 m, 437 m, 459 m, 520 m, 898 m, 1096 s, 1121 s, 1294 m, 1380 m, 1478 m, 2895 vs. Iα/Iβ: 740/710 cm-1 bands cited in Zhang et al. review (not used). Class 'binder' used for schema; also used in separators."
+ },
+ {
+  "name": "Cellulose II (regenerated / mercerized, Avicel II)",
+  "formula": "(C6H10O5)n",
+  "cas": "",
+  "cls": "binder",
+  "tags": [
+   "cellulose",
+   "cellulose II",
+   "regenerated cellulose",
+   "mercerized",
+   "separator",
+   "polysaccharide"
+  ],
+  "laser_nm": 1064,
+  "peaks": [
+   {
+    "position": 3490,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 3446,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 3329,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 3263,
+    "intensity": 0.05,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2984,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2970,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2956,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2935,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2911,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2888,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "CH stretching"
+   },
+   {
+    "position": 2816,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2776,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2744,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2720,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1462,
+    "intensity": 0.55,
+    "width": 0,
+    "label": "CH2 bending (cellulose II marker, 1464)"
+   },
+   {
+    "position": 1413,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1374,
+    "intensity": 0.55,
+    "width": 0,
+    "label": "C-C-H, C-O-H, O-C-H bending (review: 1378-1338)"
+   },
+   {
+    "position": 1337,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "C-C-H, C-O-H, O-C-H bending (review: 1378-1338)"
+   },
+   {
+    "position": 1265,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "CH2 twisting (cellulose II marker)"
+   },
+   {
+    "position": 1236,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1193,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1146,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "skeletal deformation (review: 1160)"
+   },
+   {
+    "position": 1117,
+    "intensity": 0,
+    "width": 0,
+    "label": "(COC) glycosidic stretching; ring breathing"
+   },
+   {
+    "position": 1096,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "(COC) glycosidic stretching; ring breathing"
+   },
+   {
+    "position": 1058,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 969,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 897,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "glucose ring deformation (review: 896)"
+   },
+   {
+    "position": 577,
+    "intensity": 0.4,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 522,
+    "intensity": 0.4,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 491,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 461,
+    "intensity": 0.4,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 419,
+    "intensity": 0.4,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 377,
+    "intensity": 0.55,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 353,
+    "intensity": 0.7,
+    "width": 0,
+    "label": "(CCC),(CO),(CCO) ring deformation (cellulose II marker, 355)"
+   },
+   {
+    "position": 299,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 238,
+    "intensity": 0.25,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 210,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 173,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Agarwal U.P., Front. Plant Sci. 2014, 5, 490 (1064 nm FT-Raman of biomass; Table 3 Avicel polymorphs)",
+    "doi_or_url": "https://doi.org/10.3389/fpls.2014.00490",
+    "covers": "all positions and qualitative intensities (Avicel II column)"
+   },
+   {
+    "ref": "Almlof Ambjornsson H., Schenzel K., Germgard U., BioResources 2013, 8(2), 1918-1932",
+    "doi_or_url": "https://bioresources.cnr.ncsu.edu//BioRes_08/BioRes_08_2_1918_Ambjornsson_SG_CMC_Merceriz_NIR_Raman_3599.pdf",
+    "covers": "assignments of 1464, 1265, 1116, 1095, 355 markers"
+   },
+   {
+    "ref": "Gieroba B. et al., Int. J. Mol. Sci. 2023, 24, 2630 (review of vibrational spectra of polysaccharides; Raman Table 2, cellulose)",
+    "doi_or_url": "https://doi.org/10.3390/ijms24032630",
+    "covers": "generic region assignments marked (review)"
+   }
+  ],
+  "rruff_id": "",
+  "confidence": "medium",
+  "notes": "From Agarwal 2014 Table 3 (1064 nm FT-Raman; Avicel converted to cellulose II). Same intensity mapping as cellulose I (sh=0). Key differences vs cellulose I: 1462 (single CH2 bend) vs 1476, 1265 vs 1294, 353 strong vs 380, 577 m. A few rows of the source table are misaligned in the XML (913, 724, 697 cm-1) and were left out."
+ },
+ {
+  "name": "LiTFSI (solid salt)",
+  "formula": "LiN(SO2CF3)2",
+  "cas": "",
+  "cls": "electrolyte salt",
+  "tags": [
+   "Li-ion",
+   "electrolyte",
+   "TFSI",
+   "solid"
+  ],
+  "laser_nm": 532,
+  "peaks": [
+   {
+    "position": 748.9,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "TFSI- strongest band (S-N-S stretch / CF3 bend combination region), solid salt"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "McBrayer et al., J. Electrochem. Soc. 2018 (Polysulfide Speciation in the Bulk Electrolyte of a Lithium Sulfur Battery), Supplemental (SAND2018-2835J)",
+    "doi_or_url": "https://doi.org/10.1149/2.0441805jes ; https://www.osti.gov/servlets/purl/1432473",
+    "covers": "748.9 cm-1 (most intense peak of pure LiTFSI; 532 nm WiTec, laser stated in main paper OSTI 1432474)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Only the strongest band position is stated in the opened source; it cites Suo et al. at 747.3 cm-1 for the solid (spread ~1.6 cm-1). Solid LiTFSI photobleached/fluoresced in air at 8 mW; measure under Ar. Other solid-salt bands not given in an opened source, so omitted.",
+  "confidence": "medium"
+ },
+ {
+  "name": "TFSI- anion in solution (free vs Li+-bound)",
+  "formula": "[N(SO2CF3)2]-",
+  "cas": "",
+  "cls": "electrolyte salt",
+  "tags": [
+   "Li-ion",
+   "electrolyte",
+   "TFSI",
+   "solution",
+   "ion pairing"
+  ],
+  "laser_nm": 532,
+  "peaks": [
+   {
+    "position": 741,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "free (Li+-uncoordinated) TFSI- band, nu_s(SNS)+delta_s(CF3) combination, C1+C2 conformers overlapped (in DEMETFSA ionic liquid)"
+   },
+   {
+    "position": 741.5,
+    "intensity": 0,
+    "width": 0,
+    "label": "TFSI- main band, 1 M LiTFSI in 1:1 DME:DOL (+0.25 M LiNO3)"
+   },
+   {
+    "position": 747,
+    "intensity": 0,
+    "width": 0,
+    "label": "TFSI- bound to Li+ ([Li(TFSA)2]- type, contact/aggregate), grows with LiTFSI concentration"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Shirai et al., Anal. Sci. 2008, 24, 1291",
+    "doi_or_url": "https://www.jstage.jst.go.jp/article/analsci/24/10/24_10_1291/_article/-char/en",
+    "covers": "741 (free) and 747 cm-1 (Li+-bound); 532 nm; LiTFSA 0.12-1.92 mol/kg in DEMETFSA ionic liquid; pseudo-isosbestic point 744 cm-1"
+   },
+   {
+    "ref": "McBrayer et al., J. Electrochem. Soc. 2018, Supplemental",
+    "doi_or_url": "https://doi.org/10.1149/2.0441805jes ; https://www.osti.gov/servlets/purl/1432473",
+    "covers": "741.5 cm-1 for 1 M LiTFSI in DME:DOL (532 nm)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Solvated anion, not the solid. Free/bound positions from an ionic-liquid solvent (DEMETFSA); in molecular solvents the free band is ~741 cm-1 (1 M DME/DOL: 741.5; McBrayer cites Suo et al. 740.7). Search snippets (not opened, so not used) report finer FT-Raman schemes (free 736-738, loose pair 740-742, intimate 744-746, aggregate 746.5-747.3 cm-1, Chinese Phys. B 2016) and Henderson et al. JES 2022 (Part VIII) warns that a coordinated-anion band overlaps the uncoordinated band; treat species assignment as indicative. Relative intensity of 741 vs 747 depends on concentration.",
+  "confidence": "medium"
+ },
+ {
+  "name": "LiFSI (solid salt)",
+  "formula": "LiN(SO2F)2",
+  "cas": "",
+  "cls": "electrolyte salt",
+  "tags": [
+   "Li-ion",
+   "electrolyte",
+   "FSI",
+   "solid"
+  ],
+  "laser_nm": 632.8,
+  "peaks": [
+   {
+    "position": 307,
+    "intensity": 0,
+    "width": 0,
+    "label": "broad band (305-310 cm-1)"
+   },
+   {
+    "position": 344,
+    "intensity": 0,
+    "width": 0,
+    "label": "broad band (340-348 cm-1)"
+   },
+   {
+    "position": 365,
+    "intensity": 0,
+    "width": 0,
+    "label": "prominent band (conformation-sensitive region; C1 anion in salt)"
+   },
+   {
+    "position": 776,
+    "intensity": 0,
+    "width": 0,
+    "label": "single prominent band 774-778 cm-1 (the ~720-730 S-N-S band of free FSI-, shifted up by AGG coordination in the salt)"
+   },
+   {
+    "position": 1172,
+    "intensity": 0,
+    "width": 0,
+    "label": "low-intensity band (1171-1174 cm-1)"
+   },
+   {
+    "position": 1216,
+    "intensity": 0,
+    "width": 0,
+    "label": "low-intensity band (1215-1218 cm-1)"
+   },
+   {
+    "position": 1246,
+    "intensity": 0,
+    "width": 0,
+    "label": "single prominent band 1245-1248 cm-1 (the ~1220 cm-1 SO2-region band, shifted up in the salt)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Han, Sommer, Boyle, Zhou, Young, Borodin, Henderson, J. Electrochem. Soc. 2022, 169(11) (Electrolyte Solvation and Ionic Association: Part IX)",
+    "doi_or_url": "https://doi.org/10.1149/1945-7111/ac9a07 ; accepted manuscript https://www.osti.gov/pages/servlets/purl/2419630",
+    "covers": "all bands"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Anhydrous LiFSI salt (crystal: C1 anion, AGG-IIb coordination to 3 Li+). He-Ne laser (stated as 632 nm), LabRAM HR, Si-calibrated. Positions are midpoints of the ranges given; relative intensities not quantified in text (only 'prominent' vs 'low intensity'). Mode-type labels: the source does not give explicit vibrational assignments for the salt; S-N-S/SO2 wording follows the solution-band literature (Fawdon et al. Nat Commun 2021 calls the ~717 band the S-N-S bend).",
+  "confidence": "medium"
+ },
+ {
+  "name": "FSI- anion in solution (SSIP / CIP / AGG)",
+  "formula": "[N(SO2F)2]-",
+  "cas": "",
+  "cls": "electrolyte salt",
+  "tags": [
+   "Li-ion",
+   "electrolyte",
+   "FSI",
+   "solution",
+   "ion pairing"
+  ],
+  "laser_nm": 632.8,
+  "peaks": [
+   {
+    "position": 290,
+    "intensity": 0,
+    "width": 0,
+    "label": "uncoordinated C2 FSI- (crystalline solvates), 288-294 cm-1"
+   },
+   {
+    "position": 325,
+    "intensity": 0,
+    "width": 0,
+    "label": "uncoordinated C2 FSI- (crystalline solvates), 320-330 cm-1"
+   },
+   {
+    "position": 360,
+    "intensity": 0,
+    "width": 0,
+    "label": "uncoordinated C2 FSI-, 358-362 cm-1 (lower-wavenumber shoulder ~353 often attributed to C1 conformer)"
+   },
+   {
+    "position": 717,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "FSI- S-N-S bend, 2 m LiFSI in tetraglyme (785 nm); shoulders from CIP/AGG grow with concentration"
+   },
+   {
+    "position": 720,
+    "intensity": 0,
+    "width": 0,
+    "label": "SSIP / uncoordinated FSI- S-N-S band, literature range 718-723 cm-1"
+   },
+   {
+    "position": 730,
+    "intensity": 0,
+    "width": 0,
+    "label": "CIP, literature range 725-734 cm-1"
+   },
+   {
+    "position": 752,
+    "intensity": 0,
+    "width": 0,
+    "label": "AGG, literature range 744-760 cm-1"
+   },
+   {
+    "position": 1216,
+    "intensity": 0,
+    "width": 0,
+    "label": "SSIP, 1214-1218 cm-1 (uncoordinated C2 anion in solvates 1212-1217)"
+   },
+   {
+    "position": 1220,
+    "intensity": 0,
+    "width": 0,
+    "label": "CIP, 1218-1222 cm-1"
+   },
+   {
+    "position": 1226,
+    "intensity": 0,
+    "width": 0,
+    "label": "AGG, 1224-1228 cm-1"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Han et al., J. Electrochem. Soc. 2022, 169(11) (Part IX)",
+    "doi_or_url": "https://doi.org/10.1149/1945-7111/ac9a07 ; https://www.osti.gov/pages/servlets/purl/2419630",
+    "covers": "SSIP/CIP/AGG ranges (survey of literature) and uncoordinated-anion bands from (CRYPT-222)1:LiFSI and (G4)1:LiFSI solvates; 632 nm"
+   },
+   {
+    "ref": "Fawdon, Ihli et al., Nat. Commun. 2021, 12, 4053",
+    "doi_or_url": "https://doi.org/10.1038/s41467-021-24297-0 ; https://pmc.ncbi.nlm.nih.gov/articles/PMC8245635/",
+    "covers": "717 cm-1 (LiFSI in G4, 785 nm)"
+   },
+   {
+    "ref": "Fawdon, Rees, La Mantia, Pasta, J. Phys. Chem. Lett. 2022, 13, 1734",
+    "doi_or_url": "https://ora.ox.ac.uk/objects/uuid:a7332bb3-51bb-4090-b628-3a754e76bf77/files/rt148fh757",
+    "covers": "corroboration only: ~730 cm-1 S-N-S band in FSI ionic liquid shifts up with Li+; 1215 (free) / 1225 cm-1 (Li-bound) assignments"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Solvated anion. SSIP/CIP/AGG positions are midpoints of ranges that Han et al. compiled from the literature; they caution these assignments 'remain somewhat speculative'. Positions shift with solvent; uncoordinated anion measured 718-723 cm-1 in solvates vs 717 in G4 solution. Intensity 1.0 marks the dominant band at low concentration only.",
+  "confidence": "low"
+ },
+ {
+  "name": "PF6- anion in carbonate electrolyte (LiPF6 in PC)",
+  "formula": "[PF6]-",
+  "cas": "",
+  "cls": "electrolyte salt",
+  "tags": [
+   "Li-ion",
+   "electrolyte",
+   "PF6",
+   "solution",
+   "propylene carbonate"
+  ],
+  "laser_nm": 1064,
+  "peaks": [
+   {
+    "position": 712,
+    "intensity": 0,
+    "width": 0,
+    "label": "free PC ring deformation (solvent, for reference)"
+   },
+   {
+    "position": 721,
+    "intensity": 0,
+    "width": 0,
+    "label": "Li+-coordinated PC (solvent, for reference)"
+   },
+   {
+    "position": 742,
+    "intensity": 0,
+    "width": 0,
+    "label": "PF6- nu1 P-F symmetric stretch (free + ion-paired not resolved; nonlinear decrease attributed to ion pairing)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Avall, Wallenstein, Cheng et al., J. Electrochem. Soc. 2021, 168, 050521 (CC BY 4.0)",
+    "doi_or_url": "https://doi.org/10.1149/1945-7111/abfdc3 ; https://research.chalmers.se/publication/524381/file/524381_Fulltext.pdf",
+    "covers": "all bands"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "LiPF6 in PC, up to 3.2 M, Bruker FT-Raman 1064 nm, Voigt fit of 680-760 cm-1 with 3 components. The source does not give a separate ion-paired PF6- position (no ~745-750 band reported); at 3.2 M only ~30% of Li+ have PF6- in first shell from Raman. Solid LiPF6 entry is separate.",
+  "confidence": "medium"
+ }
+]

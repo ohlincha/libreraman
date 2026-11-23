@@ -170,6 +170,14 @@ void writeBandList(const QString& path, const std::vector<BandListEntry>& entrie
 // The simulator's five recorded spectra (532 nm, x from the factory calibration) as own entries, plus the
 // reference standards of standards.h as literature band lists. For tests and the demo.
 void createDemo(Library& lib, bool withStandards = true);
+
+// Reference entries shipped with LibreRamen (resources/reference/*.json): literature band positions with
+// citations, as peak lists (source Literature, tag "reference", provenance "reference_key"). Adds the ones not
+// yet in `lib` and records info "reference_version"; returns how many were added. Throws lr::Error if `lib` is
+// read-only.
+int addReferenceEntries(Library& lib);
+int referenceVersion();                         // of the shipped set (info "reference_version" in a library)
+int referenceCount();                           // entries in the shipped set
 // The simulator spectrum of `sample` (simulatorData() name) on the factory shift axis, counts per second.
 std::pair<Vec, Vec> simulatorSpectrum(const QString& sample);
 

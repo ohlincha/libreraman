@@ -99,7 +99,14 @@ A spectral library is an SQLite file (**New library…**, **Open…**). Add spec
 files, or import a RRUFF folder. Select a spectrum and press **Match** to rank the library entries against
 it; *Filters* narrow the search. Matching removes the baseline with *arPLS* by default, so fluorescent
 samples are still matched to clean reference spectra (classic SNIP left part of the fluorescence behind and
-matched them to the wrong entry). Peak tables picked automatically by an older version (0.3.1 or older) are
+matched them to the wrong entry).
+
+**Reference entries.** The default library comes with literature reference entries: band positions of battery
+materials (cathodes, carbons and anodes, binders and cellulose, electrolyte salts and anions, SEI products), each
+with its sources (DOIs), the excitation laser, notes on composition and phase, and a confidence. They are peak
+lists, not spectra, so use **peak search** for them; class *Literature*, tag *reference*. New versions of
+LibreRamen add new reference entries to the default library; entries you edited are kept. **Library ▸ Add
+reference entries** adds them to any other library. Peak tables picked automatically by an older version (0.3.1 or older) are
 re-picked the same way the first time the library is opened for writing; edited peak tables are kept.
 
 ## Analysis

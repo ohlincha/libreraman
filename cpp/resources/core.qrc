@@ -2,5 +2,6 @@
   <qresource prefix="/core">
     <file>simulator.bin</file>
     <file>band_assignments.csv</file>
+    <file>reference/battery.json</file>
   </qresource>
 </RCC>

@@ -101,6 +101,7 @@ private:
     void newLibrary();
     void openLibrary(bool readOnly);
     void addDemo();
+    void addReference();                       // shipped literature band lists (library::addReferenceEntries)
     void importFiles();
     void importRruff();
     void importBandList();

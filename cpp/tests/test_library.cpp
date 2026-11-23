@@ -635,6 +635,37 @@ private slots:
         QCOMPARE(edited[0].label, QStringLiteral("ZnS LO"));
     }
 
+    // The shipped reference set: literature band lists with citations; added once (idempotent), recorded in
+    // info, and found by peak search.
+    void referenceEntries() {
+        Library lib;
+        lib.open(file("reference.sqlite"));
+        const int n = addReferenceEntries(lib);
+        QCOMPARE(n, referenceCount());
+        QVERIFY(n >= 30);
+        QCOMPARE(addReferenceEntries(lib), 0);
+        QCOMPARE(lib.info("reference_version"), QString::number(referenceVersion()));
+        Filter f;
+        f.text = "LiFePO4";
+        const auto found = lib.find(f, true);
+        const auto it = std::find_if(found.begin(), found.end(), [](const Entry& e) { return e.formula == "LiFePO4"; });
+        QVERIFY(it != found.end());
+        const Entry& lfp = *it;
+        QCOMPARE(lfp.source, Source::Literature);
+        QVERIFY(lfp.tags.contains("reference"));
+        QVERIFY(lfp.notes.contains("doi.org"));
+        bool v1 = false;
+        for (const auto& p : lfp.peaks) v1 = v1 || std::abs(p.position - 949) < 5;
+        QVERIFY(v1);
+        // a measured LFP peak list (main PO4 bands) finds LFP first
+        match::Matcher m;
+        m.load(lib);
+        const std::vector<PeakEntry> q{{949, 1, 0, {}}, {995, 0.3, 0, {}}, {1068, 0.3, 0, {}}, {440, 0.1, 0, {}}};
+        const auto hits = m.searchPeaks(q, {}, 3);
+        QVERIFY(!hits.empty());
+        QVERIFY2(hits[0].name.contains("LFP"), qPrintable(hits[0].name));
+    }
+
     void searchFluorescent() {
         Library lib;
         lib.open(file("fluor.sqlite"));

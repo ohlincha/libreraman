@@ -335,6 +335,9 @@ QWidget* LibraryPage::buildHeader() {
     libMenu->addAction(QStringLiteral("Open read-only…"), this, [this] { openLibrary(true); });
     libMenu->addSeparator();
     libMenu->addAction(QStringLiteral("Add demo entries (simulator spectra, standards)"), this, &LibraryPage::addDemo);
+    libMenu->addAction(QStringLiteral("Add reference entries (literature band positions, %1 compounds)")
+                           .arg(library::referenceCount()),
+                       this, &LibraryPage::addReference);
     m_libMenu = menuButton(QStringLiteral("Library"), libMenu);
 
     auto* imp = new QMenu(this);
@@ -561,6 +564,16 @@ bool LibraryPage::setLibraryPath(const QString& path, bool readOnly) {
         fillTable();
         emit message(msg);
         return false;
+    }
+    // the default library carries the shipped reference entries (literature band lists), new ones included
+    if (!readOnly && QFileInfo(path) == QFileInfo(defaultLibraryPath()) &&
+        m_lib->info(QStringLiteral("reference_version")).toInt() < library::referenceVersion()) {
+        try {
+            if (const int n = library::addReferenceEntries(*m_lib))
+                emit message(QStringLiteral("Added %1 reference entries (literature band positions) to the library").arg(n));
+        } catch (const Error& e) {
+            emit message(QStringLiteral("Reference entries not added: %1").arg(QString::fromUtf8(e.what())));
+        }
     }
     m_matcherDirty = true;
     m_hits.clear();
@@ -1199,6 +1212,18 @@ void LibraryPage::openLibrary(bool readOnly) {
     if (path.isEmpty()) return;
     if (!setLibraryPath(path, readOnly))
         QMessageBox::warning(this, QStringLiteral("Open library"), QStringLiteral("Could not open %1.").arg(path));
+}
+
+void LibraryPage::addReference() {
+    if (!requireWritable()) return;
+    try {
+        const int n = library::addReferenceEntries(*m_lib);
+        emit message(n ? QStringLiteral("Added %1 reference entries").arg(n)
+                       : QStringLiteral("The library already has all reference entries"));
+    } catch (const Error& e) {
+        QMessageBox::warning(this, QStringLiteral("Reference entries"), QString::fromUtf8(e.what()));
+    }
+    libraryModified();
 }
 
 void LibraryPage::addDemo() {

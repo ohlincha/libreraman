@@ -3,8 +3,10 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QRegularExpression>
+#include <QSet>
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
@@ -1277,6 +1279,81 @@ void createDemo(Library& lib, bool withStandards) {
         for (const auto& b : standards::bands(st.name)) e.peaks.push_back({b.position, b.strength / 3.0, 0, {}});
         lib.add(std::move(e));
     }
+}
+
+// ------------------------------------------------------------------------------------------- reference set
+namespace {
+constexpr int kReferenceVersion = 1;               // bump when resources/reference changes
+const char* const kReferenceFiles[] = {":/core/reference/battery.json"};
+
+std::vector<Entry> referenceSet() {
+    std::vector<Entry> out;
+    for (const char* path : kReferenceFiles) {
+        QFile f(QString::fromLatin1(path));
+        if (!f.open(QIODevice::ReadOnly)) throw Error(std::string("reference data missing: ") + path);
+        const QJsonArray arr = QJsonDocument::fromJson(f.readAll()).array();
+        const QString set = QFileInfo(QString::fromLatin1(path)).baseName();
+        for (const QJsonValue& v : arr) {
+            const QJsonObject o = v.toObject();
+            Entry e;
+            e.name = o["name"].toString();
+            e.formula = o["formula"].toString();
+            e.cas = o["cas"].toString();
+            e.cls = o["cls"].toString();
+            for (const QJsonValue& t : o["tags"].toArray()) e.tags << t.toString();
+            e.tags << QStringLiteral("reference");
+            e.source = Source::Literature;
+            e.laserNm = o["laser_nm"].toDouble();
+            QStringList refs;
+            const QJsonArray src = o["sources"].toArray();
+            for (const QJsonValue& s : src) {
+                const QJsonObject so = s.toObject();
+                refs << so["ref"].toString() + QStringLiteral(" — ") + so["doi_or_url"].toString() +
+                            (so["covers"].toString().isEmpty() ? QString() : QStringLiteral(" (") + so["covers"].toString() + ')');
+            }
+            if (!src.isEmpty()) e.sourceId = src.first().toObject()["doi_or_url"].toString();
+            e.licence = QStringLiteral("Band positions from the cited literature (factual data); compiled for LibreRamen (MIT)");
+            QString notes = o["notes"].toString();
+            if (!o["rruff_id"].toString().isEmpty())
+                notes += QStringLiteral("\nRRUFF: %1 (import from rruff.info yourself; not redistributable)").arg(o["rruff_id"].toString());
+            notes += QStringLiteral("\nConfidence: %1\nSources:\n%2").arg(o["confidence"].toString(), refs.join('\n'));
+            e.notes = notes.trimmed();
+            e.provenance.insert("reference_key", set + ':' + e.name);
+            e.provenance.insert("reference_set", set);
+            e.provenance.insert("generator", QStringLiteral("LibreRamen reference library v%1").arg(kReferenceVersion));
+            for (const QJsonValue& pv : o["peaks"].toArray()) {
+                const QJsonObject p = pv.toObject();
+                e.peaks.push_back({p["position"].toDouble(), p["intensity"].toDouble(), p["width"].toDouble(),
+                                   p["label"].toString()});
+            }
+            std::sort(e.peaks.begin(), e.peaks.end(), [](const PeakEntry& a, const PeakEntry& b) { return a.position < b.position; });
+            out.push_back(std::move(e));
+        }
+    }
+    return out;
+}
+}  // namespace
+
+int referenceVersion() { return kReferenceVersion; }
+int referenceCount() { return int(referenceSet().size()); }
+
+int addReferenceEntries(Library& lib) {
+    if (lib.readOnly()) throw Error("the library is open read-only");
+    QSet<QString> have;
+    Filter f;
+    f.source = Source::Literature;
+    for (const Entry& e : lib.find(f)) {
+        const QString k = e.provenance.value("reference_key").toString();
+        if (!k.isEmpty()) have.insert(k);
+    }
+    int added = 0;
+    for (Entry& e : referenceSet()) {
+        if (have.contains(e.provenance.value("reference_key").toString())) continue;   // kept as the user left it
+        lib.add(std::move(e));
+        ++added;
+    }
+    lib.setInfo(QStringLiteral("reference_version"), QString::number(kReferenceVersion));
+    return added;
 }
 
 }  // namespace lr::library
