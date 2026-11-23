@@ -102,7 +102,9 @@ samples are still matched to clean reference spectra (classic SNIP left part of 
 matched them to the wrong entry).
 
 **Reference entries.** The default library comes with literature reference entries: band positions of battery
-materials (cathodes, carbons and anodes, binders and cellulose, electrolyte salts and anions, SEI products), each
+materials (cathodes, carbons and anodes, binders and cellulose, electrolyte salts and anions, SEI products), common
+solvents (water, alcohols, acetone, acetonitrile, DMSO, DMF, chlorinated and aromatic solvents, alkanes) and the
+ASTM E1840 shift standards (cyclohexane, paracetamol, naphthalene, polystyrene, sulfur, toluene), each
 with its sources (DOIs), the excitation laser, notes on composition and phase, and a confidence. They are peak
 lists, not spectra, so use **peak search** for them; class *Literature*, tag *reference*. New versions of
 LibreRamen add new reference entries to the default library; entries you edited are kept. **Library ▸ Add

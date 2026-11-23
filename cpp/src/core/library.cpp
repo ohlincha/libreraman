@@ -1283,8 +1283,8 @@ void createDemo(Library& lib, bool withStandards) {
 
 // ------------------------------------------------------------------------------------------- reference set
 namespace {
-constexpr int kReferenceVersion = 1;               // bump when resources/reference changes
-const char* const kReferenceFiles[] = {":/core/reference/battery.json"};
+constexpr int kReferenceVersion = 2;               // bump when resources/reference changes
+const char* const kReferenceFiles[] = {":/core/reference/battery.json", ":/core/reference/solvents.json"};
 
 std::vector<Entry> referenceSet() {
     std::vector<Entry> out;

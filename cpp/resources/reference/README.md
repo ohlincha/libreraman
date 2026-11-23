@@ -11,6 +11,7 @@ not included: RRUFF's terms forbid redistribution (RRUFF IDs are listed so users
 | File | Contents | Compiled |
 |---|---|---|
 | battery.json | 33 battery materials: cathodes, anodes and carbons, binders and cellulose, electrolyte salts and anions, SEI products | 2026-11-23 (research agent, sources opened and read; spot-checked) |
+| solvents.json | 26 solvents, ASTM E1840 shift standards and PET; several solvents positions only (intensity 0, from Flanagan & Glavin, Sci. Data 2025) | 2026-11-23 (Sonnet research agent; spot-checked; formic acid and C–H-only PE/PP/PMMA dropped) |
 
 Format: an array of `{name, formula, cas, cls, tags, laser_nm, peaks: [{position, intensity, width, label}],
 sources: [{ref, doi_or_url, covers}], rruff_id, notes, confidence}`. Bump `kReferenceVersion` in

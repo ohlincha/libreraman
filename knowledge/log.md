@@ -10,3 +10,4 @@ title: Knowledge bundle log
 - 2026-11-23: Measure page baseline method/strength/show moved above the plot (hidden in collapsed Processing on laptop screens).
 - 2026-11-23: default baseline arPLS 6 (Measure, Data, matching, peak tables); polynomial control = order; band-survival test.
 - 2026-11-23: shipped reference library (resources/reference, 33 battery materials, literature band lists with DOIs); RRUFF not redistributable.
+- 2026-11-23: reference set 2: solvents.json (26 solvents and shift standards), kReferenceVersion 2.

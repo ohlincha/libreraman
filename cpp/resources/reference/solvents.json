@@ -1,0 +1,2309 @@
+[
+ {
+  "name": "Cyclohexane",
+  "formula": "C6H12",
+  "cas": "110-82-7",
+  "cls": "standard",
+  "tags": [
+   "ASTM E1840",
+   "calibration",
+   "C6H12"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 384.1,
+    "intensity": 0.02,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 426.3,
+    "intensity": 0.03,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 801.3,
+    "intensity": 0.95,
+    "width": 0,
+    "label": "ring breathing (ASTM E1840 standard)"
+   },
+   {
+    "position": 1028.3,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1157.6,
+    "intensity": 0.06,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1266.4,
+    "intensity": 0.14,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1347.6,
+    "intensity": 0,
+    "width": 0,
+    "label": "weak band (Vickers & Mann values, in Carrabba Table 3)"
+   },
+   {
+    "position": 1444.4,
+    "intensity": 0.12,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2634.0,
+    "intensity": 0,
+    "width": 0,
+    "label": "weak band (Vickers & Mann values, in Carrabba Table 3)"
+   },
+   {
+    "position": 2664.4,
+    "intensity": 0.08,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2852.9,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "CH2 sym stretch (strongest)"
+   },
+   {
+    "position": 2923.8,
+    "intensity": 0.58,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2938.3,
+    "intensity": 0.67,
+    "width": 0,
+    "label": ""
+   }
+  ],
+  "sources": [
+   {
+    "ref": "McCreery group (Univ. Alberta), Raman Shift Frequency Standards web page (ASTM E1840 materials; FT-Raman)",
+    "doi_or_url": "https://www.chem.ualberta.ca/~mccreery/ramanmaterials.html",
+    "covers": "positions and relative intensities"
+   },
+   {
+    "ref": "Carrabba, Wavenumber Standards for Raman Spectrometry, Handbook of Vibrational Spectroscopy 2006, Table 3 (ASTM E1840 averages)",
+    "doi_or_url": "https://doi.org/10.1002/9780470027325.s0705",
+    "covers": "positions with standard deviations"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "ASTM E1840 Raman-shift standard (liquid). Positions/intensities from McCreery table (ASTM values: 384.1, 426.3, 801.3, 1028.3, 1157.6, 1266.4, 1444.4, 2664.4, 2852.9, 2923.8, 2938.3); the 1347.6 and 2634.0 bands are from the Vickers & Mann column in Carrabba's Table 3 (intensity not given). Flanagan 2025 (785 nm) also reports 384, 426, 802, 1028, 1158, 1266, 1347, 1444, 2633, 2665, 2698, 2800, 2853, 2897, 2939.",
+  "confidence": "high"
+ },
+ {
+  "name": "4-Acetamidophenol (paracetamol, acetaminophen)",
+  "formula": "C8H9NO2",
+  "cas": "103-90-2",
+  "cls": "standard",
+  "tags": [
+   "paracetamol",
+   "acetaminophen",
+   "ASTM E1840",
+   "Tylenol"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 213.3,
+    "intensity": 0.17,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 329.2,
+    "intensity": 0.11,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 390.9,
+    "intensity": 0.25,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 465.1,
+    "intensity": 0.11,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 504.0,
+    "intensity": 0.11,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 651.6,
+    "intensity": 0.33,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 710.8,
+    "intensity": 0.17,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 797.2,
+    "intensity": 0.45,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 834.5,
+    "intensity": 0.14,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 857.9,
+    "intensity": 0.82,
+    "width": 0,
+    "label": "ring mode"
+   },
+   {
+    "position": 968.7,
+    "intensity": 0.12,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1105.5,
+    "intensity": 0.07,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1168.5,
+    "intensity": 0.7,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1236.8,
+    "intensity": 0.75,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1278.5,
+    "intensity": 0.42,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1323.9,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "strongest band (ASTM E1840)"
+   },
+   {
+    "position": 1371.5,
+    "intensity": 0.38,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1515.1,
+    "intensity": 0.09,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1561.5,
+    "intensity": 0.37,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1648.4,
+    "intensity": 0.73,
+    "width": 0,
+    "label": "amide I / C=O + ring"
+   },
+   {
+    "position": 2931.1,
+    "intensity": 0.29,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 3064.6,
+    "intensity": 0.26,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 3102.4,
+    "intensity": 0.2,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 3326.6,
+    "intensity": 0.07,
+    "width": 0,
+    "label": ""
+   }
+  ],
+  "sources": [
+   {
+    "ref": "McCreery group (Univ. Alberta), Raman Shift Frequency Standards web page (ASTM E1840 materials; FT-Raman)",
+    "doi_or_url": "https://www.chem.ualberta.ca/~mccreery/ramanmaterials.html",
+    "covers": "positions and relative intensities"
+   },
+   {
+    "ref": "Carrabba, Wavenumber Standards for Raman Spectrometry, Handbook of Vibrational Spectroscopy 2006, Table 3 (ASTM E1840 averages)",
+    "doi_or_url": "https://doi.org/10.1002/9780470027325.s0705",
+    "covers": "positions with standard deviations"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "ASTM E1840 Raman-shift standard (solid powder). Intensities relative to 1323.9 = 100. Only the strongest labels are assigned; assignments are the compiler's general attribution, not from the source.",
+  "confidence": "high"
+ },
+ {
+  "name": "Naphthalene",
+  "formula": "C10H8",
+  "cas": "91-20-3",
+  "cls": "standard",
+  "tags": [
+   "ASTM E1840",
+   "calibration",
+   "C10H8"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 513.8,
+    "intensity": 0.29,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 763.8,
+    "intensity": 0.3,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1021.6,
+    "intensity": 0.11,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1147.2,
+    "intensity": 0.06,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1382.2,
+    "intensity": 1.0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1464.5,
+    "intensity": 0.12,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1576.6,
+    "intensity": 0.16,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 3056.4,
+    "intensity": 0.32,
+    "width": 0,
+    "label": ""
+   }
+  ],
+  "sources": [
+   {
+    "ref": "McCreery group (Univ. Alberta), Raman Shift Frequency Standards web page (ASTM E1840 materials; FT-Raman)",
+    "doi_or_url": "https://www.chem.ualberta.ca/~mccreery/ramanmaterials.html",
+    "covers": "positions and relative intensities"
+   },
+   {
+    "ref": "Carrabba, Wavenumber Standards for Raman Spectrometry, Handbook of Vibrational Spectroscopy 2006, Table 3 (ASTM E1840 averages)",
+    "doi_or_url": "https://doi.org/10.1002/9780470027325.s0705",
+    "covers": "positions with standard deviations"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "ASTM E1840 Raman-shift standard (solid). Only 8 ASTM bands; naphthalene has more weak bands not listed here.",
+  "confidence": "high"
+ },
+ {
+  "name": "Polystyrene",
+  "formula": "(C8H8)n",
+  "cas": "9003-53-6",
+  "cls": "polymer",
+  "tags": [
+   "PS",
+   "calibration",
+   "ASTM E1840"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 620.9,
+    "intensity": 0.16,
+    "width": 0,
+    "label": "in-plane ring deformation"
+   },
+   {
+    "position": 795.8,
+    "intensity": 0.1,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1001.4,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "ring breathing (monosubstituted aromatic)"
+   },
+   {
+    "position": 1031.8,
+    "intensity": 0.27,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1155.3,
+    "intensity": 0.13,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1450.5,
+    "intensity": 0.08,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1583.1,
+    "intensity": 0.12,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1602.3,
+    "intensity": 0.28,
+    "width": 0,
+    "label": "ring stretch"
+   },
+   {
+    "position": 2852.4,
+    "intensity": 0.09,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2904.5,
+    "intensity": 0.13,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 3054.3,
+    "intensity": 0.32,
+    "width": 0,
+    "label": "aromatic C-H stretch"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "McCreery group (Univ. Alberta), Raman Shift Frequency Standards web page (ASTM E1840 materials; FT-Raman)",
+    "doi_or_url": "https://www.chem.ualberta.ca/~mccreery/ramanmaterials.html",
+    "covers": "positions and relative intensities"
+   },
+   {
+    "ref": "Spectra-Structure Correlations: Polymer Spectra, Handbook of Vibrational Spectroscopy 2006 (Wiley; s-a-s.org copy)",
+    "doi_or_url": "https://www.s-a-s.org/assets/docs/0470027320_Spectra-Structure_Correlations_Polymer_Spectra.pdf",
+    "covers": "1001 cm-1 ring breathing and ~620 cm-1 ring deformation characterisation only"
+   },
+   {
+    "ref": "Kniggendorf et al., Sensors 2019, 19, 1839, Table 1",
+    "doi_or_url": "https://doi.org/10.3390/s19081839",
+    "covers": "C-H region lines 2855, 2907, 3058 (microbeads, different instrument)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Atactic polystyrene (ASTM E1840-listed standard). McCreery positions used.",
+  "confidence": "high"
+ },
+ {
+  "name": "Sulfur (alpha-S8)",
+  "formula": "S8",
+  "cas": "7704-34-9",
+  "cls": "mineral",
+  "tags": [
+   "sulfur",
+   "S8",
+   "calibration",
+   "low-wavenumber"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 85.1,
+    "intensity": 0.17,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 153.8,
+    "intensity": 0.38,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 219.1,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "S-S bend (strongest)"
+   },
+   {
+    "position": 473.2,
+    "intensity": 0.36,
+    "width": 0,
+    "label": "S-S stretch"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "McCreery group (Univ. Alberta), Raman Shift Frequency Standards web page (ASTM E1840 materials; FT-Raman)",
+    "doi_or_url": "https://www.chem.ualberta.ca/~mccreery/ramanmaterials.html",
+    "covers": "positions and relative intensities"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "FT-Raman of Aldrich sulfur powder; only 4 bands reported by the source. Other weak S8 lines (e.g. ~190, ~246, ~437) are not listed because not confirmed here.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Toluene",
+  "formula": "C6H5CH3",
+  "cas": "108-88-3",
+  "cls": "solvent",
+  "tags": [
+   "methylbenzene",
+   "ASTM E1840",
+   "PhMe"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 217,
+    "intensity": 0,
+    "width": 0,
+    "label": "from Flanagan 2025 (785 nm), intensity unknown"
+   },
+   {
+    "position": 521.7,
+    "intensity": 0.1,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 622,
+    "intensity": 0,
+    "width": 0,
+    "label": "from Flanagan 2025 (785 nm), intensity unknown"
+   },
+   {
+    "position": 786.5,
+    "intensity": 0.39,
+    "width": 0,
+    "label": "ring/CH3 mode"
+   },
+   {
+    "position": 1003.6,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "ring breathing (strongest)"
+   },
+   {
+    "position": 1030.6,
+    "intensity": 0.23,
+    "width": 0,
+    "label": "ring CH in-plane bend"
+   },
+   {
+    "position": 1156,
+    "intensity": 0,
+    "width": 0,
+    "label": "from Flanagan 2025 (785 nm), intensity unknown"
+   },
+   {
+    "position": 1179,
+    "intensity": 0,
+    "width": 0,
+    "label": "from Flanagan 2025 (785 nm), intensity unknown"
+   },
+   {
+    "position": 1211.4,
+    "intensity": 0.16,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1380,
+    "intensity": 0,
+    "width": 0,
+    "label": "from Flanagan 2025 (785 nm), intensity unknown"
+   },
+   {
+    "position": 1586,
+    "intensity": 0,
+    "width": 0,
+    "label": "from Flanagan 2025 (785 nm), intensity unknown"
+   },
+   {
+    "position": 1605.1,
+    "intensity": 0.06,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2868,
+    "intensity": 0,
+    "width": 0,
+    "label": "from Flanagan 2025 (785 nm), intensity unknown"
+   },
+   {
+    "position": 2920,
+    "intensity": 0,
+    "width": 0,
+    "label": "from Flanagan 2025 (785 nm), intensity unknown"
+   },
+   {
+    "position": 2982,
+    "intensity": 0,
+    "width": 0,
+    "label": "from Flanagan 2025 (785 nm), intensity unknown"
+   },
+   {
+    "position": 3057.1,
+    "intensity": 0.3,
+    "width": 0,
+    "label": ""
+   }
+  ],
+  "sources": [
+   {
+    "ref": "McCreery group (Univ. Alberta), Raman Shift Frequency Standards web page (ASTM E1840 materials; FT-Raman)",
+    "doi_or_url": "https://www.chem.ualberta.ca/~mccreery/ramanmaterials.html",
+    "covers": "positions and relative intensities"
+   },
+   {
+    "ref": "Flanagan & Glavin, Sci. Data 2025, 12, 498 (Table 2/3, Raman active bands)",
+    "doi_or_url": "https://doi.org/10.1038/s41597-025-04848-6",
+    "covers": "band positions"
+   },
+   {
+    "ref": "Carrabba, Wavenumber Standards for Raman Spectrometry, Handbook of Vibrational Spectroscopy 2006, Table 3 (ASTM E1840 averages)",
+    "doi_or_url": "https://doi.org/10.1002/9780470027325.s0705",
+    "covers": "positions with standard deviations"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Toluene bands from the 50/50 toluene-acetonitrile ASTM E1840 mix (McCreery; intensities relative to 1003.6 = 100 within the mix). Extra bands (intensity 0) from Flanagan 2025 (785 nm).",
+  "confidence": "high"
+ },
+ {
+  "name": "Acetonitrile",
+  "formula": "CH3CN",
+  "cas": "75-05-8",
+  "cls": "solvent",
+  "tags": [
+   "MeCN",
+   "ASTM E1840"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 378.5,
+    "intensity": 0.06,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 919.0,
+    "intensity": 0.17,
+    "width": 0,
+    "label": "C-C stretch"
+   },
+   {
+    "position": 1375,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH3 deformation (Flanagan 2025)"
+   },
+   {
+    "position": 2253.7,
+    "intensity": 0.69,
+    "width": 0,
+    "label": "C≡N stretch (nu2)"
+   },
+   {
+    "position": 2292.6,
+    "intensity": 0.08,
+    "width": 0,
+    "label": "combination band"
+   },
+   {
+    "position": 2940.8,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "CH3 sym stretch (nu1)"
+   },
+   {
+    "position": 2994,
+    "intensity": 0,
+    "width": 0,
+    "label": "Flanagan 2025"
+   },
+   {
+    "position": 3004,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH3 antisym stretch (Flanagan 2025)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "McCreery group (Univ. Alberta), Raman Shift Frequency Standards web page (ASTM E1840 materials; FT-Raman)",
+    "doi_or_url": "https://www.chem.ualberta.ca/~mccreery/ramanmaterials.html",
+    "covers": "positions and relative intensities"
+   },
+   {
+    "ref": "Flanagan & Glavin, Sci. Data 2025, 12, 498 (Table 2/3, Raman active bands)",
+    "doi_or_url": "https://doi.org/10.1038/s41597-025-04848-6",
+    "covers": "band positions"
+   },
+   {
+    "ref": "Carrabba, Wavenumber Standards for Raman Spectrometry, Handbook of Vibrational Spectroscopy 2006, Table 3 (ASTM E1840 averages)",
+    "doi_or_url": "https://doi.org/10.1002/9780470027325.s0705",
+    "covers": "positions with standard deviations"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Positions from the acetonitrile components of the ASTM E1840 50/50 toluene-acetonitrile mixture (FT-Raman); intensities re-normalised so the strongest acetonitrile band (2940.8) = 1.0 (raw mix values 4, 11, 44, 5, 64 vs toluene 1003.6 = 100). Flanagan 2025 (785 nm) bands: 380, 920, 1375, 2253, 2293, 2732, 2994, 3004; 2732 not included.",
+  "confidence": "high"
+ },
+ {
+  "name": "2-Propanol",
+  "formula": "(CH3)2CHOH",
+  "cas": "67-63-0",
+  "cls": "solvent",
+  "tags": [
+   "isopropanol",
+   "IPA"
+  ],
+  "laser_nm": 785,
+  "peaks": [
+   {
+    "position": 373,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 429,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 489,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 820,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 953,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1132,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1342,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1452,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2721,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2882,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2920,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2975,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Flanagan & Glavin, Sci. Data 2025, 12, 498 (Table 2/3, Raman active bands)",
+    "doi_or_url": "https://doi.org/10.1038/s41597-025-04848-6",
+    "covers": "band positions"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Acetic acid",
+  "formula": "CH3COOH",
+  "cas": "64-19-7",
+  "cls": "solvent",
+  "tags": [
+   "AcOH",
+   "glacial acetic acid"
+  ],
+  "laser_nm": 785,
+  "peaks": [
+   {
+    "position": 446,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 622,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 894,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1429,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1668,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2943,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2994,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Flanagan & Glavin, Sci. Data 2025, 12, 498 (Table 2/3, Raman active bands)",
+    "doi_or_url": "https://doi.org/10.1038/s41597-025-04848-6",
+    "covers": "band positions"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Acetone",
+  "formula": "(CH3)2CO",
+  "cas": "67-64-1",
+  "cls": "solvent",
+  "tags": [
+   "propanone"
+  ],
+  "laser_nm": 785,
+  "peaks": [
+   {
+    "position": 392,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 531,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 788,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1067,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1222,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1431,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1709,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2698,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2850,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2924,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2967,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 3007,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Flanagan & Glavin, Sci. Data 2025, 12, 498 (Table 2/3, Raman active bands)",
+    "doi_or_url": "https://doi.org/10.1038/s41597-025-04848-6",
+    "covers": "band positions"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Chloroform",
+  "formula": "CHCl3",
+  "cas": "67-66-3",
+  "cls": "solvent",
+  "tags": [
+   "trichloromethane"
+  ],
+  "laser_nm": 785,
+  "peaks": [
+   {
+    "position": 261,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 366,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 668,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 758,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1216,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 3019,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Flanagan & Glavin, Sci. Data 2025, 12, 498 (Table 2/3, Raman active bands)",
+    "doi_or_url": "https://doi.org/10.1038/s41597-025-04848-6",
+    "covers": "band positions"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Dimethyl sulfoxide",
+  "formula": "(CH3)2SO",
+  "cas": "67-68-5",
+  "cls": "solvent",
+  "tags": [
+   "DMSO"
+  ],
+  "laser_nm": 785,
+  "peaks": [
+   {
+    "position": 307,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 334,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 383,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 669,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 699,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 954,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1044,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1419,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2913,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2997,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Flanagan & Glavin, Sci. Data 2025, 12, 498 (Table 2/3, Raman active bands)",
+    "doi_or_url": "https://doi.org/10.1038/s41597-025-04848-6",
+    "covers": "band positions"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Ethanol",
+  "formula": "C2H5OH",
+  "cas": "64-17-5",
+  "cls": "solvent",
+  "tags": [
+   "EtOH"
+  ],
+  "laser_nm": 785,
+  "peaks": [
+   {
+    "position": 443,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 883,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1052,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1096,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1276,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1454,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2718,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2878,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2929,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2973,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Flanagan & Glavin, Sci. Data 2025, 12, 498 (Table 2/3, Raman active bands)",
+    "doi_or_url": "https://doi.org/10.1038/s41597-025-04848-6",
+    "covers": "band positions"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Ethyl acetate",
+  "formula": "CH3COOC2H5",
+  "cas": "141-78-6",
+  "cls": "solvent",
+  "tags": [
+   "EtOAc"
+  ],
+  "laser_nm": 785,
+  "peaks": [
+   {
+    "position": 379,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 634,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 787,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 847,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 918,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 939,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1002,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1047,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1115,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1454,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1736,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2714,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2879,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2941,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2979,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Flanagan & Glavin, Sci. Data 2025, 12, 498 (Table 2/3, Raman active bands)",
+    "doi_or_url": "https://doi.org/10.1038/s41597-025-04848-6",
+    "covers": "band positions"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Ethylene glycol",
+  "formula": "HOCH2CH2OH",
+  "cas": "107-21-1",
+  "cls": "solvent",
+  "tags": [
+   "1,2-ethanediol",
+   "EG"
+  ],
+  "laser_nm": 785,
+  "peaks": [
+   {
+    "position": 347,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 481,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 865,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1046,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1091,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1271,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1462,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2722,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2881,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2937,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Flanagan & Glavin, Sci. Data 2025, 12, 498 (Table 2/3, Raman active bands)",
+    "doi_or_url": "https://doi.org/10.1038/s41597-025-04848-6",
+    "covers": "band positions"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "confidence": "medium"
+ },
+ {
+  "name": "N,N-Dimethylformamide",
+  "formula": "HCON(CH3)2",
+  "cas": "68-12-2",
+  "cls": "solvent",
+  "tags": [
+   "DMF"
+  ],
+  "laser_nm": 785,
+  "peaks": [
+   {
+    "position": 318,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 355,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 405,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 659,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 866,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1092,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1407,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1440,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1661,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2808,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2869,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2932,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2997,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Flanagan & Glavin, Sci. Data 2025, 12, 498 (Table 2/3, Raman active bands)",
+    "doi_or_url": "https://doi.org/10.1038/s41597-025-04848-6",
+    "covers": "band positions"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "confidence": "medium"
+ },
+ {
+  "name": "n-Heptane",
+  "formula": "C7H16",
+  "cas": "142-82-5",
+  "cls": "solvent",
+  "tags": [
+   "heptane"
+  ],
+  "laser_nm": 785,
+  "peaks": [
+   {
+    "position": 309,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 356,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 395,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 777,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 839,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 902,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1045,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1079,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1138,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1302,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1455,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2732,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2875,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2938,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Flanagan & Glavin, Sci. Data 2025, 12, 498 (Table 2/3, Raman active bands)",
+    "doi_or_url": "https://doi.org/10.1038/s41597-025-04848-6",
+    "covers": "band positions"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "confidence": "medium"
+ },
+ {
+  "name": "n-Hexane",
+  "formula": "C6H14",
+  "cas": "110-54-3",
+  "cls": "solvent",
+  "tags": [
+   "hexane"
+  ],
+  "laser_nm": 785,
+  "peaks": [
+   {
+    "position": 317,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 371,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 402,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 454,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 823,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 892,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1005,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1039,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1080,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1141,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1303,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1456,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2671,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2733,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2876,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2938,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Flanagan & Glavin, Sci. Data 2025, 12, 498 (Table 2/3, Raman active bands)",
+    "doi_or_url": "https://doi.org/10.1038/s41597-025-04848-6",
+    "covers": "band positions"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Methanol",
+  "formula": "CH3OH",
+  "cas": "67-56-1",
+  "cls": "solvent",
+  "tags": [
+   "MeOH"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 655,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-O torsion (broad)"
+   },
+   {
+    "position": 1033,
+    "intensity": 0.6,
+    "width": 0,
+    "label": "C-O stretch"
+   },
+   {
+    "position": 1107,
+    "intensity": 0.2,
+    "width": 0,
+    "label": "CH3 rock"
+   },
+   {
+    "position": 1165,
+    "intensity": 0.1,
+    "width": 0,
+    "label": "CH3 rock"
+   },
+   {
+    "position": 1418,
+    "intensity": 0,
+    "width": 0,
+    "label": "OH bend (broad)"
+   },
+   {
+    "position": 1464,
+    "intensity": 0.5,
+    "width": 0,
+    "label": "CH3 deformations"
+   },
+   {
+    "position": 2834,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "CH3 sym stretch"
+   },
+   {
+    "position": 2940,
+    "intensity": 0.9,
+    "width": 0,
+    "label": "CH3 antisym stretch"
+   },
+   {
+    "position": 2993,
+    "intensity": 0.3,
+    "width": 0,
+    "label": "CH3 antisym stretch"
+   },
+   {
+    "position": 3328,
+    "intensity": 0,
+    "width": 0,
+    "label": "OH stretch (very broad, 3270-3480)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Shimanouchi, Tables of Molecular Vibrational Frequencies Part 1, NSRDS-NBS 6, 1967",
+    "doi_or_url": "https://nvlpubs.nist.gov/nistpubs/Legacy/NSRDS/nbsnsrds6.pdf",
+    "covers": "liquid-phase Raman positions; intensities on a 0-10 scale or VS/S/M/W/VW"
+   },
+   {
+    "ref": "Flanagan & Glavin, Sci. Data 2025, 12, 498 (Table 2/3, Raman active bands)",
+    "doi_or_url": "https://doi.org/10.1038/s41597-025-04848-6",
+    "covers": "band positions"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Liquid-phase Raman column of Shimanouchi table (intensity scale 0-10: 2834=10, 2940=9, 1033=6, 1464=5, 2993=3, 1107=2, 1165=1) divided by 10. Flanagan 2025 (785 nm) bands 1034, 1110, 1156, 1452, 2835, 2944 agree. 655 and 1418 are IR-derived selected values listed with Raman 'broad'.",
+  "confidence": "high"
+ },
+ {
+  "name": "Carbon tetrachloride",
+  "formula": "CCl4",
+  "cas": "56-23-5",
+  "cls": "solvent",
+  "tags": [
+   "tetrachloromethane",
+   "CCl4"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 458.7,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "CCl4 sym stretch nu1 (p)"
+   },
+   {
+    "position": 217.0,
+    "intensity": 0.7,
+    "width": 0,
+    "label": "nu2 deformation"
+   },
+   {
+    "position": 313.5,
+    "intensity": 0.9,
+    "width": 0,
+    "label": "nu4 deformation"
+   },
+   {
+    "position": 761.7,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "nu3 stretch component"
+   },
+   {
+    "position": 790.4,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "nu3 stretch component (Fermi doublet)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Shimanouchi, Tables of Molecular Vibrational Frequencies Part 1, NSRDS-NBS 6, 1967",
+    "doi_or_url": "https://nvlpubs.nist.gov/nistpubs/Legacy/NSRDS/nbsnsrds6.pdf",
+    "covers": "liquid-phase Raman positions; intensities on a 0-10 scale or VS/S/M/W/VW"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Liquid Raman positions with intensities (0-10)/10 from Shimanouchi. 790.4 read from OCR of the scanned table as '1790.4' (typo for ~790); check against another source. Nu3 appears as a Fermi-resonance doublet near 762/790.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Benzene",
+  "formula": "C6H6",
+  "cas": "71-43-2",
+  "cls": "solvent",
+  "tags": [
+   "benzol"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 605.6,
+    "intensity": 0.6,
+    "width": 0,
+    "label": "ring deformation e2g"
+   },
+   {
+    "position": 848.9,
+    "intensity": 0.3,
+    "width": 0,
+    "label": "CH bend e1g (dp)"
+   },
+   {
+    "position": 991.6,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "ring breathing nu1 (p)"
+   },
+   {
+    "position": 1178.0,
+    "intensity": 0.6,
+    "width": 0,
+    "label": "CH bend e2g"
+   },
+   {
+    "position": 1326,
+    "intensity": 0.1,
+    "width": 0,
+    "label": "CH bend (VW)"
+   },
+   {
+    "position": 1584.6,
+    "intensity": 0.6,
+    "width": 0,
+    "label": "ring stretch e2g"
+   },
+   {
+    "position": 1606.4,
+    "intensity": 0.6,
+    "width": 0,
+    "label": "ring stretch e2g"
+   },
+   {
+    "position": 3046.8,
+    "intensity": 0.6,
+    "width": 0,
+    "label": "CH stretch e2g"
+   },
+   {
+    "position": 3061.9,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "CH stretch nu1 (p)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Shimanouchi, Tables of Molecular Vibrational Frequencies Part 1, NSRDS-NBS 6, 1967",
+    "doi_or_url": "https://nvlpubs.nist.gov/nistpubs/Legacy/NSRDS/nbsnsrds6.pdf",
+    "covers": "liquid-phase Raman positions; intensities on a 0-10 scale or VS/S/M/W/VW"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Raman column of Shimanouchi table (liquid). Qualitative intensities VS=1.0, S=0.6, M=0.3, W/VW=0.1.",
+  "confidence": "high"
+ },
+ {
+  "name": "1,2-Dichloroethane",
+  "formula": "ClCH2CH2Cl",
+  "cas": "107-06-2",
+  "cls": "solvent",
+  "tags": [
+   "DCE",
+   "ethylene dichloride"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 265,
+    "intensity": 0.5,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 300,
+    "intensity": 0.8,
+    "width": 0,
+    "label": "CCCl deformation (trans)"
+   },
+   {
+    "position": 411,
+    "intensity": 0.5,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 654,
+    "intensity": 0.8,
+    "width": 0,
+    "label": "C-Cl stretch (gauche)"
+   },
+   {
+    "position": 677,
+    "intensity": 0.6,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 754,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "C-Cl stretch (trans)"
+   },
+   {
+    "position": 881,
+    "intensity": 0.4,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 943,
+    "intensity": 0.5,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 989,
+    "intensity": 0.2,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1031,
+    "intensity": 0.2,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1052,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "C-C stretch (trans)"
+   },
+   {
+    "position": 1145,
+    "intensity": 0.3,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1207,
+    "intensity": 0.5,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1264,
+    "intensity": 0.3,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1304,
+    "intensity": 0.6,
+    "width": 0,
+    "label": "CH2 wag"
+   },
+   {
+    "position": 1429,
+    "intensity": 0.6,
+    "width": 0,
+    "label": "CH2 scissors (gauche)"
+   },
+   {
+    "position": 1445,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "CH2 scissors (trans)"
+   },
+   {
+    "position": 2957,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "CH2 sym stretch"
+   },
+   {
+    "position": 3005,
+    "intensity": 0.8,
+    "width": 0,
+    "label": "CH2 antisym stretch"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Shimanouchi, Tables of Molecular Vibrational Frequencies Part 1, NSRDS-NBS 6, 1967",
+    "doi_or_url": "https://nvlpubs.nist.gov/nistpubs/Legacy/NSRDS/nbsnsrds6.pdf",
+    "covers": "liquid-phase Raman positions; intensities on a 0-10 scale or VS/S/M/W/VW"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Liquid Raman column for both trans (Table 37) and gauche (Table 38) conformers, merged; intensities (0-10)/10. Liquid contains both rotamers.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Dichloromethane",
+  "formula": "CH2Cl2",
+  "cas": "75-09-2",
+  "cls": "solvent",
+  "tags": [
+   "DCM",
+   "methylene chloride"
+  ],
+  "laser_nm": 785,
+  "peaks": [
+   {
+    "position": 286,
+    "intensity": 0,
+    "width": 0,
+    "label": "CCl2 scissors"
+   },
+   {
+    "position": 703,
+    "intensity": 0,
+    "width": 0,
+    "label": "CCl2 sym stretch"
+   },
+   {
+    "position": 741,
+    "intensity": 0,
+    "width": 0,
+    "label": "CCl2 antisym stretch"
+   },
+   {
+    "position": 1156,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1423,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH2 scissors"
+   },
+   {
+    "position": 2988,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH2 sym stretch"
+   },
+   {
+    "position": 3056,
+    "intensity": 0,
+    "width": 0,
+    "label": "CH2 antisym stretch"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Flanagan & Glavin, Sci. Data 2025, 12, 498 (Table 2/3, Raman active bands)",
+    "doi_or_url": "https://doi.org/10.1038/s41597-025-04848-6",
+    "covers": "band positions"
+   },
+   {
+    "ref": "Shimanouchi, Tables of Molecular Vibrational Frequencies Part 1, NSRDS-NBS 6, 1967",
+    "doi_or_url": "https://nvlpubs.nist.gov/nistpubs/Legacy/NSRDS/nbsnsrds6.pdf",
+    "covers": "liquid-phase Raman positions; intensities on a 0-10 scale or VS/S/M/W/VW"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Positions from Flanagan 2025 (785 nm); assignments by analogy with Shimanouchi's gas/liquid values (282 sc, 713 CCl2 sym, 758 antisym, 1153, 1430, 2996, 3040) - liquid values are lower than the gas-phase 'selected' values by ~15 cm-1. Intensities unknown.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Water (liquid H2O)",
+  "formula": "H2O",
+  "cas": "7732-18-5",
+  "cls": "solvent",
+  "tags": [
+   "water",
+   "aqueous"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 450,
+    "intensity": 0,
+    "width": 0,
+    "label": "hindered-rotation (libration) band nu_L1, broad"
+   },
+   {
+    "position": 1650,
+    "intensity": 0,
+    "width": 0,
+    "label": "H-O-H bend"
+   },
+   {
+    "position": 2130,
+    "intensity": 0,
+    "width": 0,
+    "label": "bend + libration combination, weak"
+   },
+   {
+    "position": 3400,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "O-H stretch, broad (3200-3800)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Pastorczak et al., J. Phys. Chem. B 2023, 127 (femtosecond stimulated Raman of H2O/HDO/D2O)",
+    "doi_or_url": "https://doi.org/10.1021/acs.jpcb.3c01334",
+    "covers": "approximate positions quoted in the text: OH stretch ~3400, bend ~1650, libration ~450, bend+libration ~2130"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Approximate positions of broad bands quoted in the text, not a peak table. Raman of water is weak at 785 nm and the OH stretch is a broad asymmetric envelope.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Heavy water (D2O)",
+  "formula": "D2O",
+  "cas": "7789-20-0",
+  "cls": "solvent",
+  "tags": [
+   "deuterium oxide",
+   "D2O"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 425,
+    "intensity": 0,
+    "width": 0,
+    "label": "rocking libration (D2O, approx)"
+   },
+   {
+    "position": 1210,
+    "intensity": 0,
+    "width": 0,
+    "label": "D-O-D bend"
+   },
+   {
+    "position": 1555,
+    "intensity": 0,
+    "width": 0,
+    "label": "bend + libration combination, centred ~1555"
+   },
+   {
+    "position": 2500,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "O-D stretch, broad"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Pastorczak et al., J. Phys. Chem. B 2023, 127",
+    "doi_or_url": "https://doi.org/10.1021/acs.jpcb.3c01334",
+    "covers": "OD stretch ~2500, bend ~1210, combination ~1555"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Approximate positions from the text of a stimulated-Raman study, not a peak table; the 425 cm-1 libration is quoted for the HDO/D2O mixture context. Low-intensity bands only roughly located.",
+  "confidence": "low"
+ },
+ {
+  "name": "Poly(ethylene terephthalate) (PET)",
+  "formula": "(C10H8O4)n",
+  "cas": "25038-59-9",
+  "cls": "polymer",
+  "tags": [
+   "PET",
+   "polyester"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 634,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 859,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1118,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1178,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1292,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1617,
+    "intensity": 0,
+    "width": 0,
+    "label": "aromatic ring stretch"
+   },
+   {
+    "position": 1731,
+    "intensity": 0,
+    "width": 0,
+    "label": "C=O stretch"
+   },
+   {
+    "position": 2962,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 3082,
+    "intensity": 0,
+    "width": 0,
+    "label": ""
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Capozzi et al., Biology 2023, 12, 1278 (table of Raman bands for uncolored PET, citing Anger et al. 2018)",
+    "doi_or_url": "https://doi.org/10.3390/biology12101278",
+    "covers": "band positions"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Positions as quoted in a secondary table (itself citing Anger et al. 2018); laser for the underlying data not confirmed. Intensities unknown. Assignments from the Handbook text (aromatic ~1600, C=O ~1725).",
+  "confidence": "medium"
+ }
+]

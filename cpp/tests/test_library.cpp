@@ -664,6 +664,20 @@ private slots:
         const auto hits = m.searchPeaks(q, {}, 3);
         QVERIFY(!hits.empty());
         QVERIFY2(hits[0].name.contains("LFP"), qPrintable(hits[0].name));
+        // solvents: cyclohexane (ASTM E1840 bands) is found from its strongest lines
+        const std::vector<PeakEntry> cy{{801.3, 0.95, 0, {}}, {2852.9, 1, 0, {}}, {2938.3, 0.67, 0, {}},
+                                        {1028.3, 0.15, 0, {}}, {1266.4, 0.14, 0, {}}, {1444.4, 0.1, 0, {}}};
+        const auto hc = m.searchPeaks(cy, {}, 3);
+        QVERIFY(!hc.empty());
+        QVERIFY2(hc[0].name.contains("Cyclohexane"), qPrintable(hc[0].name));
+        // a library from an older version gets only the entries it lacks
+        Library old;
+        old.open(file("reference-old.sqlite"));
+        addReferenceEntries(old);
+        const auto all = old.find(Filter{}, false);
+        old.remove(std::find_if(all.begin(), all.end(), [](const Entry& e) { return e.name == "Benzene"; })->id);
+        old.setInfo("reference_version", "1");
+        QCOMPARE(addReferenceEntries(old), 1);
     }
 
     void searchFluorescent() {

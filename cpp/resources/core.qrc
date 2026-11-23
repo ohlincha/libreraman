@@ -3,5 +3,6 @@
     <file>simulator.bin</file>
     <file>band_assignments.csv</file>
     <file>reference/battery.json</file>
+    <file>reference/solvents.json</file>
   </qresource>
 </RCC>
