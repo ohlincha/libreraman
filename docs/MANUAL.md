@@ -127,3 +127,26 @@ calibration** returns to the factory one at any time.
 **Quick check** measures a standard and compares it with the calibration in use without changing anything.
 **History** lists all calibrations of the instrument (make an older one active again, or revert to factory).
 *Remind after* sets when the program asks for a new check.
+
+### Intensity correction
+
+The detector, grating and filters don't respond equally at every wavelength, so band intensities far apart in
+the spectrum (2D/G in carbons, or ratios of bands at 500 and 3000 cm⁻¹) depend on the instrument. The
+**Intensity** tab measures a reference with a known emission curve and computes a correction factor:
+
+| Reference | True curve |
+|---|---|
+| NIST SRM 2242 glass (532 nm) | the certified polynomial; the same coefficients are in the instrument's factory file |
+| Tungsten-halogen lamp | blackbody (Planck) curve at the lamp's colour temperature, a few % approximation |
+| Table from a file | two columns: Raman shift (cm⁻¹) and relative intensity, e.g. from a certificate |
+
+1. Put the reference in the sample position, choose it, and press **▶ MEASURE REFERENCE** (or **Use a saved
+   spectrum…**). Use an exposure that keeps the signal well below saturation; the reference must reach S/N ≥ 50.
+2. Check the plots: measured vs true curve (the valid range is shaded) and the correction factor next to the one
+   in use. Warnings appear if the factor varies more than 30-fold or covers less than 1500 cm⁻¹.
+3. **Accept** stores it for this instrument and channel (`response_<serial>_<channel>.json` next to the
+   calibration files, with a dated history copy). **Remove correction** stops using it.
+
+Tick **intensity correction** in Measure (Processing) or on the Data page to apply it. Raw data are never
+changed; saved spectra carry the instrument's serial number, so the Data page corrects each file with its own
+instrument's response. Outside the valid range the factor at the nearest end is used.

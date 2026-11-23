@@ -191,7 +191,7 @@ private:
     QLabel* m_minLabel;
     QComboBox *m_baseline, *m_normalise, *m_derivative;
     QSlider* m_strength;
-    QCheckBox *m_despike, *m_smoothing;
+    QCheckBox *m_despike, *m_smoothing, *m_intensity;
     QRadioButton *m_showRaw, *m_showCor, *m_showBoth;
 };
 

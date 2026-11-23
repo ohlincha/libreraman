@@ -1,6 +1,7 @@
 #include "calibrationpage.h"
 
 #include "controller.h"
+#include "intensitypanel.h"
 #include "mainwindow.h"
 #include "plotwidget.h"
 #include "theme.h"
@@ -182,12 +183,31 @@ CalibrationPage::CalibrationPage(const PageContext& ctx, QWidget* parent) : Page
     m_tabs->addTab(buildWizard(), QStringLiteral("Calibrate"));
     m_tabs->addTab(buildCheck(), QStringLiteral("Quick check"));
     m_tabs->addTab(buildHistory(), QStringLiteral("History"));
+    {
+        IntensityPanel::Host host;
+        host.serial = [this] { return serial(); };
+        host.channel = [this] { return channel(); };
+        host.laserNm = [this] { return laserNm(); };
+        host.channelCal = [this]() -> const lr::ChannelCal* {
+            const lr::Calibration& cal = instrument() ? instrument()->calibration() : lr::defaultCalibration();
+            const auto it = cal.channels.find(channel());
+            return it != cal.channels.end() ? &it->second : nullptr;
+        };
+        host.controller = [this]() -> Controller* { return instrument() ? controller() : nullptr; };
+        host.ready = [this] { return instrument() != nullptr && !m_busy; };
+        host.log = [this](const QString& m) { emit logMessage(m); };
+        m_intensity = new IntensityPanel(std::move(host));
+        connect(m_intensity, &IntensityPanel::responseChanged, this, &CalibrationPage::intensityResponseChanged);
+    }
+    m_tabs->addTab(m_intensity, QStringLiteral("Intensity"));
     m_tabs->addTab(buildLog(), QStringLiteral("Instrument log"));
     connect(m_tabs, &QTabWidget::currentChanged, this, [this](int k) {
         if (k == 2)
             refreshHistory();
-        else if (k == 3)
+        else if (k == 4)
             refreshLog();
+        else if (k == 3)
+            m_intensity->refresh();
     });
     v->addWidget(m_tabs, 1);
     setSelectedStandards({QStringLiteral("carbon tetrachloride"), QStringLiteral("chloroform")});
@@ -717,6 +737,7 @@ void CalibrationPage::setController(Controller* c) {
     if (!c)
         return;
     connect(c, &Controller::acquired, this, &CalibrationPage::onAcquired);
+    m_intensity->setController(c);
     connect(c, &Controller::busyChanged, this, [this](bool busy) {
         m_busy = busy;
         if (!busy && !m_pending.isEmpty()) {           // ended without a spectrum (error, NotArmed, Stop)

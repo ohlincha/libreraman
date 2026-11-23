@@ -7,6 +7,7 @@
 #include "core/peaks.h"
 #include "core/processing.h"
 #include "core/pyformat.h"
+#include "core/response.h"
 
 #include <QButtonGroup>
 #include <QCheckBox>
@@ -91,8 +92,14 @@ std::size_t nearestIndex(const Vec& x, double v) {    // np.argmin(np.abs(x - v)
     return best;
 }
 
-std::pair<Vec, Vec> processSafe(const Vec& x, const Vec& y, const lr::processing::Settings& s) {
+// The processing chain on a measured spectrum; with s.intensity first the instrument's intensity correction.
+std::pair<Vec, Vec> processSafe(const lr::Spectrum& sp, const lr::processing::Settings& s) {
+    const Vec& x = sp.shift;
+    const Vec& y = sp.intensity;
     try {
+        if (s.intensity)
+            return lr::processing::process(
+                x, lr::response::corrected(x, y, sp.metaValue(QLatin1String(lr::response::kSerialKey)), sp.channel), s);
         return lr::processing::process(x, y, s);
     } catch (const std::exception&) {              // e.g. too few points for the smoothing window
         return {y, Vec(y.size(), 0.0)};
@@ -518,6 +525,10 @@ QWidget* MeasurePage::buildSettingsPanel() {
     m_despike = new QCheckBox(QStringLiteral("remove cosmic rays"));
     m_despike->setChecked(true);
     m_smoothing = new QCheckBox(QStringLiteral("smooth (Savitzky–Golay)"));
+    m_intensity = new QCheckBox(QStringLiteral("intensity correction"));
+    m_intensity->setToolTip(QStringLiteral("<p>Correct the instrument's spectral sensitivity with the intensity "
+                                           "response measured on the Calibration page (tab <i>Intensity</i>). "
+                                           "Without one for this instrument nothing changes.</p>"));
     m_showRaw = new QRadioButton(QStringLiteral("raw"));
     m_showCor = new QRadioButton(QStringLiteral("corrected"));
     m_showBoth = new QRadioButton(QStringLiteral("both"));
@@ -536,12 +547,14 @@ QWidget* MeasurePage::buildSettingsPanel() {
     connect(m_strength, &QSlider::valueChanged, this, &MeasurePage::processingChanged);
     connect(m_despike, &QCheckBox::toggled, this, &MeasurePage::processingChanged);
     connect(m_smoothing, &QCheckBox::toggled, this, &MeasurePage::processingChanged);
+    connect(m_intensity, &QCheckBox::toggled, this, &MeasurePage::processingChanged);
     connect(m_normalise, &QComboBox::currentIndexChanged, this, &MeasurePage::processingChanged);
     connect(m_derivative, &QComboBox::currentIndexChanged, this, &MeasurePage::processingChanged);
     fl->addRow(QStringLiteral("Baseline"), m_baseline);
     fl->addRow(QStringLiteral("Strength"), m_strength);
     fl->addRow(m_despike);
     fl->addRow(m_smoothing);
+    fl->addRow(m_intensity);
     fl->addRow(QStringLiteral("Normalise"), m_normalise);
     fl->addRow(QStringLiteral("Derivative"), m_derivative);
     fl->addRow(QStringLiteral("Show"), shrow);
@@ -655,6 +668,7 @@ lr::processing::Settings MeasurePage::processingSettings() const {
     s.strength = m_strength->value() / 10.0;
     s.despike = m_despike->isChecked();
     s.smooth = m_smoothing->isChecked();
+    s.intensity = m_intensity->isChecked();
     s.normalize = m_normalise->currentText();
     s.derivative = m_derivative->currentIndex();
     return s;
@@ -768,7 +782,7 @@ void MeasurePage::addSpectrum(const lr::Spectrum& sp) {
     m_history.push_back(sp);
     const Vec& x = sp.shift;
     {
-        auto [y, base] = processSafe(x, sp.intensity, processingSettings());
+        auto [y, base] = processSafe(sp, processingSettings());
         m_processed.push_back({std::move(y), std::move(base), m_procStamp});
     }
     while (m_history.size() > 50) {
@@ -860,7 +874,7 @@ const MeasurePage::Processed& MeasurePage::processedAt(std::size_t i) {
     Processed& p = m_processed[i];
     if (p.stamp != m_procStamp) {
         const lr::Spectrum& sp = m_history[i];
-        std::tie(p.y, p.base) = processSafe(sp.shift, sp.intensity, processingSettings());
+        std::tie(p.y, p.base) = processSafe(sp, processingSettings());
         p.stamp = m_procStamp;
     }
     return p;

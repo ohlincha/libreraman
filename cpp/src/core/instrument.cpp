@@ -101,6 +101,7 @@ Spectrum Instrument::makeSpectrum(int ch, double exposure_s, int averages, const
     const auto c = cal_.channels.find(ch);
     sp.setMeta("laser_nm", py::str(c != cal_.channels.end() ? c->second.laser_nm : 0.0));
     sp.setMeta("calibration", calibrationLabel(ch));
+    sp.setMeta("serial", simulated() ? QStringLiteral("SIMULATOR") : cal_.serial);   // response::kSerialKey
     if (ch == 1064) {
         sp.setMeta("power_mw", py::str(power_mw > 0 ? power_mw : 50.0));   // Cora.power_mw[1064] default
         sp.setMeta("note", "1064 nm pixel orientation not yet verified");

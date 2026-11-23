@@ -6,6 +6,7 @@
 
 #include "core/errors.h"
 #include "core/pyformat.h"
+#include "core/response.h"
 
 #include <QAbstractItemView>
 #include <QApplication>
@@ -296,6 +297,13 @@ void DataPage::build() {
         });
         bar2->addWidget(c);
     }
+    bar2->addSpacing(16);
+    m_intensity = new QCheckBox(tr("intensity correction"));
+    m_intensity->setToolTip(tr("<p>Correct each spectrum with the intensity response of the instrument it was "
+                               "measured on (Calibration page, tab <i>Intensity</i>; matched by the serial number in "
+                               "the file). Spectra without one are shown unchanged.</p>"));
+    connect(m_intensity, &QCheckBox::toggled, this, &DataPage::redraw);
+    bar2->addWidget(m_intensity);
     bar2->addStretch();
     bar->addStretch();
     auto* calc = new QPushButton(tr("Calculator…"));
@@ -667,6 +675,8 @@ QString DataPage::baselineMethod() const { return m_baseline->currentData().toSt
 void DataPage::setBaselineStrength(double s) { m_strength->setValue(s); }
 double DataPage::baselineStrength() const { return m_strength->value(); }
 void DataPage::setBaselineCorrection(bool on) { setBaselineMethod(on ? m_lastBaseline : QStringLiteral("none")); }
+void DataPage::setIntensityCorrection(bool on) { m_intensity->setChecked(on); }
+bool DataPage::intensityCorrection() const { return m_intensity->isChecked(); }
 bool DataPage::baselineCorrection() const { return baselineMethod() != QLatin1String("none"); }
 void DataPage::setDifference(bool on) { m_diff->setChecked(on); }
 bool DataPage::difference() const { return m_diff->isChecked(); }
@@ -684,13 +694,20 @@ processing::Settings DataPage::settings() const {
         s.baseline = k;
         s.strength = m_strength->value();
     }
+    s.intensity = m_intensity->isChecked();
     s.normalize = m_norm->currentText();
     return s;
 }
 
 std::pair<Vec, Vec> DataPage::processed(const fileio::DataSpectrum& sp, QString* error) const {
     try {
-        return {sp.x, processing::process(sp.x, sp.y, settings()).first};
+        const processing::Settings s = settings();
+        if (s.intensity) {
+            const Vec y = response::corrected(sp.x, sp.y, sp.metaValue(QLatin1String(response::kSerialKey)),
+                                              response::channelOf(sp.metaValue(QStringLiteral("channel"))));
+            return {sp.x, processing::process(sp.x, y, s).first};
+        }
+        return {sp.x, processing::process(sp.x, sp.y, s).first};
     } catch (const std::exception& e) {
         if (error) *error = sp.name + ": " + QString::fromUtf8(e.what());
         return {sp.x, sp.y};
@@ -702,14 +719,16 @@ QString DataPage::settingsKey() const {
     return QStringLiteral("%1|%2|%3|%4|%5|%6|%7|%8|%9")
         .arg(s.baseline, QString::number(s.strength, 'g', 17), QString::number(int(s.despike)),
              QString::number(int(s.smooth)), QString::number(s.smoothWindow), QString::number(s.derivative),
-             QString::number(s.derivWindow), s.normalize, s.band ? QString::number(*s.band, 'g', 17) : QString());
+             QString::number(s.derivWindow), s.normalize, s.band ? QString::number(*s.band, 'g', 17) : QString())
+           + QStringLiteral("|intensity=%1").arg(int(s.intensity));
 }
 
 QString DataPage::describeProcessing() const {
     const processing::Settings ps = settings();
     return QStringLiteral("baseline=%1 strength=%2 despike=%3 smooth=%4 normalize=%5")
         .arg(ps.baseline, py::fixed(ps.strength, 1),
-             py::str(ps.despike), py::str(ps.smooth), m_norm->currentText());
+             py::str(ps.despike), py::str(ps.smooth), m_norm->currentText())
+           + (ps.intensity ? QStringLiteral(" intensity=True") : QString());
 }
 
 void DataPage::updateSwatches() {

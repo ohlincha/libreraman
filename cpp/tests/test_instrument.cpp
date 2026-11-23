@@ -161,11 +161,13 @@ private slots:
         QCOMPARE(sp.intensity.front(), sp.signal.front() - sp.background.front());
         QCOMPARE(sp.shift.front(), -661.5563739259451);
         QCOMPARE(sp.pixels.back(), 2047.0);
-        QCOMPARE(sp.meta.size(), size_t(3));
+        QCOMPARE(sp.meta.size(), size_t(4));
         QCOMPARE(sp.meta[0].first, QString("laser_nm"));
         QCOMPARE(sp.meta[0].second, QString("532.1"));
         QCOMPARE(sp.meta[1], qMakePair(QString("calibration"), QString("factory (built-in)")));
-        QCOMPARE(sp.meta[2], qMakePair(QString("power"), QString("set on the instrument (not computer-controlled)")));
+        // the instrument, for its intensity correction (response::kSerialKey)
+        QCOMPARE(sp.meta[2], qMakePair(QString("serial"), t.calibration().serial));
+        QCOMPARE(sp.meta[3], qMakePair(QString("power"), QString("set on the instrument (not computer-controlled)")));
     }
 
     void makeSpectrum1064() {

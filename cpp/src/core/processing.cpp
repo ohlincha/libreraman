@@ -610,6 +610,7 @@ Settings Settings::fromMap(const QVariantMap& m) {
     if (m.contains("deriv_window")) s.derivWindow = m.value("deriv_window").toInt();
     if (m.contains("normalize")) s.normalize = m.value("normalize").toString();
     if (m.contains("band") && !m.value("band").isNull()) s.band = m.value("band").toDouble();
+    if (m.contains("intensity")) s.intensity = m.value("intensity").toBool();
     return s;
 }
 

@@ -104,6 +104,8 @@ public:
     QString baselineMethod() const;
     void setBaselineStrength(double s);
     double baselineStrength() const;
+    void setIntensityCorrection(bool on);        // per spectrum, by the serial in its metadata
+    bool intensityCorrection() const;
     void setBaselineCorrection(bool on);         // off = "none"; on = the last method other than "none"
     bool baselineCorrection() const;
     void setDifference(bool on);                 // first ticked − second ticked
@@ -249,6 +251,7 @@ private:
     QCheckBox* m_diff = nullptr;
     QSlider* m_offset = nullptr;
     QSlider* m_angle = nullptr;                 // stacked: sideways shift per trace (pseudo-3D waterfall)
+    QCheckBox* m_intensity = nullptr;           // intensity (instrument-response) correction
     QCheckBox* m_mono = nullptr;                // stacked: one colour
     QCheckBox* m_bandOrganic = nullptr;         // band-assignment help (resources/band_assignments.csv)
     QCheckBox* m_bandInorganic = nullptr;

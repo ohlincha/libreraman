@@ -9,12 +9,16 @@
 #include "gui/calibrationpage.h"
 #include "gui/calibrationstore.h"
 #include "gui/controller.h"
+#include "gui/datapage.h"
+#include "gui/intensitypanel.h"
 #include "gui/mainwindow.h"
 #include "gui/page.h"
 #include "gui/plotwidget.h"
 #include "gui/theme.h"
 
 #include "core/calibrate.h"
+#include "core/fileio.h"
+#include "core/response.h"
 #include "core/simulator.h"
 #include "core/standards.h"
 
@@ -56,6 +60,7 @@ private slots:
     void reminder();
     void ccl4Only();
     void wrongCalibrationInUse();
+    void intensityResponse();
 
 private:
     void arm();
@@ -528,6 +533,67 @@ void GuiTestCalibrationPage::wrongCalibrationInUse() {
     QVERIFY(m_page->activeCalibrationText().startsWith(QStringLiteral("Factory")));
     QVERIFY(inst()->userCalibration().empty());
     QVERIFY(!m_page->headerRevertButton()->isVisibleTo(m_page));
+}
+
+// Intensity tab: a (synthetic) SRM 2242 reference loaded from a file -> correction accepted for the simulator's
+// key -> the Data page corrects spectra of that instrument (by the serial in their metadata) -> removed again.
+void GuiTestCalibrationPage::intensityResponse() {
+    QCOMPARE(m_page->tabs()->tabText(3), QStringLiteral("Intensity"));
+    IntensityPanel* panel = m_page->intensityPanel();
+    QVERIFY(panel);
+    QCOMPARE(m_page->serial(), QStringLiteral("SIMULATOR"));
+    QVERIFY(!lr::response::active(QStringLiteral("SIMULATOR"), 532));
+    auto sens = [](double x) {                                    // instrument sensitivity of the test
+        return (0.4 + std::exp(-0.5 * std::pow((x - 1200) / 1300, 2))) / (1 + std::exp(-(x - 135) / 8));
+    };
+    lr::Spectrum ref;
+    for (int i = 0; i < 2048; ++i) ref.shift.push_back(-660.0 + 4850.0 * i / 2047.0);
+    const lr::response::Reference srm;
+    const lr::Vec t = srm.curve(ref.shift, 532.1);
+    for (size_t i = 0; i < ref.shift.size(); ++i)
+        ref.intensity.push_back((std::isfinite(t[i]) ? t[i] : 0.05) * sens(ref.shift[i]) * 30000 + 30 * std::sin(i * 1.7));
+    const QString file = QDir(m_cfg.path()).filePath(QStringLiteral("srm.csv"));
+    ref.saveCsv(file);
+    QVERIFY(panel->loadFile(file));
+    QVERIFY(panel->pending().has_value());
+    QVERIFY(panel->acceptButton()->isEnabled());
+    QSignalSpy changed(m_page, &CalibrationPage::intensityResponseChanged);
+    QVERIFY(panel->acceptPending());
+    QCOMPARE(changed.count(), 1);
+    QVERIFY(QFile::exists(lr::response::activePath(QStringLiteral("SIMULATOR"), 532)));
+    QVERIFY(panel->inUseText().contains(QStringLiteral("NIST SRM 2242")));
+
+    // Data page: two equal bands far apart, as this instrument records them
+    lr::fileio::DataSpectrum sp;
+    sp.name = QStringLiteral("two bands");
+    for (double x = 100; x <= 3400; x += 2) {
+        sp.x.push_back(x);
+        sp.y.push_back(1000 * (std::exp(-0.5 * std::pow((x - 500) / 8, 2)) + std::exp(-0.5 * std::pow((x - 2900) / 8, 2))) * sens(x));
+    }
+    sp.setMeta(QStringLiteral("channel"), QStringLiteral("532 nm"));
+    sp.setMeta(QStringLiteral("serial"), QStringLiteral("SIMULATOR"));
+    DataPage data;
+    data.setMessagesEnabled(false);
+    data.setBaselineCorrection(false);
+    auto ratio = [&](const lr::Vec& x, const lr::Vec& y) {
+        double a = 0, b = 0;
+        for (size_t i = 0; i < x.size(); ++i) {
+            if (std::abs(x[i] - 500) < 20) a = std::max(a, y[i]);
+            if (std::abs(x[i] - 2900) < 20) b = std::max(b, y[i]);
+        }
+        return a / b;
+    };
+    QVERIFY(std::abs(ratio(sp.x, data.processed(sp).second) - 1) > 0.2);       // off: as measured
+    data.setIntensityCorrection(true);
+    QVERIFY(data.describeProcessing().endsWith(QStringLiteral(" intensity=True")));
+    const double r = ratio(sp.x, data.processed(sp).second);
+    QVERIFY2(std::abs(r - 1) < 0.03, qPrintable(QString::number(r)));
+    sp.setMeta(QStringLiteral("serial"), QStringLiteral("OTHER"));             // another instrument: unchanged
+    QVERIFY(std::abs(ratio(sp.x, data.processed(sp).second) - 1) > 0.2);
+
+    QVERIFY(panel->removeActive());
+    QCOMPARE(changed.count(), 2);
+    QVERIFY(!lr::response::active(QStringLiteral("SIMULATOR"), 532));
 }
 
 QTEST_MAIN(GuiTestCalibrationPage)

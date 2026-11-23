@@ -2,6 +2,9 @@
 // -DLIBRERAMEN_GUI_PREVIEW=ON). Files go to a temporary XDG_CONFIG_HOME, never the user's own.
 // Usage: QT_QPA_PLATFORM=offscreen calibration_preview [output dir] [--dark]
 #include "gui/calibrationpage.h"
+#include "gui/intensitypanel.h"
+#include "core/response.h"
+#include <cmath>
 #include "gui/calibrationstore.h"
 #include "gui/controller.h"
 #include "gui/mainwindow.h"
@@ -133,7 +136,25 @@ int main(int argc, char** argv) {
     page->tabs()->setCurrentIndex(2);
     page->historyTable()->selectRow(1);
     shot(&win, out + QStringLiteral("/calibration-history") + sfx + QStringLiteral(".png"));
-    page->tabs()->setCurrentIndex(3);
+    {   // intensity response from a synthetic SRM 2242 measurement (filter edge, sensitivity falling to the red)
+        page->tabs()->setCurrentIndex(3);
+        lr::Spectrum ref;
+        lr::response::Reference srm;
+        for (int i = 0; i < 2048; ++i) ref.shift.push_back(-660.0 + 4850.0 * i / 2047.0);
+        const lr::Vec t = srm.curve(ref.shift, 532.1);
+        for (size_t i = 0; i < ref.shift.size(); ++i) {
+            const double x = ref.shift[i];
+            const double r = (0.4 + std::exp(-0.5 * std::pow((x - 1200) / 1300, 2))) / (1 + std::exp(-(x - 135) / 8));
+            ref.intensity.push_back((std::isfinite(t[i]) ? t[i] : 0.05) * r * 30000 + 40 * std::sin(i * 1.7));
+        }
+        const QString f = QDir(out).filePath(QStringLiteral("intensity-reference.csv"));
+        ref.saveCsv(f);
+        page->intensityPanel()->loadFile(f);
+        shot(&win, out + QStringLiteral("/calibration-intensity") + sfx + QStringLiteral(".png"));
+        page->intensityPanel()->acceptPending();
+        shot(&win, out + QStringLiteral("/calibration-intensity-accepted") + sfx + QStringLiteral(".png"));
+    }
+    page->tabs()->setCurrentIndex(4);
     shot(&win, out + QStringLiteral("/calibration-log") + sfx + QStringLiteral(".png"));
 
     // calibration fixes: carbon tetrachloride alone (offset; a forced linear correction is refused), then a wrong

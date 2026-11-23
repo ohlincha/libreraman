@@ -159,7 +159,8 @@ top and can be changed later for a whole series.
   SNIP (2nd order and 4th order with decreasing window), manual anchor points, vendor-style segments; fitted on
   x ≥ 150 cm⁻¹ (below the edge filter the baseline equals the data).
 - Cosmic-ray removal (multi-scan comparison and single-spectrum spike detection), Savitzky–Golay
-  smoothing, intensity-response correction (instrument NIST coefficients), normalisation,
+  smoothing, intensity-response correction (measured reference: SRM 2242 via the instrument's NIST coefficients,
+  blackbody lamp or table; Calibration → Intensity), normalisation,
   resampling to an even grid.
 - Saturation detection; optional auto-exposure.
 

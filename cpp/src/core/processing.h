@@ -77,8 +77,11 @@ struct Settings {                       // the settings dict of process()
     int derivWindow = 11;
     QString normalize = "none";
     std::optional<double> band;
+    // Intensity (instrument-response) correction: applied by the caller BEFORE process(), with the active
+    // correction of the spectrum's instrument (response::corrected); process() itself ignores it.
+    bool intensity = false;
     // From a dict with the Python keys (baseline, strength, despike, smooth, smooth_window, derivative,
-    // deriv_window, normalize, band); missing keys keep the defaults.
+    // deriv_window, normalize, band, intensity); missing keys keep the defaults.
     static Settings fromMap(const QVariantMap& m);
 };
 // Apply the processing chain; returns (processed, baseline).

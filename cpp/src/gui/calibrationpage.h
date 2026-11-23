@@ -18,6 +18,7 @@
 //    without changing it.
 //  * History - calibration files of the instrument and channel (calibrationstore.h): view, make active,
 //    revert to factory (also in the page header, next to "In use: ...").
+//  * Intensity - instrument-response correction from a reference with a known curve (intensitypanel.h).
 //  * Instrument log - dark level and calibration drift over time (instrument-log_<serial>.csv; one row per
 //    calibration and quick check).
 // Reminder: QSettings "calibration/reminderDays" (0 = off); warning on the page and in the log at connect.
@@ -52,6 +53,7 @@ class QTableWidget;
 namespace lr::gui {
 
 class PlotWidget;
+class IntensityPanel;
 
 class CalibrationPage : public Page {
     Q_OBJECT
@@ -150,11 +152,13 @@ public:
     PlotWidget* residualPlot() const { return m_resPlot; }
     PlotWidget* detectorPlot() const { return m_devPlot; }
     QComboBox* checkStandardBox() const { return m_checkStd; }
+    IntensityPanel* intensityPanel() const { return m_intensity; }
 
 signals:
     void sampleReady(const QString& standard);
     void checkFinished();
     void calibrationChanged();                        // accepted, activated or reverted
+    void intensityResponseChanged();                  // intensity correction accepted or removed
 
 private:
     QWidget* buildHeader();
@@ -262,6 +266,7 @@ private:
     QPlainTextEdit* m_histDetails;
     QPushButton* m_btnActivate;
     QPushButton* m_btnFactory;
+    IntensityPanel* m_intensity = nullptr;
     // log
     PlotWidget* m_driftPlot;
     PlotWidget* m_darkPlot;
