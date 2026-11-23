@@ -640,7 +640,10 @@ private slots:
     void referenceEntries() {
         Library lib;
         lib.open(file("reference.sqlite"));
+        QElapsedTimer clock;
+        clock.start();
         const int n = addReferenceEntries(lib);
+        qInfo("reference entries: %d in %lld ms", n, clock.elapsed());
         QCOMPARE(n, referenceCount());
         QVERIFY(n >= 30);
         QCOMPARE(addReferenceEntries(lib), 0);
@@ -678,10 +681,11 @@ private slots:
         // measured reference spectra (open data sets): stored with a peak table, and found by full-spectrum
         // search from a noisy copy with a sloping background
         const auto withData = lib.find(Filter{}, true);
-        for (const char* name : {"Polypropylene (PP)", "Lithium carbonate (measured spectrum)", "PVDF (measured spectrum)"}) {
+        for (const char* name : {"Polypropylene (PP)", "Lithium carbonate (measured spectrum)", "PVDF (measured spectrum)",
+                                 "Corundum", "Anatase"}) {
             const auto e = std::find_if(withData.begin(), withData.end(), [&](const Entry& x) { return x.name == name; });
             QVERIFY2(e != withData.end(), name);
-            QVERIFY(!e->spectra.empty() && e->spectra[0].x.size() > 1000);
+            QVERIFY(!e->spectra.empty() && e->spectra[0].x.size() > 300);
             QVERIFY(e->peakCount > 3 || e->peaks.size() > 3);
             Vec y = e->spectra[0].y;
             for (std::size_t i = 0; i < y.size(); ++i)

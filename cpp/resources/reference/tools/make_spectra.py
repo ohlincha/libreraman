@@ -3,6 +3,7 @@
 
   make_spectra.py interphase Raman.xlsx            > ../interphase.json   (Dryad doi:10.5061/dryad.v15dv421w, CC0)
   make_spectra.py polymers Data2_processed.csv     > ../polymers.json     (OSF osf.io/7cqv4, CC BY 4.0)
+  make_spectra.py rod <folder of .rod files>        > ../rod.json          (Raman Open Database, CC0)
 
 Needs openpyxl for the .xlsx. Output entries have the reference format of battery.json plus
 "spectrum": {"label", "processed", "x": [...], "y": [...]}; peak tables are picked by LibreRamen on import.
@@ -153,9 +154,111 @@ def polymers(path):
     return sorted(out, key=lambda e: e["name"])
 
 
+ROD_LASER_RANK = {"532": 0, "514": 1, "514.5": 1, "488": 2, "633": 3, "632.8": 3, "780": 4, "785": 4}
+ROD_BAD_NAMES = {"", ",", ";", "co", "phase ii or wii", "phase iii", "phase iv"}
+
+
+def rod_file(path):
+    """One ROD (CIF-style) file: metadata dict and the spectrum."""
+    meta, x, y = {}, [], []
+    lines = open(path, errors="replace").read().splitlines()
+    i = 0
+    while i < len(lines):
+        ln = lines[i].strip()
+        if ln.startswith("_") and not ln.startswith("_raman_spectrum."):
+            parts = ln.split(None, 1)
+            if len(parts) == 2:
+                meta[parts[0]] = parts[1].strip().strip("'")
+            elif i + 1 < len(lines) and lines[i + 1].startswith(";"):   # multi-line value
+                j, buf = i + 2, []
+                while j < len(lines) and not lines[j].startswith(";"):
+                    buf.append(lines[j].strip())
+                    j += 1
+                meta[parts[0]] = " ".join(buf).strip()
+                i = j
+        elif ln == "_raman_spectrum.intensity":
+            for row in lines[i + 1:]:
+                f = row.split()
+                if len(f) != 2:
+                    break
+                try:
+                    x.append(float(f[0])); y.append(float(f[1]))
+                except ValueError:
+                    break
+            break
+        i += 1
+    # first author: the line after _publ_author_name
+    for k, ln in enumerate(lines):
+        if ln.strip() == "_publ_author_name" and k + 1 < len(lines):
+            meta["author"] = lines[k + 1].strip().strip("'")
+            break
+    return meta, x, y
+
+
+def rod(folder):
+    import os
+    best = {}
+    for dp, _, fs in os.walk(folder):
+        for f in fs:
+            if not f.endswith(".rod"):
+                continue
+            meta, x, y = rod_file(os.path.join(dp, f))
+            if meta.get("_raman_determination_method", "experimental") != "experimental" or len(x) < 50:
+                continue
+            mineral = meta.get("_chemical_name_mineral", "")
+            name = mineral or meta.get("_chemical_name_common", "") or meta.get("_chemical_name_systematic", "")
+            if name.strip().lower() in ROD_BAD_NAMES:
+                continue
+            laser = meta.get("_raman_measurement_device.excitation_laser_wavelength", "")
+            pts = sorted(zip(x, y))
+            span = pts[-1][0] - pts[0][0]
+            score = (ROD_LASER_RANK.get(laser, 5), -span)
+            key = name.strip().lower()
+            if key not in best or score < best[key][0]:
+                best[key] = (score, f, meta, pts, name.strip(), bool(mineral))
+    out = []
+    for key, (_, f, meta, pts, name, is_mineral) in best.items():
+        # 2 cm-1 grid at most (size), intensity 0..1
+        xs, ys = [], []
+        for xv, yv in pts:
+            if xs and xv - xs[-1] < 2.0:
+                continue
+            xs.append(xv); ys.append(yv)
+        lo, hi = min(ys), max(ys)
+        ys = [(v - lo) / (hi - lo or 1) for v in ys]
+        code = meta.get("_rod_database.code", f[:-4])
+        laser = meta.get("_raman_measurement_device.excitation_laser_wavelength", "")
+        try:
+            laser_nm = float(laser)
+        except ValueError:
+            laser_nm = 0
+        formula = meta.get("_chemical_formula_sum", "").replace(" ", "")
+        title = meta.get("_publ_section_title", "")
+        journal = meta.get("_journal_name_full", "")
+        year = meta.get("_journal_year", "")
+        src = {"ref": f"{meta.get('author', '')}: {title} ({journal} {year}); Raman Open Database entry {code}".strip(),
+               "doi_or_url": f"https://solsa.crystallography.net/rod/{code}.html",
+               "covers": "measured spectrum (as deposited; intensity scaled 0-1, at most one point per 2 cm-1)"}
+        notes = f"Raman Open Database {code}" + (f", {laser} nm" if laser else "")
+        dev = " ".join(v for v in (meta.get("_raman_measurement_device.company", ""),
+                                     meta.get("_raman_measurement_device.model", "")) if v)
+        if dev:
+            notes += f", {dev}"
+        if meta.get("_chemical_compound_source"):
+            notes += f"; sample: {meta['_chemical_compound_source']}"
+        disp = name[0].upper() + name[1:] if name else name
+        e = entry(disp, formula, "", "mineral" if is_mineral else "inorganic", ["ROD"], laser_nm, src,
+                  notes + ".", xs, ys, f"ROD {code}" + (f" ({laser} nm)" if laser else ""),
+                  "CC0 1.0 (Raman Open Database, solsa.crystallography.net/rod); cite El Mendili et al., "
+                  "Sci. Data 6, 2019 and the depositor")
+        e["spectrum"]["processed"] = False
+        out.append(e)
+    return sorted(out, key=lambda e: e["name"].lower())
+
+
 if __name__ == "__main__":
     kind, path = sys.argv[1], sys.argv[2]
-    data = interphase(path) if kind == "interphase" else polymers(path)
+    data = {"interphase": interphase, "polymers": polymers, "rod": rod}[kind](path)
     json.dump(data, sys.stdout, ensure_ascii=False, separators=(",", ":"))
     sys.stdout.write("\n")
     print(f"{len(data)} entries", file=sys.stderr)

@@ -7,5 +7,6 @@
     <file>reference/interphase.json</file>
     <file>reference/polymers.json</file>
     <file>reference/electrolyte.json</file>
+    <file>reference/rod.json</file>
   </qresource>
 </RCC>
