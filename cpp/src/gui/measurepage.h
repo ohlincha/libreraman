@@ -86,6 +86,7 @@ public:
     QSpinBox* bandBox() const { return m_band; }
     QToolButton* moreButton() const { return m_moreBtn; }   // "⋯" menu of the Last spectrum panel
     QPushButton* addToLibraryButton() const { return m_addLibBtn; }
+    QSlider* strengthSlider() const { return m_strength; }
     QMenu* moreMenu() const { return m_moreMenu; }
     QLabel* signalLabel() const { return m_fillPct; }         // "37 %" next to the Signal bar
     QToolButton* processingToggle() const { return m_procToggle; }

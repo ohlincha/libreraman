@@ -15,6 +15,12 @@
 #include "core/simulator.h"
 
 #include <QApplication>
+#include <QTabWidget>
+#include <QComboBox>
+#include <QLabel>
+#include <QAbstractSpinBox>
+#include <QAbstractButton>
+#include <QSlider>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDir>
@@ -464,6 +470,15 @@ void GuiTestMainWindow::measureCurveToggles() {
     QVERIFY(m->showBaselineBox()->isVisible());
     QVERIFY(m->showEarlierBox()->isVisible());
     QVERIFY(m->addToLibraryButton()->isVisible());     // a plain button in the Last spectrum box, not only in ⋯
+    // laptop size (1440x900): no page (Measure strip, Data control rows, Analysis panel) makes the window
+    // wider than the screen, and the baseline slider keeps its width
+    const QSize old = m_win->size();
+    m_win->resize(1440, 900);
+    QApplication::processEvents();
+    QVERIFY2(m_win->minimumSizeHint().width() <= 1440, qPrintable(QString::number(m_win->minimumSizeHint().width())));
+    QVERIFY2(m->strengthSlider()->width() >= 60, qPrintable(QString::number(m->strengthSlider()->width())));
+    m_win->resize(old);
+    QApplication::processEvents();
     const bool was = m->showEarlierBox()->isChecked();
     m->showEarlierBox()->setChecked(!was);
     QCOMPARE(QSettings().value(QStringLiteral("measure/showEarlier")).toBool(), !was);

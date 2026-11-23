@@ -544,8 +544,11 @@ QWidget* MeasurePage::buildSettingsPanel() {
     m_strength->setRange(0, 100);
     m_strength->setValue(60);
     m_strength->setToolTip(QStringLiteral("Baseline stiffness: larger = smoother baseline"));
+    m_strength->setMinimumWidth(70);       // laptop screens: the bar must not squeeze the slider away
     m_strength->setMaximumWidth(120);
-    m_baseline->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    // the long method names (popup) must not widen the bar and push the right-hand panel off the window
+    m_baseline->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+    m_baseline->setMinimumContentsLength(16);
     m_despike = new QCheckBox(QStringLiteral("remove cosmic rays"));
     m_despike->setChecked(true);
     m_smoothing = new QCheckBox(QStringLiteral("smooth (Savitzky–Golay)"));

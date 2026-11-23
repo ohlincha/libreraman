@@ -1,4 +1,5 @@
 #include "datapage.h"
+#include "flowlayout.h"
 #include "page.h"
 
 #include "bandstrip.h"
@@ -369,8 +370,15 @@ void DataPage::build() {
     m->addAction(tr("Plot as SVG…"), this, [this] { exportDialog("svg"); });
     exp->setMenu(m);
     bar->addWidget(exp);
-    rv->addLayout(bar);
-    rv->addLayout(bar2);
+    // both rows wrap on narrow (laptop) windows; a label stays with its control, the actions stay together last
+    auto* flow = new FlowLayout;
+    flow->addGroups(bar);
+    QLayoutItem* actions = flow->takeAt(flow->count() - 1);
+    flow->addGroups(bar2);
+    flow->addItem(actions);
+    delete bar;
+    delete bar2;
+    rv->addLayout(flow);
     {   // last session's baseline settings (#6)
         const QSignalBlocker b1(m_baseline), b2(m_strength), b3(m_fitMin);
         const QSettings st;

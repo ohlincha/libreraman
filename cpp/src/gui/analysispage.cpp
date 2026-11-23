@@ -391,6 +391,8 @@ QWidget* AnalysisPage::buildDataPanel() {
     m_baseline = new QComboBox;
     for (const auto& b : processing::baselines()) m_baseline->addItem(b.second, b.first);
     m_baseline->setCurrentIndex(std::max(0, m_baseline->findData(QStringLiteral("none"))));
+    m_baseline->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);   // long names: popup only
+    m_baseline->setMinimumContentsLength(16);
     m_strength = new QSlider(Qt::Horizontal);
     m_strength->setRange(0, 20);
     m_strength->setValue(10);
