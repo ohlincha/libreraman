@@ -678,6 +678,12 @@ private slots:
         const auto he = m.searchPeaks(ec, {}, 3);
         QVERIFY(!he.empty());
         QVERIFY2(he[0].name.contains("Li+") || he[0].name.contains("LiPF6"), qPrintable(he[0].name));
+        // salts from the electrolyte set: a LiDFOB band list finds LiDFOB
+        const std::vector<PeakEntry> df{{723, 1, 0, {}}, {615, 0.3, 0, {}}, {635, 0.3, 0, {}}, {942, 0.2, 0, {}},
+                                        {1405, 0.2, 0, {}}, {1800, 0.2, 0, {}}};
+        const auto hd = m.searchPeaks(df, {}, 3);
+        QVERIFY(!hd.empty());
+        QVERIFY2(hd[0].name.contains("LiDFOB"), qPrintable(hd[0].name));
         // measured reference spectra (open data sets): stored with a peak table, and found by full-spectrum
         // search from a noisy copy with a sloping background
         const auto withData = lib.find(Filter{}, true);

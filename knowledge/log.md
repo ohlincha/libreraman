@@ -15,3 +15,4 @@ title: Knowledge bundle log
 - 2026-11-23: Data page Match button (ticked spectrum -> Library Match tab via MainWindow::matchInLibrary).
 - 2026-11-23: reference set 4: electrolyte.json (10 carbonate electrolyte entries incl. Li+-solvated EC/PC, LP30); many publishers block automated access.
 - 2026-11-23: reference set 5: Raman Open Database (CC0), 422 compounds, one spectrum each (rod.json, 4.4 MB); first-start import of all 540 reference entries ~0.6 s.
+- 2026-11-23: reference set 6: VC, BF4-/ClO4- coordination, BOB-, LiDFOB from papers the user supplied (articles/ in Instruments, gitignored); EC/PC entries refined with Allen 2014.

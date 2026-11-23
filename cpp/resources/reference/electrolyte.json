@@ -68,10 +68,15 @@
     "ref": "Borodin O., Olguin M., Ganesh P., Kent P. R. C., Allen J. L., Henderson W. A., Competitive lithium solvation of linear and cyclic carbonates from quantum chemistry, Phys. Chem. Chem. Phys. 2016, 18, 164-175 (OSTI 1238740 accepted manuscript)",
     "doi_or_url": "https://doi.org/10.1039/c5cp05121e",
     "covers": "894 cm-1 EC Raman band and its +11 cm-1 shift on Li+ binding (DFT plus comparison with experiment)"
+   },
+   {
+    "ref": "Allen J.L., Borodin O., Seo D.M., Henderson W.A., Combined quantum chemical/Raman spectroscopic analyses of Li+ cation solvation: cyclic carbonate solvents - ethylene carbonate and propylene carbonate, J. Power Sources 267 (2014) 821-830",
+    "doi_or_url": "https://doi.org/10.1016/j.jpowsour.2014.05.107",
+    "covers": "ring breathing 717 and 894 cm-1 (uncoordinated EC; 632 nm), shoulder ~704"
    }
   ],
   "rruff_id": "",
-  "notes": "EC is solid at RT (mp ~34-37 °C). Positions here are from liquid EC (melt) or EC in carbonate electrolytes, not the crystal; crystalline EC differs, especially in the C=O region. Sources disagree by ±3 cm-1 (893-897 for ring breathing; 1773-1781/1800-1808 for the C=O doublet). Diagnostic: 893 (free) vs 903 (Li+-bound) ring breathing and 717-720 vs 729-733 ring deformation. No intensities given in the sources; ring breathing ~893 is the strongest band in the fingerprint region. C-H stretch positions are from SERS and may be slightly shifted from normal Raman.",
+  "notes": "EC is solid at RT (mp ~34-37 °C). Positions here are from liquid EC (melt) or EC in carbonate electrolytes, not the crystal; crystalline EC differs, especially in the C=O region. Sources disagree by ±3 cm-1 (893-897 for ring breathing; 1773-1781/1800-1808 for the C=O doublet). Diagnostic: 893 (free) vs 903 (Li+-bound) ring breathing and 717-720 vs 729-733 ring deformation. No intensities given in the sources; ring breathing ~893 is the strongest band in the fingerprint region. C-H stretch positions are from SERS and may be slightly shifted from normal Raman. Allen 2014 (632 nm): uncoordinated EC ring bands at 717 and 894 cm-1 (shoulder ~704); they shift to 729 and 905 cm-1 on Li+ coordination.",
   "confidence": "medium"
  },
  {
@@ -126,10 +131,15 @@
     "ref": "Borodin O., Olguin M., Ganesh P., Kent P. R. C., Allen J. L., Henderson W. A., Competitive lithium solvation of linear and cyclic carbonates from quantum chemistry, Phys. Chem. Chem. Phys. 2016, 18, 164-175 (OSTI 1238740 accepted manuscript)",
     "doi_or_url": "https://doi.org/10.1039/c5cp05121e",
     "covers": "+11 cm-1 DFT shift of the 894 band on Li+ binding, consistent with experiment; Raman activity of coordinated EC ~17-20% higher than free"
+   },
+   {
+    "ref": "Allen J.L., Borodin O., Seo D.M., Henderson W.A., Combined quantum chemical/Raman spectroscopic analyses of Li+ cation solvation: cyclic carbonate solvents - ethylene carbonate and propylene carbonate, J. Power Sources 267 (2014) 821-830",
+    "doi_or_url": "https://doi.org/10.1016/j.jpowsour.2014.05.107",
+    "covers": "729 and 905 cm-1 (Li+-coordinated EC, 632 nm); used for solvation numbers"
    }
   ],
   "rruff_id": "",
-  "notes": "Solution species, not an isolated compound: appears alongside free EC in any Li-salt/EC electrolyte. Solvation numbers are obtained by fitting the 893/903 pair (or 717/730); Borodin et al. recommend correcting for the ~17-20% higher Raman activity of coordinated EC. Positions vary by a few cm-1 with salt, concentration and co-solvent. Laser listed is that of the main source (Miele); RSC Adv source used 532 nm.",
+  "notes": "Solution species, not an isolated compound: appears alongside free EC in any Li-salt/EC electrolyte. Solvation numbers are obtained by fitting the 893/903 pair (or 717/730); Borodin et al. recommend correcting for the ~17-20% higher Raman activity of coordinated EC. Positions vary by a few cm-1 with salt, concentration and co-solvent. Laser listed is that of the main source (Miele); RSC Adv source used 532 nm. Allen 2014 (632 nm, (EC)n-LiX) gives 729 and 905 cm-1 for Li+-coordinated EC (vs 717/894 uncoordinated).",
   "confidence": "high"
  },
  {
@@ -161,6 +171,12 @@
     "intensity": 0,
     "width": 0,
     "label": "CH3 group vibration; concentration-insensitive internal reference"
+   },
+   {
+    "position": 645,
+    "intensity": 0,
+    "width": 0,
+    "label": "ring deformation (cis- conformer region); Allen 2014"
    }
   ],
   "sources": [
@@ -168,10 +184,15 @@
     "ref": "Åvall G., Wallenstein J., Cheng G. et al., Highly Concentrated Electrolytes: Electrochemical and Physicochemical Characteristics of LiPF6 in Propylene Carbonate Solutions, J. Electrochem. Soc. 2021, 168, 050521 (open access)",
     "doi_or_url": "https://doi.org/10.1149/1945-7111/abfdc3",
     "covers": "712 (free PC) Raman ring mode, 848 and 958 Raman reference bands (FT-Raman, 1064 nm); IR bands 774, 1043, 1074, 1173, 1353, 1388, 1779 also tabulated (IR, not Raman)"
+   },
+   {
+    "ref": "Allen J.L., Borodin O., Seo D.M., Henderson W.A., Combined quantum chemical/Raman spectroscopic analyses of Li+ cation solvation: cyclic carbonate solvents - ethylene carbonate and propylene carbonate, J. Power Sources 267 (2014) 821-830",
+    "doi_or_url": "https://doi.org/10.1016/j.jpowsour.2014.05.107",
+    "covers": "645 and 712 cm-1 (uncoordinated PC); 712 -> 722 on Li+ coordination"
    }
   ],
   "rruff_id": "",
-  "notes": "Neat liquid at RT. Only the Raman bands explicitly given in the source are listed; the paper's Table II gives FTIR positions for PC (C=O 1779, CO2 asym 1173, ring 1353/1388, C-O 1043, ring/C-Me 1074, ring deformation 774/711) which have Raman counterparts nearby but are not Raman values. Commercial PC is racemic with ring-puckering conformers, which complicates band fitting (Allen et al. 2014). Incomplete band list: C=O (~1780-1790) and C-H region not confirmed from an opened Raman source.",
+  "notes": "Neat liquid at RT. Only the Raman bands explicitly given in the source are listed; the paper's Table II gives FTIR positions for PC (C=O 1779, CO2 asym 1173, ring 1353/1388, C-O 1043, ring/C-Me 1074, ring deformation 774/711) which have Raman counterparts nearby but are not Raman values. Commercial PC is racemic with ring-puckering conformers, which complicates band fitting (Allen et al. 2014). Incomplete band list: C=O (~1780-1790) and C-H region not confirmed from an opened Raman source. Allen 2014: the 712 cm-1 symmetric ring deformation is the band used for Li+ solvation (722 cm-1 coordinated); 841/856 calculated bands appear as one experimental band.",
   "confidence": "medium"
  },
  {
@@ -204,6 +225,11 @@
     "ref": "Åvall G., Wallenstein J., Cheng G. et al., Highly Concentrated Electrolytes: Electrochemical and Physicochemical Characteristics of LiPF6 in Propylene Carbonate Solutions, J. Electrochem. Soc. 2021, 168, 050521 (open access)",
     "doi_or_url": "https://doi.org/10.1149/1945-7111/abfdc3",
     "covers": "Voigt fit of 680-760 region: 712 free PC, 721 coordinated PC, 742 PF6-; IR: C=O 1779->1750, CO2 asym 1173->1200, C-O 1043->1059 on Li+ coordination"
+   },
+   {
+    "ref": "Allen J.L., Borodin O., Seo D.M., Henderson W.A., Combined quantum chemical/Raman spectroscopic analyses of Li+ cation solvation: cyclic carbonate solvents - ethylene carbonate and propylene carbonate, J. Power Sources 267 (2014) 821-830",
+    "doi_or_url": "https://doi.org/10.1016/j.jpowsour.2014.05.107",
+    "covers": "712 (free) -> 722 cm-1 (Li+-coordinated) ring deformation"
    }
   ],
   "rruff_id": "",
@@ -630,5 +656,395 @@
   "rruff_id": "",
   "notes": "Solution species in LiFSI/tetraglyme. Free tetraglyme band positions were not confirmed from an opened source; only the complex breathing mode and the reference CH2 band are listed.",
   "confidence": "medium"
+ },
+ {
+  "name": "Vinylene carbonate (VC)",
+  "formula": "C3H2O3",
+  "cas": "872-36-6",
+  "cls": "electrolyte solvent",
+  "tags": [
+   "VC",
+   "carbonate",
+   "additive"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 532,
+    "intensity": 0.3,
+    "width": 0,
+    "label": "C=O out-of-plane bend (depol.)"
+   },
+   {
+    "position": 565,
+    "intensity": 0.3,
+    "width": 0,
+    "label": "C=O in-plane bend (depol.)"
+   },
+   {
+    "position": 744,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "A1 skeletal ring mode (pol.)"
+   },
+   {
+    "position": 823,
+    "intensity": 0.1,
+    "width": 0,
+    "label": "w"
+   },
+   {
+    "position": 892,
+    "intensity": 0.3,
+    "width": 0,
+    "label": "ring mode (depol.)"
+   },
+   {
+    "position": 907,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "A1 ring stretch (pol.)"
+   },
+   {
+    "position": 1040,
+    "intensity": 0.3,
+    "width": 0,
+    "label": "B1 skeletal stretch (depol.)"
+   },
+   {
+    "position": 1085,
+    "intensity": 0.45,
+    "width": 0,
+    "label": "B1 skeletal stretch (depol.)"
+   },
+   {
+    "position": 1165,
+    "intensity": 0.3,
+    "width": 0,
+    "label": "A1 C-H in-plane deformation (pol.)"
+   },
+   {
+    "position": 1403,
+    "intensity": 0.1,
+    "width": 0,
+    "label": "w"
+   },
+   {
+    "position": 1565,
+    "intensity": 0.1,
+    "width": 0,
+    "label": "w"
+   },
+   {
+    "position": 1627,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "C=C stretch (pol.)"
+   },
+   {
+    "position": 1799,
+    "intensity": 0.1,
+    "width": 0,
+    "label": "C=O stretch region"
+   },
+   {
+    "position": 1835,
+    "intensity": 0.1,
+    "width": 0,
+    "label": "C=O stretch"
+   },
+   {
+    "position": 3171,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "C-H stretch (pol.)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Dorris K.L., Boggs J.E., Danti A., Altpeter L.L., Infrared and Raman Spectra of Vinylene Carbonate, J. Chem. Phys. 46 (1967) 1191-1193",
+    "doi_or_url": "https://doi.org/10.1063/1.1840790",
+    "covers": "Table I, Raman (liquid) with strengths and polarisation; assignments from the text"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Neat liquid, Cary 81 Raman spectrometer (1967; excitation not stated in the table). Strengths s=1.0, ms=0.45, m=0.3, w=0.1. Diagnostic: C=C stretch 1627 (absent in EC), ring band 907, C-H 3171.",
+  "confidence": "medium"
+ },
+ {
+  "name": "BF4- anion: free and Li+-coordinated (LiBF4 in acetonitrile)",
+  "formula": "BF4-",
+  "cas": "",
+  "cls": "electrolyte species",
+  "tags": [
+   "LiBF4",
+   "BF4",
+   "anion",
+   "solvation",
+   "SSIP",
+   "AGG"
+  ],
+  "laser_nm": 632,
+  "peaks": [
+   {
+    "position": 763.5,
+    "intensity": 0,
+    "width": 0,
+    "label": "B-F ν1 symmetric stretch, SSIP (uncoordinated anion; (AN)4:LiBF4)"
+   },
+   {
+    "position": 766.5,
+    "intensity": 0,
+    "width": 0,
+    "label": "new band at 60 °C (unassigned)"
+   },
+   {
+    "position": 774.5,
+    "intensity": 0,
+    "width": 0,
+    "label": "ν1, AGG-I (anion bound to two Li+), liquid 60 °C (779 in the crystalline solvate)"
+   },
+   {
+    "position": 782,
+    "intensity": 0,
+    "width": 0,
+    "label": "ν1, AGG-II (anion bound to three Li+); 782-786 in the liquid"
+   },
+   {
+    "position": 798,
+    "intensity": 0,
+    "width": 0,
+    "label": "ν1, AGG-III (anion bound to four or more Li+), most concentrated"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Henderson W.A. et al., Electrolyte Solvation and Ionic Association. VII. Correlating Raman Spectroscopic Data with Electrolyte Properties, J. Electrochem. Soc. 167 (2020) 110551",
+    "doi_or_url": "https://doi.org/10.1149/1945-7111/aba44a",
+    "covers": "BF4- ν1 band positions for (AN)n-LiBF4 at -80 °C and 60 °C, 632 nm"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Only the BF4- ν1 band (750-800 cm-1); acetonitrile has no bands there. Henderson cautions that SSIP and CIP shift by only 1-5 cm-1, so a band near 764 may contain both. Positions in carbonate solvents may differ by a few cm-1.",
+  "confidence": "medium"
+ },
+ {
+  "name": "ClO4- anion coordinated to Li+ (LiClO4 electrolytes)",
+  "formula": "ClO4-",
+  "cas": "",
+  "cls": "electrolyte species",
+  "tags": [
+   "LiClO4",
+   "ClO4",
+   "anion",
+   "solvation",
+   "CIP"
+  ],
+  "laser_nm": 632,
+  "peaks": [
+   {
+    "position": 927,
+    "intensity": 0,
+    "width": 0,
+    "label": "ν1 Cl-O symmetric stretch, CIP-II (bidentate to one Li+)"
+   },
+   {
+    "position": 941,
+    "intensity": 0,
+    "width": 0,
+    "label": "ν1, CIP-I (monodentate to one Li+)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Henderson W.A. et al., Electrolyte Solvation and Ionic Association. VII. Correlating Raman Spectroscopic Data with Electrolyte Properties, J. Electrochem. Soc. 167 (2020) 110551",
+    "doi_or_url": "https://doi.org/10.1149/1945-7111/aba44a",
+    "covers": "ClO4- ν1 near 941 (CIP-I) and 927 cm-1 (CIP-II), citing earlier work"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "The uncoordinated ClO4- ν1 lies near 933 cm-1, between the two contact-ion-pair bands, which is why simple deconvolution of this region is unreliable (Henderson 2020). Use together with a solvent band to judge ion pairing.",
+  "confidence": "medium"
+ },
+ {
+  "name": "BOB- anion (LiBOB in solution)",
+  "formula": "C4BO8-",
+  "cas": "244761-29-3",
+  "cls": "electrolyte species",
+  "tags": [
+   "LiBOB",
+   "BOB",
+   "anion",
+   "salt"
+  ],
+  "laser_nm": 1064,
+  "peaks": [
+   {
+    "position": 308,
+    "intensity": 0.05,
+    "width": 0,
+    "label": "torsion of B-O2 groups"
+   },
+   {
+    "position": 344,
+    "intensity": 0.05,
+    "width": 0,
+    "label": "OC-CO bend"
+   },
+   {
+    "position": 371,
+    "intensity": 0.05,
+    "width": 0,
+    "label": "OC-CO bend + breathing"
+   },
+   {
+    "position": 702,
+    "intensity": 0.05,
+    "width": 0,
+    "label": "O-B-O deformation"
+   },
+   {
+    "position": 722,
+    "intensity": 0.15,
+    "width": 0,
+    "label": "O-B-O deformation + ring breathing"
+   },
+   {
+    "position": 949,
+    "intensity": 0.1,
+    "width": 0,
+    "label": "symmetric O-B-O stretch + O-C-O deformation"
+   },
+   {
+    "position": 1328,
+    "intensity": 0.6,
+    "width": 0,
+    "label": "in-phase C-O + C-C stretch"
+   },
+   {
+    "position": 1780,
+    "intensity": 0.25,
+    "width": 0,
+    "label": "out-of-phase C=O stretch"
+   },
+   {
+    "position": 1804,
+    "intensity": 0.05,
+    "width": 0,
+    "label": "out-of-phase C=O stretch (shoulder)"
+   },
+   {
+    "position": 1822,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "in-phase C=O stretch"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Holomb R., Xu W., Markusson H., Johansson P., Jacobsson P., Vibrational Spectroscopy and ab Initio Studies of Lithium Bis(oxalato)borate (LiBOB) in Different Solvents, J. Phys. Chem. A 110 (2006) 11467-11472",
+    "doi_or_url": "https://doi.org/10.1021/jp0626824",
+    "covers": "Table 2, experimental Raman bands of BOB- in solution (FT-Raman, Nd:YAG 1064 nm); assignments"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Experimental positions from the solution spectra; relative intensities are only indicative, scaled from the calculated Raman activities of the matching modes (B3LYP). Diagnostic: 1822 and 1328 cm-1.",
+  "confidence": "medium"
+ },
+ {
+  "name": "LiDFOB (lithium difluoro(oxalato)borate, solid salt)",
+  "formula": "LiC2BF2O4",
+  "cas": "409071-16-5",
+  "cls": "electrolyte salt",
+  "tags": [
+   "LiDFOB",
+   "DFOB",
+   "salt"
+  ],
+  "laser_nm": 632,
+  "peaks": [
+   {
+    "position": 325,
+    "intensity": 0,
+    "width": 0,
+    "label": "ring twisting + F-B-F torsion"
+   },
+   {
+    "position": 360,
+    "intensity": 0,
+    "width": 0,
+    "label": "OC-O in-plane bend + F-B-F bend"
+   },
+   {
+    "position": 390,
+    "intensity": 0,
+    "width": 0,
+    "label": "OC-O in-plane bend + F-B-F bend"
+   },
+   {
+    "position": 615,
+    "intensity": 0,
+    "width": 0,
+    "label": "O-C-C deformation"
+   },
+   {
+    "position": 635,
+    "intensity": 0,
+    "width": 0,
+    "label": "B-F scissoring + O-B bend"
+   },
+   {
+    "position": 680,
+    "intensity": 0,
+    "width": 0,
+    "label": "ring rotation"
+   },
+   {
+    "position": 723,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "ring breathing (very strong); near 710 for the uncoordinated (SSIP) anion"
+   },
+   {
+    "position": 840,
+    "intensity": 0,
+    "width": 0,
+    "label": "C-C bend (out of plane)"
+   },
+   {
+    "position": 942,
+    "intensity": 0,
+    "width": 0,
+    "label": "symmetric B-O + C-C + B-F stretch"
+   },
+   {
+    "position": 1405,
+    "intensity": 0,
+    "width": 0,
+    "label": "symmetric C-O + C-C stretch"
+   },
+   {
+    "position": 1769,
+    "intensity": 0,
+    "width": 0,
+    "label": "antisymmetric C=O stretch"
+   },
+   {
+    "position": 1800,
+    "intensity": 0,
+    "width": 0,
+    "label": "symmetric C=O stretch"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Han S.-D., Allen J.L., Jónsson E., Johansson P., McOwen D.W., Boyle P.D., Henderson W.A., Solvate Structures and Computational/Spectroscopic Characterization of Lithium Difluoro(oxalato)borate (LiDFOB) Electrolytes, J. Phys. Chem. C 117 (2013) 5521-5531",
+    "doi_or_url": "https://doi.org/10.1021/jp309102c",
+    "covers": "Table 1 experimental frequencies (LiDFOB salt), assignments; SSIP ring breathing near 710 cm-1"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Solid LiDFOB salt, 632 nm (Si-calibrated). The 723 cm-1 ring-breathing band moves to ~710 cm-1 for uncoordinated DFOB- in solvates, so its position indicates ion pairing. Boron isotopes (10B/11B) split modes involving B.",
+  "confidence": "high"
  }
 ]
