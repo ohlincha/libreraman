@@ -475,7 +475,22 @@ void GuiTestMainWindow::measureCurveToggles() {
     const QSize old = m_win->size();
     m_win->resize(1440, 900);
     QApplication::processEvents();
-    QVERIFY2(m_win->minimumSizeHint().width() <= 1440, qPrintable(QString::number(m_win->minimumSizeHint().width())));
+    if (m_win->minimumSizeHint().width() > 1440) {   // say which page and which widget is too wide
+        QString why = QString::number(m_win->minimumSizeHint().width()) + QStringLiteral(" px:");
+        for (const QString& a : pageAreas()) {
+            QWidget* pg = m_win->page(a);
+            if (!pg) continue;
+            why += QStringLiteral(" %1=%2").arg(a).arg(pg->minimumSizeHint().width());
+            QWidget* widest = nullptr;
+            for (QWidget* c : pg->findChildren<QWidget*>())
+                if (!c->findChild<QWidget*>() && (!widest || c->minimumSizeHint().width() > widest->minimumSizeHint().width()))
+                    widest = c;
+            if (widest)
+                why += QStringLiteral(" (%1 %2 %3)").arg(QString::fromLatin1(widest->metaObject()->className()),
+                                                          widest->objectName()).arg(widest->minimumSizeHint().width());
+        }
+        QFAIL(qPrintable(why));
+    }
     QVERIFY2(m->strengthSlider()->width() >= 60, qPrintable(QString::number(m->strengthSlider()->width())));
     m_win->resize(old);
     QApplication::processEvents();
