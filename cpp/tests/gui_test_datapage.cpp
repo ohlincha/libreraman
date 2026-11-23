@@ -106,6 +106,8 @@ private slots:
 
 void GuiTestDataPage::initTestCase() {
     QStandardPaths::setTestModeEnabled(true);          // QSettings away from the user's configuration
+    QCoreApplication::setOrganizationName(QStringLiteral("LibreRamenTest"));   // Windows/macOS: QSettings
+    QCoreApplication::setApplicationName(QStringLiteral("gui_test_datapage")); // needs one to store anything
     theme::apply(*qApp, theme::Mode::Light);
     QVERIFY(QDir(FILES).exists());
 }

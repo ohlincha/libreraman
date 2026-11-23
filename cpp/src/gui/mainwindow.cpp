@@ -2,6 +2,7 @@
 #include "mainwindow.h"
 
 #include "apiserver.h"
+#include "desktopentry.h"
 
 #include "measurepage.h"
 #include "page.h"
@@ -148,6 +149,14 @@ bool MainWindow::addToLibrary(const lr::Spectrum& sp) {
     return ok;
 }
 
+void MainWindow::showEvent(QShowEvent* e) {
+    QMainWindow::showEvent(e);
+    if (m_offerDesktopIcon) {
+        m_offerDesktopIcon = false;
+        QTimer::singleShot(1000, this, [this] { desktop::offerOnce(this); });
+    }
+}
+
 void MainWindow::raiseWindow() {
     if (isMinimized())
         showNormal();
@@ -249,6 +258,21 @@ void MainWindow::buildMenus() {
     QAction* a = m->addAction(QStringLiteral("Quit"), this, &QWidget::close);
     a->setShortcut(QKeySequence::Quit);
     a->setMenuRole(QAction::QuitRole);
+    if (desktop::supported()) {
+        auto* d = new QAction(QStringLiteral("Put an icon on the desktop"), m);
+        m->insertAction(a, d);
+        d->setToolTip(QStringLiteral("A LibreRamen launcher in the desktop folder"));
+        connect(d, &QAction::triggered, this, [this] {
+            const QString err = desktop::createLauncher();
+            if (err.isEmpty())
+                addLog(QStringLiteral("Desktop icon: %1").arg(desktop::launcherPath()));
+            else if (dialogsEnabled())
+                QMessageBox::warning(this, QStringLiteral("Desktop icon"), QStringLiteral("No desktop icon: %1").arg(err));
+            else
+                addLog(QStringLiteral("No desktop icon: %1").arg(err));
+        });
+        m->insertSeparator(a);
+    }
 
     m = menuBar()->addMenu(QStringLiteral("&Instrument"));
     m->addAction(QStringLiteral("Use simulator"), this, [this] { connectInstrument(true); });

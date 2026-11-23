@@ -57,6 +57,10 @@ public:
     bool startApi(int port = -1, const QString& apiFile = {});
     void stopApi();
 
+    // Linux: ask once, when the window is first shown, whether to put an icon on the desktop (desktopentry.h).
+    // Off by default (tests); main() switches it on except for --screenshot.
+    void setOfferDesktopIcon(bool on) { m_offerDesktopIcon = on; }
+
     static OnClose onClosePolicy();
     static void setOnClosePolicy(OnClose p);
 
@@ -83,6 +87,7 @@ private slots:
 
 protected:
     void closeEvent(QCloseEvent* e) override;
+    void showEvent(QShowEvent* e) override;
 
 private:
     void buildMenus();
@@ -91,6 +96,7 @@ private:
     void updateRemoteTile();
 
     Controller* m_ctl;
+    bool m_offerDesktopIcon = false;
     InstrumentInfo m_info;
     StatusStrip* m_strip;
     QWidget* m_simBar;

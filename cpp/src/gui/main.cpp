@@ -187,6 +187,7 @@ int main(int argc, char** argv) {
             QObject::connect(c, &QLocalSocket::disconnected, c, &QObject::deleteLater);
         }
     });
+    win.setOfferDesktopIcon(shot.isEmpty());
     const QString winSize = argValue(args, QStringLiteral("--window-size"));
     if (!winSize.isEmpty()) {
         const QStringList wh = winSize.split(QLatin1Char('x'));

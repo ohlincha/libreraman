@@ -17,6 +17,11 @@ This covers the desktop application (version 0.2.1). For installation see the [R
 | REMOTE | State of the local API (used by scripts and the MCP server) |
 | **STOP** | Switches the laser off and stops any measurement immediately |
 
+**Desktop icon.** The Windows installer offers one (*Create a desktop shortcut*). On Linux, LibreRamen asks
+the first time it starts; **File → Put an icon on the desktop** makes one at any time (from an AppImage it also
+adds LibreRamen to the applications menu). On GNOME the desktop shows icons only with the *Desktop Icons NG*
+extension.
+
 **Areas (left).** Measure, Data, Library, Analysis and Calibration. The log at the bottom shows what the
 program and the instrument did; the **Instrument** menu has *Reconnect*, *Use simulator*, *Shut down instrument…* and what to do with the
 instrument when LibreRamen closes.
