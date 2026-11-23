@@ -348,6 +348,12 @@ void DataPage::build() {
     m_addLibBtn->setEnabled(false);
     connect(m_addLibBtn, &QPushButton::clicked, this, &DataPage::addToLibraryDialog);
     bar->addWidget(m_addLibBtn);
+    m_matchBtn = new QPushButton(tr("Match"));
+    m_matchBtn->setToolTip(tr("<p>Identify a spectrum: rank the library entries against it (Library area, Match "
+                              "tab). With several ticked spectra you choose which.</p>"));
+    m_matchBtn->setEnabled(false);
+    connect(m_matchBtn, &QPushButton::clicked, this, &DataPage::matchDialog);
+    bar->addWidget(m_matchBtn);
     auto* exp = new QToolButton;
     exp->setText(tr("Export ▾"));
     exp->setPopupMode(QToolButton::InstantPopup);
@@ -705,7 +711,7 @@ int DataPage::currentRow() const { return m_list->currentRow(); }
 
 // Add to library…: the one ticked spectrum, or (several ticked) the one chosen from a list with the current
 // one preselected; none ticked: the current one. Without dialogs (tests): the current ticked one, else the first.
-int DataPage::libraryCandidate(bool ask) {
+int DataPage::libraryCandidate(bool ask, const QString& title) {
     std::vector<int> rows = tickedRows();
     const int cur = currentRow();
     if (rows.empty()) return cur >= 0 && cur < count() ? cur : -1;
@@ -717,7 +723,9 @@ int DataPage::libraryCandidate(bool ask) {
     QStringList names;
     for (int r : rows) names << m_entries[size_t(r)].sp.name;
     bool ok = false;
-    const QString pick = QInputDialog::getItem(this, tr("Add to library"), tr("Spectrum to add:"), names, pre, false, &ok);
+    const QString pick = QInputDialog::getItem(this, title.isEmpty() ? tr("Add to library") : title,
+                                               title.isEmpty() ? tr("Spectrum to add:") : tr("Spectrum:"), names,
+                                               pre, false, &ok);
     if (!ok) return -1;
     return rows[size_t(names.indexOf(pick))];
 }
@@ -725,6 +733,11 @@ int DataPage::libraryCandidate(bool ask) {
 void DataPage::addToLibraryDialog() {
     const int r = libraryCandidate(dialogsEnabled());
     if (r >= 0) emit addToLibraryRequested(m_entries[size_t(r)].sp);
+}
+
+void DataPage::matchDialog() {
+    const int r = libraryCandidate(dialogsEnabled(), tr("Match"));
+    if (r >= 0) emit matchRequested(m_entries[size_t(r)].sp);
 }
 
 void DataPage::setCurrentRow(int row) { m_list->setCurrentRow(row, QItemSelectionModel::ClearAndSelect); }
@@ -847,6 +860,7 @@ void DataPage::updateSwatches() {
 
 void DataPage::redraw() {
     m_addLibBtn->setEnabled(count() > 0);
+    m_matchBtn->setEnabled(count() > 0);
     if (m_batch) {
         m_dirty = true;
         return;

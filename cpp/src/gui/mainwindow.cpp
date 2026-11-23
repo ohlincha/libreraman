@@ -149,6 +149,16 @@ bool MainWindow::addToLibrary(const lr::Spectrum& sp) {
     return ok;
 }
 
+bool MainWindow::matchInLibrary(const lr::Spectrum& sp) {
+    Page* lib = page(QStringLiteral("Library"));
+    if (!lib) {
+        addLog(QStringLiteral("Match: no Library area"));
+        return false;
+    }
+    showArea(int(pageAreas().indexOf(QStringLiteral("Library"))));
+    return lib->matchSpectrum(sp);
+}
+
 void MainWindow::showEvent(QShowEvent* e) {
     QMainWindow::showEvent(e);
     if (m_offerDesktopIcon) {

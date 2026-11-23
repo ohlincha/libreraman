@@ -90,6 +90,8 @@ Open spectra (CSV, TXT, SPC, JCAMP-DX, vendor files) and compare them: overlay, 
   the peak CSV export includes them. Ranges are typical values; positions shift with phase, hydrogen bonding
   and neighbouring groups. The table is `cpp/resources/band_assignments.csv`.
 - **Add to library…** (next to *Calculator…*): the ticked spectrum; with several ticked you choose which.
+- **Match:** identifies the ticked spectrum (with several ticked you choose which): the Library area opens on
+  its *Match* tab with the spectrum as the query and the library entries ranked against it.
 - **Export:** ticked spectra as CSV, JCAMP-DX (one or multi-block), SPC or one table on a common axis; the
   peak table as CSV; the plot as PNG or SVG.
 

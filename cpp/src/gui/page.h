@@ -44,6 +44,9 @@ public:
     // "Add to library…" of a spectrum from another page (MainWindow::addToLibrary); only the Library area
     // implements it. True if the spectrum was stored.
     virtual bool addToLibrary(const lr::Spectrum& /*sp*/) { return false; }
+    // "Match" of a spectrum from another page (MainWindow::matchInLibrary): the Library area makes it the
+    // query and ranks the library against it. True if it did.
+    virtual bool matchSpectrum(const lr::Spectrum& /*sp*/) { return false; }
 
 signals:
     void logMessage(const QString& msg);       // shown in the log view at the bottom of the window

@@ -14,6 +14,7 @@ public:
     void addSpectrum(const lr::Spectrum& sp) override;
     void activated() override;
     bool addToLibrary(const lr::Spectrum& sp) override;   // asks for name etc. if dialogsEnabled()
+    bool matchSpectrum(const lr::Spectrum& sp) override;  // query + Match tab + ranked hits
     LibraryPage* libraryPage() const { return m_page; }
 
 private:

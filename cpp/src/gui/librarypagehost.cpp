@@ -24,6 +24,14 @@ void LibraryPageHost::activated() {
     }
 }
 
+bool LibraryPageHost::matchSpectrum(const lr::Spectrum& sp) {
+    activated();
+    m_page->setQuery(sp.shift, sp.intensity, spectrumDisplayName(sp));
+    m_page->showMatchTab();
+    m_page->runMatch();
+    return true;
+}
+
 bool LibraryPageHost::addToLibrary(const lr::Spectrum& sp) {
     activated();                                           // the default library if none is open yet
     return m_page->addSpectrum(sp, dialogsEnabled()) > 0;

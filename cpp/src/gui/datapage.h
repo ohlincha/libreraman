@@ -92,8 +92,10 @@ public:
     void clear();
     int currentRow() const;
     QPushButton* addToLibraryButton() const { return m_addLibBtn; }
-    int libraryCandidate(bool ask);        // row "Add to library…" adds (-1: none / cancelled)
+    int libraryCandidate(bool ask, const QString& title = {});   // row "Add to library…"/"Match" uses (-1: none / cancelled)
     void addToLibraryDialog();
+    void matchDialog();                    // "Match": the candidate spectrum (asks which if several are ticked)
+    QPushButton* matchButton() const { return m_matchBtn; }
     void setCurrentRow(int row);
     std::vector<int> tickedRows() const;
 
@@ -197,6 +199,8 @@ signals:
     void message(const QString& title, const QString& text);   // warnings and notes (also shown as boxes)
     // "Add to library…" in the list's context menu (the host routes it to the Library page).
     void addToLibraryRequested(const lr::fileio::DataSpectrum& sp);
+    // "Match" (next to Add to library…): the host sends it to the Library page's matching.
+    void matchRequested(const lr::fileio::DataSpectrum& sp);
 
 protected:
     void changeEvent(QEvent* e) override;
@@ -254,7 +258,8 @@ private:
     QComboBox* m_norm = nullptr;
     QComboBox* m_baseline = nullptr;           // "measure" = the Measure page's method, else a method key
     QDoubleSpinBox* m_strength = nullptr;
-    QPushButton* m_addLibBtn = nullptr;      // used when a method is chosen on this page
+    QPushButton* m_addLibBtn = nullptr;
+    QPushButton* m_matchBtn = nullptr;      // used when a method is chosen on this page
     QSpinBox* m_fitMin = nullptr;              // baseline fit lower end (cm-1)
     QString m_lastBaseline = QStringLiteral("measure");   // restored by setBaselineCorrection(true)
     void saveBaselineSettings() const;     // method, strength and fit start persist (QSettings)

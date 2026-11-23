@@ -73,6 +73,8 @@ public slots:
     void fitToScreen();
     // "Add to library…" from another page (Measure): the Library area stores it (Page::addToLibrary).
     Q_INVOKABLE bool addToLibrary(const lr::Spectrum& sp);   // invokable: DataPageHost calls it by name
+    // "Match" on the Data page: the Library area matches the spectrum and is shown (Page::matchSpectrum).
+    Q_INVOKABLE bool matchInLibrary(const lr::Spectrum& sp);
     // Instrument > Shut down instrument…: confirms (dialogsEnabled), stops a running measurement, then the
     // vendor power-down (real instrument) or a plain disconnect (simulator). Logs "Instrument shut down".
     void shutDownInstrument();

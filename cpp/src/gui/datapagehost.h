@@ -27,7 +27,8 @@ public:
     // "sample" defaults to the entry name).
     static lr::Spectrum toSpectrum(const fileio::DataSpectrum& d);
     // Invokes window->addToLibrary(sp) by name; false with the reason if it is missing, fails or declines.
-    static bool routeToLibrary(QObject* window, const lr::Spectrum& sp, QString* error = nullptr);
+    static bool routeToLibrary(QObject* window, const lr::Spectrum& sp, QString* error = nullptr,
+                               const char* method = "addToLibrary");   // or "matchInLibrary" (Match)
 
 private:
     DataPage* m_page;

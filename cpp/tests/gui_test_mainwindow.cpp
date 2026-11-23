@@ -3,6 +3,7 @@
 // once), closing without dialogs.
 #include "gui/calibrationpage.h"
 #include "gui/controller.h"
+#include "gui/datapage.h"
 #include "gui/datapagehost.h"
 #include "gui/mainwindow.h"
 #include "gui/measurepage.h"
@@ -52,6 +53,11 @@ public:
         libraryAdds << spectrumDisplayName(sp);
         return true;
     }
+    bool matchSpectrum(const lr::Spectrum& sp) override {
+        matches << spectrumDisplayName(sp);
+        return true;
+    }
+    QStringList matches;
     PageContext ctx;
     QStringList names;
     QStringList libraryAdds;
@@ -76,6 +82,7 @@ private slots:
     void pauseAndResume();
     void stopSwitchesLaserOff();
     void addToLibraryAndClear();
+    void dataMatchGoesToLibrary();
     void peaksOnlyInUsefulRange();
     void settingsFitWithoutScrolling();
     void simulatorReactionsListed();
@@ -384,6 +391,31 @@ void GuiTestMainWindow::addToLibraryAndClear() {
     QCOMPARE(m->spectrumPlot()->xRange().hi, 3500.0);
     QVERIFY(m->spectrumPlot()->autoY());
     QVERIFY(m->signalLabel()->text().endsWith(QStringLiteral(" %")));
+}
+
+// "Match" on the Data page: the ticked spectrum goes to the Library area's matching, which is shown.
+void GuiTestMainWindow::dataMatchGoesToLibrary() {
+    auto* host = dynamic_cast<DataPageHost*>(m_win->page(QStringLiteral("Data")));
+    QVERIFY(host);
+    DataPage* d = host->dataPage();
+    lr::Spectrum sp;
+    for (int i = 0; i < 500; ++i) {
+        sp.shift.push_back(200 + 4 * i);
+        sp.intensity.push_back(100 * std::exp(-std::pow((200 + 4 * i - 801) / 6.0, 2)));
+    }
+    sp.setMeta(QStringLiteral("sample"), QStringLiteral("match me"));
+    host->addSpectrum(sp);
+    host->batcher()->flush();
+    QTRY_VERIFY(d->count() > 0);
+    QVERIFY(d->matchButton()->isEnabled());
+    m_win->showArea(0);
+    const int before = int(g_recorder->matches.size());
+    d->setCurrentRow(d->count() - 1);
+    d->matchButton()->click();
+    QCOMPARE(int(g_recorder->matches.size()), before + 1);
+    QVERIFY(g_recorder->matches.back().contains(QStringLiteral("match me")));
+    QCOMPARE(m_win->page(QStringLiteral("Library"))->isVisible(), true);
+    m_win->showArea(0);                         // the later tests work on the Measure area
 }
 
 // Junk far beyond the detector range (6000-9000 cm-1, taller than the real bands) and below 100 cm-1
