@@ -6,6 +6,7 @@
 #include "gui/statusstrip.h"
 #include "gui/theme.h"
 
+#include <QFont>
 #include <QApplication>
 #include <QElapsedTimer>
 #include <QPushButton>
@@ -357,6 +358,9 @@ void GuiTestPlot::legendPlacement() {
             y.push_back(50 + 10000 * std::exp(-std::pow((s - peakAt) / 15, 2)) + 3000 * std::exp(-std::pow((s - 1800) / 20, 2)));
         }
         w.resize(640, 400);
+        QFont f = w.font();                    // fixed pixel size: the CI runners render fonts at 72 dpi, and a
+        f.setPixelSize(16);                    // smaller legend fit beside the peak in the top right
+        w.setFont(f);
         w.setHeadroom(0.18);
         w.addCurve(x, y, QPen(Qt::blue), QStringLiteral("a rather long sample name  12:34:56"));
         w.addPeakLabels()->setPeaks({peakAt, 1800}, x, y);
