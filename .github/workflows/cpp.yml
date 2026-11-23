@@ -41,8 +41,8 @@ jobs:
           ctest --test-dir build --output-on-failure
           if ($LASTEXITCODE -ne 0) {
             foreach ($t in (ctest --test-dir build -N | Select-String "Test +#\d+: (\S+)" | % { $_.Matches[0].Groups[1].Value })) {
-              & "build\$t.exe" -o -,txt 2>&1 | Out-Host
-              if ($LASTEXITCODE -ne 0) { Write-Host "== $t exit code: $LASTEXITCODE" }
+              & "build\$t.exe" -o "$t.txt,txt" 2>&1 | Out-Host
+              if ($LASTEXITCODE -ne 0) { Write-Host "== $t exit code: $LASTEXITCODE"; Get-Content "$t.txt" | Select-String -NotMatch "^PASS" | Out-Host }
             }
             exit 1
           }
