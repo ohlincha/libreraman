@@ -1,6 +1,6 @@
 # LibreRamen — quick manual
 
-This covers the desktop application (version 0.3.5). For installation see the [README](../README.md).
+This covers the desktop application (version 0.3.6). For installation see the [README](../README.md).
 
 ## The window
 

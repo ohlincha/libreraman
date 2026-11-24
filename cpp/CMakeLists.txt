@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.21)
 if(POLICY CMP0144)
   cmake_policy(SET CMP0144 NEW)        # use <PACKAGENAME>_ROOT hints (LIBUSB_ROOT, HIDAPI_ROOT)
 endif()
-project(LibreRamen VERSION 0.3.5 LANGUAGES CXX)
+project(LibreRamen VERSION 0.3.6 LANGUAGES CXX)
 
 # C++ implementation of LibreRamen (the Python package in ../libreramen is the reference).
 # Layout:  src/core  engine library (Qt Core + SerialPort, libusb, hidapi, Eigen; no widgets)
