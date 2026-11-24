@@ -700,8 +700,9 @@ private slots:
             QVERIFY(!hs.empty());
             QVERIFY2(hs[0].name == name, qPrintable(hs[0].name));
         }
-        // band-list entries take part in full-spectrum search (drawn with the width of the query's peaks):
-        // simulated solvents find their literature band lists
+        // band-list entries take part in full-spectrum search (drawn with the width of the query's peaks): the
+        // simulator's spectra (recorded on the Cora at 532 nm, plus noise) find their literature band lists with
+        // both methods
         auto sim = simulator();
         for (const QString& sample : {QStringLiteral("ethanol"), QStringLiteral("chloroform")}) {
             sim->setSample(sample);
@@ -714,6 +715,11 @@ private slots:
             qInfo("%s (band width %.1f): %s", qPrintable(sample), m.bandWidth(), qPrintable(names.join("; ")));
             QVERIFY(!hb.empty());
             QVERIFY2(hb[0].name.toLower() == sample && hb[0].bandList, qPrintable(names.join("; ")));
+            const auto hp = m.searchPeaks(sp.shift, sp.intensity, {}, 10);
+            names.clear();
+            for (const auto& h : hp) names << QString("%1 %2").arg(h.name).arg(h.score, 0, 'f', 3);
+            qInfo("%s, peaks: %s", qPrintable(sample), qPrintable(names.join("; ")));
+            QVERIFY2(!hp.empty() && hp[0].name.toLower() == sample, qPrintable(names.join("; ")));
         }
         // a library from an older version gets only the entries it lacks
         Library old;
