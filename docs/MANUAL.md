@@ -117,7 +117,7 @@ entries come with their sources (DOIs), the excitation laser, notes on compositi
 relative intensity; where the source gave none, it is an estimate of typical published spectra (noted in the
 entry); class *Literature*, tag *reference*. The default library also
 has measured spectra from open data sets, usable with full-spectrum search: 42 polymers at 532 nm (PE, PP, PTFE, PVDF,
-nylon, PET, PMMA, polyimide, cellulose and more; Miller et al. 2022, CC BY 4.0), 422 minerals and inorganic compounds from the Raman Open Database (quartz, glass,
+nylon, PET, PMMA, polyimide, cellulose and more; Miller et al. 2022, CC BY 4.0), 421 minerals and inorganic compounds from the Raman Open Database (quartz, glass,
 sapphire, calcite, gypsum, TiO₂, metal oxides and more; CC0, mostly 532 nm) and 7 battery-interphase compounds at
 488 nm (Li₂CO₃, LiPF₆, Li₂O, lithium acetate, MnF₂, NiF₂, PEO; Karapin-Springorum et al. 2025, CC0). The licence
 and citation are in each entry. New versions of

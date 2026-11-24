@@ -728,14 +728,52 @@ private slots:
             if (sample == "water" || sample == "zinc sulfide") continue;
             QVERIFY2(!hp.empty() && hp[0].name == expected, qPrintable(names.join("; ")));
         }
-        // a library from an older version gets only the entries it lacks
+        // real spectra measured on the Cora (532 nm, 2026-11-24): polystyrene (the verification standard; not the
+        // mislabelled ROD "cobalt oxide", which is a polystyrene spectrum) and ethanol
+        for (const auto& [f, want] : {std::pair{"polystyrene.csv", "polystyrene"}, {"ethanol.csv", "ethanol"}}) {
+            const auto real = fileio::read(QStringLiteral(GOLDEN_DIR "/cora/") + f);
+            QVERIFY(!real.empty());
+            const auto hr = m.search(real[0].x, real[0].y, 3);
+            QStringList names;
+            for (const auto& h : hr) names << QString("%1 %2").arg(h.name).arg(h.score, 0, 'f', 3);
+            qInfo("%s: %s", f, qPrintable(names.join("; ")));
+            QVERIFY2(!hr.empty() && hr[0].name.toLower().contains(want), qPrintable(names.join("; ")));
+        }
+        // a library from an older reference set: unedited entries are renewed, retired ones removed, edited ones and
+        // the user's own entries kept
         Library old;
         old.open(file("reference-old.sqlite"));
         addReferenceEntries(old);
-        const auto all = old.find(Filter{}, false);
+        auto all = old.find(Filter{}, false);
         old.remove(std::find_if(all.begin(), all.end(), [](const Entry& e) { return e.name == "Benzene"; })->id);
+        Entry edited = *std::find_if(all.begin(), all.end(), [](const Entry& e) { return e.name == "Ethanol"; });
+        edited.notes = "checked on our Cora";
+        QTest::qWait(5);
+        old.update(edited, true);
+        Entry retired;
+        retired.name = "Retired entry";
+        retired.source = Source::Literature;
+        retired.provenance["reference_key"] = "rod:Retired entry";
+        retired.peaks = {{500, 1, 0, {}}};
+        old.add(retired);
+        Entry own;
+        own.name = "My sample";
+        own.peaks = {{600, 1, 0, {}}};
+        old.add(own);
         old.setInfo("reference_version", "1");
-        QCOMPARE(addReferenceEntries(old), 1);
+        addReferenceEntries(old);
+        all = old.find(Filter{}, false);
+        auto count = [&](const QString& n) {
+            return std::count_if(all.begin(), all.end(), [&](const Entry& e) { return e.name == n; });
+        };
+        QCOMPARE(int(all.size()), referenceCount() + 1);   // + "My sample"; Benzene back, the retired one gone
+        QCOMPARE(count("Benzene"), 1);
+        QCOMPARE(count("Retired entry"), 0);
+        QCOMPARE(count("My sample"), 1);
+        QCOMPARE(count("Ethanol"), 1);
+        QCOMPARE(std::find_if(all.begin(), all.end(), [](const Entry& e) { return e.name == "Ethanol"; })->notes,
+                 QString("checked on our Cora"));
+        QCOMPARE(addReferenceEntries(old), 0);   // up to date: nothing to do
     }
 
     void searchFluorescent() {

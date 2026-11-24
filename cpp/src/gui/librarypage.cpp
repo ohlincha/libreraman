@@ -577,7 +577,7 @@ bool LibraryPage::setLibraryPath(const QString& path, bool readOnly) {
         m_lib->info(QStringLiteral("reference_version")).toInt() < library::referenceVersion()) {
         try {
             if (const int n = library::addReferenceEntries(*m_lib))
-                emit message(QStringLiteral("Added %1 reference entries (literature band positions) to the library").arg(n));
+                emit message(QStringLiteral("Reference entries added or updated: %1").arg(n));
         } catch (const Error& e) {
             emit message(QStringLiteral("Reference entries not added: %1").arg(QString::fromUtf8(e.what())));
         }

@@ -156,6 +156,10 @@ def polymers(path):
 
 ROD_LASER_RANK = {"532": 0, "514": 1, "514.5": 1, "488": 2, "633": 3, "632.8": 3, "780": 4, "785": 4}
 ROD_BAD_NAMES = {"", ",", ";", "co", "phase ii or wii", "phase iii", "phase iv"}
+# deposits whose spectrum is not the named compound (checked against a measured standard)
+ROD_BAD_CODES = {
+    "3500085",   # "Cobalt (II) oxide": the spectrum is polystyrene (1002, 1031, 1603, 2905, 3053; no CoO bands)
+}
 
 
 def rod_file(path):
@@ -207,7 +211,7 @@ def rod(folder):
                 continue
             mineral = meta.get("_chemical_name_mineral", "")
             name = mineral or meta.get("_chemical_name_common", "") or meta.get("_chemical_name_systematic", "")
-            if name.strip().lower() in ROD_BAD_NAMES:
+            if name.strip().lower() in ROD_BAD_NAMES or f[:-4] in ROD_BAD_CODES:
                 continue
             laser = meta.get("_raman_measurement_device.excitation_laser_wavelength", "")
             pts = sorted(zip(x, y))

@@ -3,6 +3,7 @@
 // once), closing without dialogs.
 #include "gui/calibrationpage.h"
 #include "gui/controller.h"
+#include "core/fileio.h"
 #include "gui/datapage.h"
 #include "gui/datapagehost.h"
 #include "gui/mainwindow.h"
@@ -453,6 +454,16 @@ void GuiTestMainWindow::peaksOnlyInUsefulRange() {
     QVERIFY(!MeasurePage::pickPeaks(sp.shift, sp.intensity).empty());
     for (double p : MeasurePage::pickPeaks(sp.shift, sp.intensity))
         QVERIFY(p >= MeasurePage::kPeakMin && p <= MeasurePage::kUsefulMax);
+    // a band-rich real spectrum (polystyrene on the Cora): the list holds the strongest bands, not the first 12
+    const auto ps = lr::fileio::read(QStringLiteral(GOLDEN_DIR "/cora/polystyrene.csv"));
+    QVERIFY(!ps.empty());
+    const lr::Vec pk = MeasurePage::pickPeaks(ps[0].x, ps[0].y);
+    QVERIFY(pk.size() <= 12 && std::is_sorted(pk.begin(), pk.end()));
+    for (double want : {1001.4, 1602.3, 3054.3}) {
+        bool found = false;
+        for (double p : pk) found = found || std::abs(p - want) < 4;
+        QVERIFY2(found, qPrintable(QString("%1 missing").arg(want)));
+    }
     m->clearAll();
 }
 

@@ -1283,7 +1283,7 @@ void createDemo(Library& lib, bool withStandards) {
 
 // ------------------------------------------------------------------------------------------- reference set
 namespace {
-constexpr int kReferenceVersion = 8;               // bump when resources/reference changes
+constexpr int kReferenceVersion = 9;               // bump when resources/reference changes
 const char* const kReferenceFiles[] = {":/core/reference/battery.json", ":/core/reference/solvents.json",
                                         ":/core/reference/interphase.json", ":/core/reference/polymers.json",
                                         ":/core/reference/electrolyte.json", ":/core/reference/rod.json"};
@@ -1352,14 +1352,26 @@ int referenceCount() { return int(referenceSet().size()); }
 
 int addReferenceEntries(Library& lib) {
     if (lib.readOnly()) throw Error("the library is open read-only");
+    // Entries from an older reference set are replaced by the current ones, and entries that were retired (e.g. a
+    // mislabelled database spectrum) are removed - but only if the user never edited them: an entry is unedited
+    // while its modified time equals its created time (add() sets both, update() only the modified time).
+    const bool upgrade = lib.info(QStringLiteral("reference_version")).toInt() < kReferenceVersion;
+    std::vector<Entry> current = referenceSet();
+    QSet<QString> currentKeys;
+    for (const Entry& e : current) currentKeys.insert(e.provenance.value("reference_key").toString());
     QSet<QString> have;
+    std::vector<qint64> drop;
     for (const Entry& e : lib.find(Filter{})) {
         const QString k = e.provenance.value("reference_key").toString();
-        if (!k.isEmpty()) have.insert(k);
+        if (k.isEmpty()) continue;
+        const bool unedited = e.created.isValid() && e.created == e.modified;
+        if (upgrade && unedited) drop.push_back(e.id);   // replaced below (or retired)
+        else have.insert(k);                             // kept as the user left it
     }
+    if (!drop.empty()) lib.remove(drop);
     int added = 0;
-    for (Entry& e : referenceSet()) {
-        if (have.contains(e.provenance.value("reference_key").toString())) continue;   // kept as the user left it
+    for (Entry& e : current) {
+        if (have.contains(e.provenance.value("reference_key").toString())) continue;
         lib.add(std::move(e));
         ++added;
     }

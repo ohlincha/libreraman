@@ -113,8 +113,9 @@ QString cm1(double v) { return QStringLiteral("%1 cm⁻¹").arg(v, 0, 'f', 0); }
 
 }  // namespace
 
-// [p.position for p in pick(x, y, snr=8, xmin=150)][:12], on the useful range only (the noise level is then
-// also estimated there, not on the junk beyond the detector range).
+// The 12 highest peaks of pick(x, y, snr=8, xmin=150), listed by position, on the useful range only (the noise
+// level is then also estimated there, not on the junk beyond the detector range). (The Python version kept the
+// first 12 by position, which dropped the strong high-shift bands of band-rich spectra such as polystyrene.)
 Vec MeasurePage::pickPeaks(const Vec& x, const Vec& y) {
     Vec xs, ys;
     const std::size_t n = std::min(x.size(), y.size());
@@ -127,11 +128,13 @@ Vec MeasurePage::pickPeaks(const Vec& x, const Vec& y) {
     if (xs.size() < 16)
         return out;
     try {
-        for (const auto& p : lr::peaks::pick(xs, ys, 8.0, 2.0, false, kPeakMin, kUsefulMax)) {
-            if (out.size() >= 12)
-                break;
+        auto pk = lr::peaks::pick(xs, ys, 8.0, 2.0, false, kPeakMin, kUsefulMax);
+        std::stable_sort(pk.begin(), pk.end(), [](const auto& a, const auto& b) { return a.height > b.height; });
+        if (pk.size() > 12)
+            pk.resize(12);
+        for (const auto& p : pk)
             out.push_back(p.position);
-        }
+        std::sort(out.begin(), out.end());
     } catch (const std::exception&) {
     }
     return out;
