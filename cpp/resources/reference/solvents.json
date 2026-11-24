@@ -2148,26 +2148,26 @@
   "peaks": [
    {
     "position": 450,
-    "intensity": 0,
-    "width": 0,
+    "intensity": 0.05,
+    "width": 250,
     "label": "hindered-rotation (libration) band nu_L1, broad"
    },
    {
     "position": 1650,
-    "intensity": 0,
-    "width": 0,
+    "intensity": 0.08,
+    "width": 100,
     "label": "H-O-H bend"
    },
    {
     "position": 2130,
-    "intensity": 0,
-    "width": 0,
+    "intensity": 0.02,
+    "width": 200,
     "label": "bend + libration combination, weak"
    },
    {
     "position": 3400,
     "intensity": 1.0,
-    "width": 0,
+    "width": 400,
     "label": "O-H stretch, broad (3200-3800)"
    }
   ],
@@ -2179,7 +2179,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Approximate positions of broad bands quoted in the text, not a peak table. Raman of water is weak at 785 nm and the OH stretch is a broad asymmetric envelope.",
+  "notes": "Approximate positions of broad bands quoted in the text, not a peak table. Raman of water is weak at 785 nm and the OH stretch is a broad asymmetric envelope. Relative heights and widths (FWHM) are approximate (typical liquid-water spectra).",
   "confidence": "medium"
  },
  {
@@ -2304,6 +2304,49 @@
   ],
   "rruff_id": "",
   "notes": "Positions as quoted in a secondary table (itself citing Anger et al. 2018); laser for the underlying data not confirmed. Intensities unknown. Assignments from the Handbook text (aromatic ~1600, C=O ~1725). Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Zinc sulfide (sphalerite, ZnS)",
+  "formula": "ZnS",
+  "cas": "1314-98-3",
+  "cls": "mineral",
+  "tags": [
+   "sphalerite",
+   "zinc blende",
+   "ZnS",
+   "phosphor"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 275,
+    "intensity": 0.5,
+    "width": 0,
+    "label": "TO(Γ)"
+   },
+   {
+    "position": 350,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "LO(Γ)"
+   },
+   {
+    "position": 668,
+    "intensity": 0.15,
+    "width": 40,
+    "label": "second order (2TO / TO+LO region), weak"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Serrano, Cantarero, Cardona et al., Raman scattering in β-ZnS, Phys. Rev. B 69, 014301 (2004)",
+    "doi_or_url": "https://doi.org/10.1103/PhysRevB.69.014301",
+    "covers": "first-order TO/LO frequencies and second-order spectrum"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Cubic ZnS at room temperature. Doped ZnS (phosphors) fluoresces strongly at 532 nm; the TO band can look shifted or asymmetric on a strong background. Relative heights are approximate.",
   "confidence": "medium"
  }
 ]

@@ -39,7 +39,7 @@ namespace lr::match {
 
 struct Preprocess {
     double step = 2.0;                 // grid spacing (cm^-1)
-    double xmin = 150, xmax = 3500;    // analysed range (intersected with the data)
+    double xmin = 150, xmax = 4000;    // analysed range (intersected with the data)
     QString baseline = "arpls";        // processing::baseline method ("none" = off)
     double strength = 6.0;             // 0..10
     int smoothWindow = 0;              // Savitzky-Golay smoothing on the grid (odd points; 0 = off)

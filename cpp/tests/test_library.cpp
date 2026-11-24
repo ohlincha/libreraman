@@ -704,7 +704,10 @@ private slots:
         // simulator's spectra (recorded on the Cora at 532 nm, plus noise) find their literature band lists with
         // both methods
         auto sim = simulator();
-        for (const QString& sample : {QStringLiteral("ethanol"), QStringLiteral("chloroform")}) {
+        const QList<QPair<QString, QString>> samples{{"ethanol", "Ethanol"}, {"chloroform", "Chloroform"},
+                                                     {"carbon tetrachloride", "Carbon tetrachloride"},
+                                                     {"water", "Water (liquid H2O)"}, {"zinc sulfide", "Zinc sulfide (sphalerite, ZnS)"}};
+        for (const auto& [sample, expected] : samples) {
             sim->setSample(sample);
             AcquireOptions o;
             o.exposure_s = 0.5;
@@ -713,13 +716,17 @@ private slots:
             QStringList names;
             for (const auto& h : hb) names << QString("%1 %2").arg(h.name).arg(h.score, 0, 'f', 3);
             qInfo("%s (band width %.1f): %s", qPrintable(sample), m.bandWidth(), qPrintable(names.join("; ")));
+            if (expected == "-") continue;   // not in the reference set
             QVERIFY(!hb.empty());
-            QVERIFY2(hb[0].name.toLower() == sample && hb[0].bandList, qPrintable(names.join("; ")));
+            QVERIFY2(hb[0].name == expected && hb[0].bandList, qPrintable(names.join("; ")));
             const auto hp = m.searchPeaks(sp.shift, sp.intensity, {}, 10);
             names.clear();
             for (const auto& h : hp) names << QString("%1 %2").arg(h.name).arg(h.score, 0, 'f', 3);
             qInfo("%s, peaks: %s", qPrintable(sample), qPrintable(names.join("; ")));
-            QVERIFY2(!hp.empty() && hp[0].name.toLower() == sample, qPrintable(names.join("; ")));
+            // water (one broad band) and fluorescent ZnS (background bumps picked as peaks, TO band distorted) are
+            // cases for full-spectrum search
+            if (sample == "water" || sample == "zinc sulfide") continue;
+            QVERIFY2(!hp.empty() && hp[0].name == expected, qPrintable(names.join("; ")));
         }
         // a library from an older version gets only the entries it lacks
         Library old;
