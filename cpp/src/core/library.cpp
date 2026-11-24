@@ -1283,7 +1283,7 @@ void createDemo(Library& lib, bool withStandards) {
 
 // ------------------------------------------------------------------------------------------- reference set
 namespace {
-constexpr int kReferenceVersion = 6;               // bump when resources/reference changes
+constexpr int kReferenceVersion = 7;               // bump when resources/reference changes
 const char* const kReferenceFiles[] = {":/core/reference/battery.json", ":/core/reference/solvents.json",
                                         ":/core/reference/interphase.json", ":/core/reference/polymers.json",
                                         ":/core/reference/electrolyte.json", ":/core/reference/rod.json"};

@@ -9,6 +9,13 @@
 // which is independent of scale and offset (normalisation is implicit). Entries whose overlap is shorter
 // than minOverlap are skipped.
 //
+// Entries that only have a band list take part in full-spectrum search and mixtures through a spectrum drawn
+// from their bands: pseudo-Voigt profiles (50 % Lorentzian) at the listed positions, height = relative intensity
+// (1 when the list has none; 0.2 for unrated bands in a rated list), FWHM = the band's own width if it is larger,
+// else the typical width of the query's peaks (bandWidth(), median FWHM of its strongest peaks, 4-40 cm^-1, so
+// instrument resolution and sample broadening are taken from the measurement). The drawn spectrum covers the
+// bands +- 150 cm^-1. Such hits have Hit::bandList set.
+//
 // Peak search: query peaks (picked on the SNIP-corrected spectrum, or given) against the entries' peak lists
 // (literature band lists, or peaks picked when the spectrum was stored). Peaks are paired one-to-one,
 // closest first, within `tolerance`; each pair counts with closeness 1 - 0.5 d/tolerance and the peak weights
@@ -71,6 +78,11 @@ PeakScore peakScore(const std::vector<library::PeakEntry>& query, const std::vec
                     double rlo = -std::numeric_limits<double>::infinity(),
                     double rhi = std::numeric_limits<double>::infinity());
 
+// Typical FWHM (cm^-1) of the strongest peaks of a spectrum: median of the 8 highest, clamped to 4..40; 10 when none.
+double typicalWidth(const Vec& x, const Vec& y);
+// A spectrum drawn from a band list (see above), on a 1 cm^-1 grid.
+void bandSpectrum(const std::vector<library::PeakEntry>& bands, double fwhm, Vec& x, Vec& y);
+
 // Lawson-Hanson NNLS: argmin ||A c - b||, c >= 0.
 Eigen::VectorXd nnls(const Eigen::MatrixXd& A, const Eigen::VectorXd& b, int maxIter = 0);
 
@@ -82,6 +94,7 @@ struct Hit {
     double score = 0;                  // HQI or peak score, 0..1
     double lo = 0, hi = 0;             // compared range (cm^-1)
     int matched = -1, libraryPeaks = -1, queryPeaks = -1;   // peak search only
+    bool bandList = false;             // full-spectrum hit on a spectrum drawn from a band list
 };
 
 struct PeakOptions {
@@ -121,6 +134,9 @@ public:
     void clear() { refs_.clear(); }
     size_t size() const { return refs_.size(); }
     double minOverlap = 400.0;                   // cm^-1 for full-spectrum search and mixtures
+    // Width used to draw band-list entries; search(x, y), fitMixture and searchMixtures set it from the query.
+    double bandWidth() const { return bandWidth_; }
+    void setBandWidth(double fwhm) const;
 
     // Full-spectrum search; `f` is applied in memory (class, source, laser, text in name/formula/class/tags).
     std::vector<Hit> search(const Vec& x, const Vec& y, int topN = 10, const library::Filter& f = {}) const;
@@ -145,7 +161,8 @@ private:
     struct Ref {
         library::Entry meta;                     // without spectra (kept small)
         Vec x, y;                                // original preferred spectrum (for re-preparing)
-        Prepared prep;
+        mutable Prepared prep;                   // for band-list entries: drawn at bandWidth_
+        bool bands = false;                      // no measured spectrum, prep drawn from the band list
         std::vector<library::PeakEntry> peaks;
         double lo = -std::numeric_limits<double>::infinity(), hi = std::numeric_limits<double>::infinity();
     };
@@ -154,8 +171,11 @@ private:
     Mixture fit(const Prepared& q, const std::vector<const Ref*>& refs) const;
     const Ref* find(qint64 id) const;
 
+    void drawBands(const Ref& r) const;
+
     Preprocess pre_;
     std::vector<Ref> refs_;
+    mutable double bandWidth_ = 10.0;
 };
 
 }  // namespace lr::match

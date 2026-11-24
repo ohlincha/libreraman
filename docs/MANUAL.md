@@ -1,6 +1,6 @@
 # LibreRamen — quick manual
 
-This covers the desktop application (version 0.3.3). For installation see the [README](../README.md).
+This covers the desktop application (version 0.3.4). For installation see the [README](../README.md).
 
 ## The window
 
@@ -99,7 +99,11 @@ Open spectra (CSV, TXT, SPC, JCAMP-DX, vendor files) and compare them: overlay, 
 
 A spectral library is an SQLite file (**New library…**, **Open…**). Add spectra from Data or Measure, from
 files, or import a RRUFF folder. Select a spectrum and press **Match** to rank the library entries against
-it; *Filters* narrow the search. Matching removes the baseline with *arPLS* by default, so fluorescent
+it; *Filters* narrow the search. Three methods: **Peaks** (the default) compares peak positions with every entry's
+peak or band list; **Full spectrum** correlates the whole spectra (hit quality index), which handles broad and
+overlapping bands best; **Mixture** fits 1–3 of the best full-spectrum hits. In full-spectrum search, entries
+that only have a band list are compared with a spectrum drawn from their bands, using the typical peak width of
+your spectrum; such hits are marked *(band list)*. The method you choose is remembered. Matching removes the baseline with *arPLS* by default, so fluorescent
 samples are still matched to clean reference spectra (classic SNIP left part of the fluorescence behind and
 matched them to the wrong entry).
 
@@ -109,8 +113,9 @@ electrolytes (EC, PC, DMC, EMC, DEC, FEC, VC, the Li⁺-solvated EC and PC bands
 ion-pairing bands, LiBOB, LiDFOB), common
 solvents (water, alcohols, acetone, acetonitrile, DMSO, DMF, chlorinated and aromatic solvents, alkanes) and the
 ASTM E1840 shift standards (cyclohexane, paracetamol, naphthalene, polystyrene, sulfur, toluene). Band-list
-entries come with their sources (DOIs), the excitation laser, notes on composition and phase, and a confidence. These are peak
-lists, not spectra, so use **peak search** for them; class *Literature*, tag *reference*. The default library also
+entries come with their sources (DOIs), the excitation laser, notes on composition and phase, and a confidence. Most bands carry a
+relative intensity; where the source gave none, it is an estimate of typical published spectra (noted in the
+entry); class *Literature*, tag *reference*. The default library also
 has measured spectra from open data sets, usable with full-spectrum search: 42 polymers at 532 nm (PE, PP, PTFE, PVDF,
 nylon, PET, PMMA, polyimide, cellulose and more; Miller et al. 2022, CC BY 4.0), 422 minerals and inorganic compounds from the Raman Open Database (quartz, glass,
 sapphire, calcite, gypsum, TiO₂, metal oxides and more; CC0, mostly 532 nm) and 7 battery-interphase compounds at

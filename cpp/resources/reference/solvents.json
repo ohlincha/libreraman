@@ -730,73 +730,73 @@
   "peaks": [
    {
     "position": 373,
-    "intensity": 0,
+    "intensity": 0.05,
     "width": 0,
     "label": ""
    },
    {
     "position": 429,
-    "intensity": 0,
+    "intensity": 0.15,
     "width": 0,
     "label": ""
    },
    {
     "position": 489,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": ""
    },
    {
     "position": 820,
-    "intensity": 0,
+    "intensity": 0.6,
     "width": 0,
     "label": ""
    },
    {
     "position": 953,
-    "intensity": 0,
+    "intensity": 0.25,
     "width": 0,
     "label": ""
    },
    {
     "position": 1132,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 1342,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 1452,
-    "intensity": 0,
+    "intensity": 0.35,
     "width": 0,
     "label": ""
    },
    {
     "position": 2721,
-    "intensity": 0,
+    "intensity": 0.05,
     "width": 0,
     "label": ""
    },
    {
     "position": 2882,
-    "intensity": 0,
+    "intensity": 0.25,
     "width": 0,
     "label": ""
    },
    {
     "position": 2920,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": ""
    },
    {
     "position": 2975,
-    "intensity": 0,
+    "intensity": 0.65,
     "width": 0,
     "label": ""
    }
@@ -809,7 +809,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -825,43 +825,43 @@
   "peaks": [
    {
     "position": 446,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 622,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": ""
    },
    {
     "position": 894,
-    "intensity": 0,
+    "intensity": 0.7,
     "width": 0,
     "label": ""
    },
    {
     "position": 1429,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": ""
    },
    {
     "position": 1668,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": ""
    },
    {
     "position": 2943,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": ""
    },
    {
     "position": 2994,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": ""
    }
@@ -874,7 +874,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -889,73 +889,73 @@
   "peaks": [
    {
     "position": 392,
-    "intensity": 0,
+    "intensity": 0.05,
     "width": 0,
     "label": ""
    },
    {
     "position": 531,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": ""
    },
    {
     "position": 788,
-    "intensity": 0,
+    "intensity": 0.7,
     "width": 0,
     "label": ""
    },
    {
     "position": 1067,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 1222,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": ""
    },
    {
     "position": 1431,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": ""
    },
    {
     "position": 1709,
-    "intensity": 0,
+    "intensity": 0.3,
     "width": 0,
     "label": ""
    },
    {
     "position": 2698,
-    "intensity": 0,
+    "intensity": 0.05,
     "width": 0,
     "label": ""
    },
    {
     "position": 2850,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 2924,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": ""
    },
    {
     "position": 2967,
-    "intensity": 0,
+    "intensity": 0.3,
     "width": 0,
     "label": ""
    },
    {
     "position": 3007,
-    "intensity": 0,
+    "intensity": 0.25,
     "width": 0,
     "label": ""
    }
@@ -968,7 +968,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -983,37 +983,37 @@
   "peaks": [
    {
     "position": 261,
-    "intensity": 0,
+    "intensity": 0.75,
     "width": 0,
     "label": ""
    },
    {
     "position": 366,
-    "intensity": 0,
+    "intensity": 0.85,
     "width": 0,
     "label": ""
    },
    {
     "position": 668,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": ""
    },
    {
     "position": 758,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": ""
    },
    {
     "position": 1216,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 3019,
-    "intensity": 0,
+    "intensity": 0.65,
     "width": 0,
     "label": ""
    }
@@ -1026,7 +1026,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -1041,61 +1041,61 @@
   "peaks": [
    {
     "position": 307,
-    "intensity": 0,
+    "intensity": 0.3,
     "width": 0,
     "label": ""
    },
    {
     "position": 334,
-    "intensity": 0,
+    "intensity": 0.3,
     "width": 0,
     "label": ""
    },
    {
     "position": 383,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": ""
    },
    {
     "position": 669,
-    "intensity": 0,
+    "intensity": 0.7,
     "width": 0,
     "label": ""
    },
    {
     "position": 699,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": ""
    },
    {
     "position": 954,
-    "intensity": 0,
+    "intensity": 0.25,
     "width": 0,
     "label": ""
    },
    {
     "position": 1044,
-    "intensity": 0,
+    "intensity": 0.25,
     "width": 0,
     "label": ""
    },
    {
     "position": 1419,
-    "intensity": 0,
+    "intensity": 0.15,
     "width": 0,
     "label": ""
    },
    {
     "position": 2913,
-    "intensity": 0,
+    "intensity": 0.8,
     "width": 0,
     "label": ""
    },
    {
     "position": 2997,
-    "intensity": 0,
+    "intensity": 0.4,
     "width": 0,
     "label": ""
    }
@@ -1108,7 +1108,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -1123,61 +1123,61 @@
   "peaks": [
    {
     "position": 443,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 883,
-    "intensity": 0,
+    "intensity": 0.6,
     "width": 0,
     "label": ""
    },
    {
     "position": 1052,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": ""
    },
    {
     "position": 1096,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": ""
    },
    {
     "position": 1276,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 1454,
-    "intensity": 0,
+    "intensity": 0.3,
     "width": 0,
     "label": ""
    },
    {
     "position": 2718,
-    "intensity": 0,
+    "intensity": 0.05,
     "width": 0,
     "label": ""
    },
    {
     "position": 2878,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": ""
    },
    {
     "position": 2929,
-    "intensity": 0,
+    "intensity": 0.85,
     "width": 0,
     "label": ""
    },
    {
     "position": 2973,
-    "intensity": 0,
+    "intensity": 0.55,
     "width": 0,
     "label": ""
    }
@@ -1190,7 +1190,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -1205,91 +1205,91 @@
   "peaks": [
    {
     "position": 379,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 634,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 787,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 847,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": ""
    },
    {
     "position": 918,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 939,
-    "intensity": 0,
+    "intensity": 0.05,
     "width": 0,
     "label": ""
    },
    {
     "position": 1002,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 1047,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": ""
    },
    {
     "position": 1115,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 1454,
-    "intensity": 0,
+    "intensity": 0.25,
     "width": 0,
     "label": ""
    },
    {
     "position": 1736,
-    "intensity": 0,
+    "intensity": 0.35,
     "width": 0,
     "label": ""
    },
    {
     "position": 2714,
-    "intensity": 0,
+    "intensity": 0.05,
     "width": 0,
     "label": ""
    },
    {
     "position": 2879,
-    "intensity": 0,
+    "intensity": 0.3,
     "width": 0,
     "label": ""
    },
    {
     "position": 2941,
-    "intensity": 0,
+    "intensity": 0.95,
     "width": 0,
     "label": ""
    },
    {
     "position": 2979,
-    "intensity": 0,
+    "intensity": 0.4,
     "width": 0,
     "label": ""
    }
@@ -1302,7 +1302,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -1318,61 +1318,61 @@
   "peaks": [
    {
     "position": 347,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 481,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": ""
    },
    {
     "position": 865,
-    "intensity": 0,
+    "intensity": 0.85,
     "width": 0,
     "label": ""
    },
    {
     "position": 1046,
-    "intensity": 0,
+    "intensity": 0.25,
     "width": 0,
     "label": ""
    },
    {
     "position": 1091,
-    "intensity": 0,
+    "intensity": 0.3,
     "width": 0,
     "label": ""
    },
    {
     "position": 1271,
-    "intensity": 0,
+    "intensity": 0.15,
     "width": 0,
     "label": ""
    },
    {
     "position": 1462,
-    "intensity": 0,
+    "intensity": 0.3,
     "width": 0,
     "label": ""
    },
    {
     "position": 2722,
-    "intensity": 0,
+    "intensity": 0.05,
     "width": 0,
     "label": ""
    },
    {
     "position": 2881,
-    "intensity": 0,
+    "intensity": 0.85,
     "width": 0,
     "label": ""
    },
    {
     "position": 2937,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": ""
    }
@@ -1385,7 +1385,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -1400,79 +1400,79 @@
   "peaks": [
    {
     "position": 318,
-    "intensity": 0,
+    "intensity": 0.15,
     "width": 0,
     "label": ""
    },
    {
     "position": 355,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": ""
    },
    {
     "position": 405,
-    "intensity": 0,
+    "intensity": 0.15,
     "width": 0,
     "label": ""
    },
    {
     "position": 659,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": ""
    },
    {
     "position": 866,
-    "intensity": 0,
+    "intensity": 0.5,
     "width": 0,
     "label": ""
    },
    {
     "position": 1092,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": ""
    },
    {
     "position": 1407,
-    "intensity": 0,
+    "intensity": 0.15,
     "width": 0,
     "label": ""
    },
    {
     "position": 1440,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": ""
    },
    {
     "position": 1661,
-    "intensity": 0,
+    "intensity": 0.3,
     "width": 0,
     "label": ""
    },
    {
     "position": 2808,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 2869,
-    "intensity": 0,
+    "intensity": 0.35,
     "width": 0,
     "label": ""
    },
    {
     "position": 2932,
-    "intensity": 0,
+    "intensity": 0.9,
     "width": 0,
     "label": ""
    },
    {
     "position": 2997,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": ""
    }
@@ -1485,7 +1485,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -1500,85 +1500,85 @@
   "peaks": [
    {
     "position": 309,
-    "intensity": 0,
+    "intensity": 0.05,
     "width": 0,
     "label": ""
    },
    {
     "position": 356,
-    "intensity": 0,
+    "intensity": 0.05,
     "width": 0,
     "label": ""
    },
    {
     "position": 395,
-    "intensity": 0,
+    "intensity": 0.05,
     "width": 0,
     "label": ""
    },
    {
     "position": 777,
-    "intensity": 0,
+    "intensity": 0.05,
     "width": 0,
     "label": ""
    },
    {
     "position": 839,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 902,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 1045,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 1079,
-    "intensity": 0,
+    "intensity": 0.15,
     "width": 0,
     "label": ""
    },
    {
     "position": 1138,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 1302,
-    "intensity": 0,
+    "intensity": 0.35,
     "width": 0,
     "label": ""
    },
    {
     "position": 1455,
-    "intensity": 0,
+    "intensity": 0.3,
     "width": 0,
     "label": ""
    },
    {
     "position": 2732,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 2875,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": ""
    },
    {
     "position": 2938,
-    "intensity": 0,
+    "intensity": 0.9,
     "width": 0,
     "label": ""
    }
@@ -1591,7 +1591,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, low confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -1606,97 +1606,97 @@
   "peaks": [
    {
     "position": 317,
-    "intensity": 0,
+    "intensity": 0.05,
     "width": 0,
     "label": ""
    },
    {
     "position": 371,
-    "intensity": 0,
+    "intensity": 0.05,
     "width": 0,
     "label": ""
    },
    {
     "position": 402,
-    "intensity": 0,
+    "intensity": 0.05,
     "width": 0,
     "label": ""
    },
    {
     "position": 454,
-    "intensity": 0,
+    "intensity": 0.05,
     "width": 0,
     "label": ""
    },
    {
     "position": 823,
-    "intensity": 0,
+    "intensity": 0.05,
     "width": 0,
     "label": ""
    },
    {
     "position": 892,
-    "intensity": 0,
+    "intensity": 0.15,
     "width": 0,
     "label": ""
    },
    {
     "position": 1005,
-    "intensity": 0,
+    "intensity": 0.05,
     "width": 0,
     "label": ""
    },
    {
     "position": 1039,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 1080,
-    "intensity": 0,
+    "intensity": 0.15,
     "width": 0,
     "label": ""
    },
    {
     "position": 1141,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 1303,
-    "intensity": 0,
+    "intensity": 0.35,
     "width": 0,
     "label": ""
    },
    {
     "position": 1456,
-    "intensity": 0,
+    "intensity": 0.3,
     "width": 0,
     "label": ""
    },
    {
     "position": 2671,
-    "intensity": 0,
+    "intensity": 0.05,
     "width": 0,
     "label": ""
    },
    {
     "position": 2733,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 2876,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": ""
    },
    {
     "position": 2938,
-    "intensity": 0,
+    "intensity": 0.9,
     "width": 0,
     "label": ""
    }
@@ -1709,7 +1709,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, low confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -2078,43 +2078,43 @@
   "peaks": [
    {
     "position": 286,
-    "intensity": 0,
+    "intensity": 0.5,
     "width": 0,
     "label": "CCl2 scissors"
    },
    {
     "position": 703,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": "CCl2 sym stretch"
    },
    {
     "position": 741,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": "CCl2 antisym stretch"
    },
    {
     "position": 1156,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 1423,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": "CH2 scissors"
    },
    {
     "position": 2988,
-    "intensity": 0,
+    "intensity": 0.8,
     "width": 0,
     "label": "CH2 sym stretch"
    },
    {
     "position": 3056,
-    "intensity": 0,
+    "intensity": 0.3,
     "width": 0,
     "label": "CH2 antisym stretch"
    }
@@ -2132,7 +2132,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions from Flanagan 2025 (785 nm); assignments by analogy with Shimanouchi's gas/liquid values (282 sc, 713 CCl2 sym, 758 antisym, 1153, 1430, 2996, 3040) - liquid values are lower than the gas-phase 'selected' values by ~15 cm-1. Intensities unknown.",
+  "notes": "Positions from Flanagan 2025 (785 nm); assignments by analogy with Shimanouchi's gas/liquid values (282 sc, 713 CCl2 sym, 758 antisym, 1153, 1430, 2996, 3040) - liquid values are lower than the gas-phase 'selected' values by ~15 cm-1. Intensities unknown. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -2242,55 +2242,55 @@
   "peaks": [
    {
     "position": 634,
-    "intensity": 0,
+    "intensity": 0.15,
     "width": 0,
     "label": ""
    },
    {
     "position": 859,
-    "intensity": 0,
+    "intensity": 0.15,
     "width": 0,
     "label": ""
    },
    {
     "position": 1118,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": ""
    },
    {
     "position": 1178,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 1292,
-    "intensity": 0,
+    "intensity": 0.45,
     "width": 0,
     "label": ""
    },
    {
     "position": 1617,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": "aromatic ring stretch"
    },
    {
     "position": 1731,
-    "intensity": 0,
+    "intensity": 0.65,
     "width": 0,
     "label": "C=O stretch"
    },
    {
     "position": 2962,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    },
    {
     "position": 3082,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": ""
    }
@@ -2303,7 +2303,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions as quoted in a secondary table (itself citing Anger et al. 2018); laser for the underlying data not confirmed. Intensities unknown. Assignments from the Handbook text (aromatic ~1600, C=O ~1725).",
+  "notes": "Positions as quoted in a secondary table (itself citing Anger et al. 2018); laser for the underlying data not confirmed. Intensities unknown. Assignments from the Handbook text (aromatic ~1600, C=O ~1725). Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  }
 ]

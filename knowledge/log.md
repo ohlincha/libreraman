@@ -17,3 +17,4 @@ title: Knowledge bundle log
 - 2026-11-23: reference set 5: Raman Open Database (CC0), 422 compounds, one spectrum each (rod.json, 4.4 MB); first-start import of all 540 reference entries ~0.6 s.
 - 2026-11-23: reference set 6: VC, BF4-/ClO4- coordination, BOB-, LiDFOB from papers the user supplied (articles/ in Instruments, gitignored); EC/PC entries refined with Allen 2014.
 - 2026-11-23: laptop width (1440x900): Data control rows wrap (FlowLayout), long baseline names no longer widen Measure/Analysis; test checks the window fits. README screenshots renewed (0.3.3).
+- 2026-11-24: matching: Peaks is the default method (covers all entries; remembered); full-spectrum search draws band-list entries (pseudo-Voigt, width from the query's peaks) so solvents/electrolytes are no longer skipped; 37 band lists got estimated relative intensities (reference set 7). Prompted by a real ethanol spectrum not matching (0.3.4).

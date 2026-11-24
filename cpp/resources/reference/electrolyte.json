@@ -13,37 +13,37 @@
   "peaks": [
    {
     "position": 720,
-    "intensity": 0,
+    "intensity": 0.4,
     "width": 0,
     "label": "ring deformation (O-C-O / skeletal, often written δ(O-C-O)); 717 in SERS; shifts to ~729-733 when Li+-coordinated"
    },
    {
     "position": 893,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": "ring breathing (C-C / skeletal); DIAGNOSTIC free-EC band, shifts to ~903 when Li+-coordinated"
    },
    {
     "position": 1777,
-    "intensity": 0,
+    "intensity": 0.15,
     "width": 0,
     "label": "C=O stretch, Fermi-resonance doublet component (in EC/DMC/LiPF6)"
    },
    {
     "position": 1805,
-    "intensity": 0,
+    "intensity": 0.15,
     "width": 0,
     "label": "C=O stretch, Fermi-resonance doublet component (C=O with 2x ring breathing overtone); ~1787 when Li+-coordinated"
    },
    {
     "position": 2952,
-    "intensity": 0,
+    "intensity": 0.45,
     "width": 0,
     "label": "C-H stretch (SERS value, melt at 39 °C)"
    },
    {
     "position": 3019,
-    "intensity": 0,
+    "intensity": 0.3,
     "width": 0,
     "label": "C-H stretch (SERS value, melt at 39 °C)"
    }
@@ -76,7 +76,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "EC is solid at RT (mp ~34-37 °C). Positions here are from liquid EC (melt) or EC in carbonate electrolytes, not the crystal; crystalline EC differs, especially in the C=O region. Sources disagree by ±3 cm-1 (893-897 for ring breathing; 1773-1781/1800-1808 for the C=O doublet). Diagnostic: 893 (free) vs 903 (Li+-bound) ring breathing and 717-720 vs 729-733 ring deformation. No intensities given in the sources; ring breathing ~893 is the strongest band in the fingerprint region. C-H stretch positions are from SERS and may be slightly shifted from normal Raman. Allen 2014 (632 nm): uncoordinated EC ring bands at 717 and 894 cm-1 (shoulder ~704); they shift to 729 and 905 cm-1 on Li+ coordination.",
+  "notes": "EC is solid at RT (mp ~34-37 °C). Positions here are from liquid EC (melt) or EC in carbonate electrolytes, not the crystal; crystalline EC differs, especially in the C=O region. Sources disagree by ±3 cm-1 (893-897 for ring breathing; 1773-1781/1800-1808 for the C=O doublet). Diagnostic: 893 (free) vs 903 (Li+-bound) ring breathing and 717-720 vs 729-733 ring deformation. No intensities given in the sources; ring breathing ~893 is the strongest band in the fingerprint region. C-H stretch positions are from SERS and may be slightly shifted from normal Raman. Allen 2014 (632 nm): uncoordinated EC ring bands at 717 and 894 cm-1 (shoulder ~704); they shift to 729 and 905 cm-1 on Li+ coordination. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -94,19 +94,19 @@
   "peaks": [
    {
     "position": 733,
-    "intensity": 0,
+    "intensity": 0.45,
     "width": 0,
     "label": "ring deformation of Li+-coordinated EC (Raman; 729 in SERS/IR); free EC at 717-720"
    },
    {
     "position": 903,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": "ring breathing of Li+-coordinated EC; DIAGNOSTIC, free EC at 893 (fitted 900-915 range in RSC Adv 2025)"
    },
    {
     "position": 1787,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": "C=O stretch of Li+-coordinated EC; free EC at ~1805"
    }
@@ -139,7 +139,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Solution species, not an isolated compound: appears alongside free EC in any Li-salt/EC electrolyte. Solvation numbers are obtained by fitting the 893/903 pair (or 717/730); Borodin et al. recommend correcting for the ~17-20% higher Raman activity of coordinated EC. Positions vary by a few cm-1 with salt, concentration and co-solvent. Laser listed is that of the main source (Miele); RSC Adv source used 532 nm. Allen 2014 (632 nm, (EC)n-LiX) gives 729 and 905 cm-1 for Li+-coordinated EC (vs 717/894 uncoordinated).",
+  "notes": "Solution species, not an isolated compound: appears alongside free EC in any Li-salt/EC electrolyte. Solvation numbers are obtained by fitting the 893/903 pair (or 717/730); Borodin et al. recommend correcting for the ~17-20% higher Raman activity of coordinated EC. Positions vary by a few cm-1 with salt, concentration and co-solvent. Laser listed is that of the main source (Miele); RSC Adv source used 532 nm. Allen 2014 (632 nm, (EC)n-LiX) gives 729 and 905 cm-1 for Li+-coordinated EC (vs 717/894 uncoordinated). Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "high"
  },
  {
@@ -156,25 +156,25 @@
   "peaks": [
    {
     "position": 712,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": "ring deformation (free PC); DIAGNOSTIC, shifts to ~721 when Li+-coordinated"
    },
    {
     "position": 848,
-    "intensity": 0,
+    "intensity": 0.6,
     "width": 0,
     "label": "ring breathing / skeletal band, used as internal reference in earlier studies"
    },
    {
     "position": 958,
-    "intensity": 0,
+    "intensity": 0.3,
     "width": 0,
     "label": "CH3 group vibration; concentration-insensitive internal reference"
    },
    {
     "position": 645,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": "ring deformation (cis- conformer region); Allen 2014"
    }
@@ -192,7 +192,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Neat liquid at RT. Only the Raman bands explicitly given in the source are listed; the paper's Table II gives FTIR positions for PC (C=O 1779, CO2 asym 1173, ring 1353/1388, C-O 1043, ring/C-Me 1074, ring deformation 774/711) which have Raman counterparts nearby but are not Raman values. Commercial PC is racemic with ring-puckering conformers, which complicates band fitting (Allen et al. 2014). Incomplete band list: C=O (~1780-1790) and C-H region not confirmed from an opened Raman source. Allen 2014: the 712 cm-1 symmetric ring deformation is the band used for Li+ solvation (722 cm-1 coordinated); 841/856 calculated bands appear as one experimental band.",
+  "notes": "Neat liquid at RT. Only the Raman bands explicitly given in the source are listed; the paper's Table II gives FTIR positions for PC (C=O 1779, CO2 asym 1173, ring 1353/1388, C-O 1043, ring/C-Me 1074, ring deformation 774/711) which have Raman counterparts nearby but are not Raman values. Commercial PC is racemic with ring-puckering conformers, which complicates band fitting (Allen et al. 2014). Incomplete band list: C=O (~1780-1790) and C-H region not confirmed from an opened Raman source. Allen 2014: the 712 cm-1 symmetric ring deformation is the band used for Li+ solvation (722 cm-1 coordinated); 841/856 calculated bands appear as one experimental band. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -209,13 +209,13 @@
   "peaks": [
    {
     "position": 721,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": "ring deformation of Li+-coordinated PC; DIAGNOSTIC vs free PC at 712"
    },
    {
     "position": 742,
-    "intensity": 0,
+    "intensity": 0.5,
     "width": 0,
     "label": "PF6- P-F symmetric stretch in the same fit window (ion-paired contribution grows with concentration)"
    }
@@ -233,7 +233,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Solution species in LiPF6/PC (0-3.2 M). The 712/721 pair gives Li+-PC solvation numbers (4.5 down to 2.6 with increasing concentration in this study). IR shows larger shifts (C=O -29, CO2 asym +27 cm-1) but these are IR values. Non-linear decrease of the 742 band intensity is attributed to ion pairing.",
+  "notes": "Solution species in LiPF6/PC (0-3.2 M). The 712/721 pair gives Li+-PC solvation numbers (4.5 down to 2.6 with increasing concentration in this study). IR shows larger shifts (C=O -29, CO2 asym +27 cm-1) but these are IR values. Non-linear decrease of the 742 band intensity is attributed to ion pairing. Relative intensities are estimates of typical published spectra (AI-assisted, low confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -250,19 +250,19 @@
   "peaks": [
    {
     "position": 518,
-    "intensity": 0,
+    "intensity": 0.3,
     "width": 0,
     "label": "O-C-O deformation (523 quoted in review); develops a Li+ side-band on salt addition"
    },
    {
     "position": 916,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": "O-CH3 stretch / skeletal (cis-cis conformer); DIAGNOSTIC, shifts up on Li+ coordination (DFT +14 to +29 cm-1)"
    },
    {
     "position": 1756,
-    "intensity": 0,
+    "intensity": 0.3,
     "width": 0,
     "label": "C=O stretch (1750-1756 in EC/DMC electrolyte)"
    }
@@ -285,7 +285,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Neat liquid at RT; exists as cis-cis (dominant) and cis-trans conformers in the liquid. Positions taken from EC/DMC electrolyte spectra, so expect ±3 cm-1 vs neat DMC. Diagnostic: ~916-920 (free) vs higher-frequency Li+-bound side-band; 518-523 O-C-O deformation side-band. Incomplete list (C-H region and 1100-1460 bands not individually assigned in the opened sources).",
+  "notes": "Neat liquid at RT; exists as cis-cis (dominant) and cis-trans conformers in the liquid. Positions taken from EC/DMC electrolyte spectra, so expect ±3 cm-1 vs neat DMC. Diagnostic: ~916-920 (free) vs higher-frequency Li+-bound side-band; 518-523 O-C-O deformation side-band. Incomplete list (C-H region and 1100-1460 bands not individually assigned in the opened sources). Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -302,13 +302,13 @@
   "peaks": [
    {
     "position": 900,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": "skeletal mode (overlaps EC ring breathing in EC/EMC mixtures)"
    },
    {
     "position": 1750,
-    "intensity": 0,
+    "intensity": 0.35,
     "width": 0,
     "label": "C=O stretch, free EMC; DIAGNOSTIC, ~1735 when Li+-solvated"
    }
@@ -321,7 +321,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Neat liquid at RT. Only two bands confirmed from an opened source, both from an EC/EMC electrolyte spectrum; the full neat-EMC band list was not found in an accessible source. Li+-solvated EMC C=O at ~1735 (integration window 1730-1765 used for free+solvated).",
+  "notes": "Neat liquid at RT. Only two bands confirmed from an opened source, both from an EC/EMC electrolyte spectrum; the full neat-EMC band list was not found in an accessible source. Li+-solvated EMC C=O at ~1735 (integration window 1730-1765 used for free+solvated). Relative intensities are estimates of typical published spectra (AI-assisted, low confidence), not measured values.",
   "confidence": "low"
  },
  {
@@ -338,31 +338,31 @@
   "peaks": [
    {
     "position": 613,
-    "intensity": 0,
+    "intensity": 0.15,
     "width": 0,
     "label": "O-C-O scissoring"
    },
    {
     "position": 902,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": "O-C-O bending (prominent); overlaps EC 896 band in EC/DEC"
    },
    {
     "position": 1122,
-    "intensity": 0,
+    "intensity": 0.35,
     "width": 0,
     "label": "CH3 rocking; insensitive to environment, used for normalisation"
    },
    {
     "position": 1735,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": "C=O stretch, Fermi-resonance doublet component; Li+-coordinated ~1725"
    },
    {
     "position": 1753,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": "C=O stretch, Fermi-resonance doublet component; Li+-coordinated ~1744"
    }
@@ -375,7 +375,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Neat liquid. All positions are from nanogap SERS (785 nm), which the authors note can shift and broaden bands relative to normal Raman; the C=O doublet splitting was reported as a first observation and may be SERS-specific. Use with caution until checked against a normal Raman spectrum.",
+  "notes": "Neat liquid. All positions are from nanogap SERS (785 nm), which the authors note can shift and broaden bands relative to normal Raman; the C=O doublet splitting was reported as a first observation and may be SERS-specific. Use with caution until checked against a normal Raman spectrum. Relative intensities are estimates of typical published spectra (AI-assisted, low confidence), not measured values.",
   "confidence": "low"
  },
  {
@@ -393,67 +393,67 @@
   "peaks": [
    {
     "position": 729,
-    "intensity": 0,
+    "intensity": 0.7,
     "width": 0,
     "label": "ring deformation O-C-O (12 cm-1 above EC)"
    },
    {
     "position": 868,
-    "intensity": 0,
+    "intensity": 0.5,
     "width": 0,
     "label": "C-F stretch; DIAGNOSTIC for FEC vs EC"
    },
    {
     "position": 908,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": "ring deformation / skeletal (FEC analogue of EC 893-896)"
    },
    {
     "position": 1000,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": "C-C skeletal stretch"
    },
    {
     "position": 1088,
-    "intensity": 0,
+    "intensity": 0.25,
     "width": 0,
     "label": "C-C skeletal stretch"
    },
    {
     "position": 1814,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": "C=O stretch doublet component"
    },
    {
     "position": 1835,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": "C=O stretch doublet component"
    },
    {
     "position": 2865,
-    "intensity": 0,
+    "intensity": 0.05,
     "width": 0,
     "label": "C-H stretch"
    },
    {
     "position": 2898,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": "C-H stretch"
    },
    {
     "position": 3017,
-    "intensity": 0,
+    "intensity": 0.4,
     "width": 0,
     "label": "C-H stretch (CFH / CH2 asym)"
    },
    {
     "position": 3066,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": "C-H stretch"
    }
@@ -466,7 +466,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Liquid at 39 °C (mp ~18-23 °C). All positions are SERS values; the authors state the confocal (normal) Raman spectrum was almost featureless at their low power, so normal-Raman positions may differ by a few cm-1. Diagnostic: 868 C-F stretch and the C=O doublet above 1810 (vs EC 1781/1807).",
+  "notes": "Liquid at 39 °C (mp ~18-23 °C). All positions are SERS values; the authors state the confocal (normal) Raman spectrum was almost featureless at their low power, so normal-Raman positions may differ by a few cm-1. Diagnostic: 868 C-F stretch and the C=O doublet above 1810 (vs EC 1781/1807). Relative intensities are estimates of typical published spectra (AI-assisted, low confidence), not measured values.",
   "confidence": "low"
  },
  {
@@ -485,115 +485,115 @@
   "peaks": [
    {
     "position": 518,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": "DMC O-C-O deformation (assignment from other sources)"
    },
    {
     "position": 717,
-    "intensity": 0,
+    "intensity": 0.45,
     "width": 0,
     "label": "EC ring deformation, free EC"
    },
    {
     "position": 723,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": "EC ring deformation region (Li+-coordinated EC contribution; tentative)"
    },
    {
     "position": 741,
-    "intensity": 0,
+    "intensity": 0.35,
     "width": 0,
     "label": "PF6- A1g symmetric stretch (stated by source)"
    },
    {
     "position": 893,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": "EC ring breathing, free EC"
    },
    {
     "position": 904,
-    "intensity": 0,
+    "intensity": 0.35,
     "width": 0,
     "label": "EC ring breathing, Li+-coordinated EC (assignment from Miele 2022)"
    },
    {
     "position": 916,
-    "intensity": 0,
+    "intensity": 0.85,
     "width": 0,
     "label": "DMC O-CH3 stretch / skeletal"
    },
    {
     "position": 973,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": "EC/DMC band (unassigned in source)"
    },
    {
     "position": 1220,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": "EC/DMC band (unassigned in source)"
    },
    {
     "position": 1455,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": "CH3/CH2 deformation"
    },
    {
     "position": 1487,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": "CH2 scissoring (EC)"
    },
    {
     "position": 1750,
-    "intensity": 0,
+    "intensity": 0.2,
     "width": 0,
     "label": "DMC C=O stretch"
    },
    {
     "position": 1777,
-    "intensity": 0,
+    "intensity": 0.12,
     "width": 0,
     "label": "EC C=O Fermi-resonance doublet component"
    },
    {
     "position": 1808,
-    "intensity": 0,
+    "intensity": 0.12,
     "width": 0,
     "label": "EC C=O stretch"
    },
    {
     "position": 2849,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": "C-H stretch"
    },
    {
     "position": 2888,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": "C-H stretch"
    },
    {
     "position": 2935,
-    "intensity": 0,
+    "intensity": 0.6,
     "width": 0,
     "label": "C-H stretch"
    },
    {
     "position": 2967,
-    "intensity": 0,
+    "intensity": 0.5,
     "width": 0,
     "label": "C-H stretch"
    },
    {
     "position": 3002,
-    "intensity": 0,
+    "intensity": 0.35,
     "width": 0,
     "label": "C-H stretch"
    }
@@ -616,7 +616,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Commercial LP30. The source lists the band positions as 'typical peaks for DMC and EC' without per-band assignments; labels other than 741 (PF6-) are added from the other cited sources and are tentative where noted. Commercial LP30 shows a fluorescence background at 532 nm that grows with electrolyte age. Diagnostic: 893/904 (free vs Li+-EC), 741 PF6-, 1750 (DMC C=O) vs 1777/1808 (EC C=O).",
+  "notes": "Commercial LP30. The source lists the band positions as 'typical peaks for DMC and EC' without per-band assignments; labels other than 741 (PF6-) are added from the other cited sources and are tentative where noted. Commercial LP30 shows a fluorescence background at 532 nm that grows with electrolyte age. Diagnostic: 893/904 (free vs Li+-EC), 741 PF6-, 1750 (DMC C=O) vs 1777/1808 (EC C=O). Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -635,13 +635,13 @@
   "peaks": [
    {
     "position": 868,
-    "intensity": 0,
+    "intensity": 0.6,
     "width": 0,
     "label": "breathing mode of the crown-ether-like [Li(G4)]+ complex; DIAGNOSTIC, grows with Li salt concentration"
    },
    {
     "position": 1471,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": "G4 CH2 bending/scissoring; used as internal reference (solvent band)"
    }
@@ -654,7 +654,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Solution species in LiFSI/tetraglyme. Free tetraglyme band positions were not confirmed from an opened source; only the complex breathing mode and the reference CH2 band are listed.",
+  "notes": "Solution species in LiFSI/tetraglyme. Free tetraglyme band positions were not confirmed from an opened source; only the complex breathing mode and the reference CH2 band are listed. Relative intensities are estimates of typical published spectra (AI-assisted, low confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -788,31 +788,31 @@
   "peaks": [
    {
     "position": 763.5,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": "B-F ν1 symmetric stretch, SSIP (uncoordinated anion; (AN)4:LiBF4)"
    },
    {
     "position": 766.5,
-    "intensity": 0,
+    "intensity": 0.3,
     "width": 0,
     "label": "new band at 60 °C (unassigned)"
    },
    {
     "position": 774.5,
-    "intensity": 0,
+    "intensity": 0.6,
     "width": 0,
     "label": "ν1, AGG-I (anion bound to two Li+), liquid 60 °C (779 in the crystalline solvate)"
    },
    {
     "position": 782,
-    "intensity": 0,
+    "intensity": 0.3,
     "width": 0,
     "label": "ν1, AGG-II (anion bound to three Li+); 782-786 in the liquid"
    },
    {
     "position": 798,
-    "intensity": 0,
+    "intensity": 0.1,
     "width": 0,
     "label": "ν1, AGG-III (anion bound to four or more Li+), most concentrated"
    }
@@ -825,7 +825,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Only the BF4- ν1 band (750-800 cm-1); acetonitrile has no bands there. Henderson cautions that SSIP and CIP shift by only 1-5 cm-1, so a band near 764 may contain both. Positions in carbonate solvents may differ by a few cm-1.",
+  "notes": "Only the BF4- ν1 band (750-800 cm-1); acetonitrile has no bands there. Henderson cautions that SSIP and CIP shift by only 1-5 cm-1, so a band near 764 may contain both. Positions in carbonate solvents may differ by a few cm-1. Relative intensities are estimates of typical published spectra (AI-assisted, low confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -844,13 +844,13 @@
   "peaks": [
    {
     "position": 927,
-    "intensity": 0,
+    "intensity": 0.5,
     "width": 0,
     "label": "ν1 Cl-O symmetric stretch, CIP-II (bidentate to one Li+)"
    },
    {
     "position": 941,
-    "intensity": 0,
+    "intensity": 1.0,
     "width": 0,
     "label": "ν1, CIP-I (monodentate to one Li+)"
    }
@@ -863,7 +863,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "The uncoordinated ClO4- ν1 lies near 933 cm-1, between the two contact-ion-pair bands, which is why simple deconvolution of this region is unreliable (Henderson 2020). Use together with a solvent band to judge ion pairing.",
+  "notes": "The uncoordinated ClO4- ν1 lies near 933 cm-1, between the two contact-ion-pair bands, which is why simple deconvolution of this region is unreliable (Henderson 2020). Use together with a solvent band to judge ion pairing. Relative intensities are estimates of typical published spectra (AI-assisted, low confidence), not measured values.",
   "confidence": "medium"
  },
  {

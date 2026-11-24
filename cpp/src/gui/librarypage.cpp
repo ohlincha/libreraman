@@ -22,6 +22,7 @@
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QScrollArea>
+#include <QSettings>
 #include <QSpinBox>
 #include <QSplitter>
 #include <QStandardPaths>
@@ -49,6 +50,7 @@ namespace {
 
 constexpr int kIdRole = Qt::UserRole + 1;
 constexpr int kScoreRole = Qt::UserRole + 2;
+constexpr char kMethodKey[] = "library/matchMethod";
 
 QColor sourceColor(Source s) {
     switch (s) {
@@ -536,7 +538,11 @@ QWidget* LibraryPage::buildMatchPanel() {
         m_baseline->setEnabled(m != Method::Peaks);
         m_deriv->setEnabled(m != Method::Peaks);
     };
+    // Peaks is the default: it covers every entry, including the literature band lists
+    m_method->setCurrentIndex(std::clamp(QSettings().value(QLatin1String(kMethodKey), int(Method::Peaks)).toInt(), 0, 2));
     connect(m_method, qOverload<int>(&QComboBox::currentIndexChanged), this, methodChanged);
+    connect(m_method, qOverload<int>(&QComboBox::activated), this,
+            [](int i) { QSettings().setValue(QLatin1String(kMethodKey), i); });
     methodChanged();
     connect(m_matchButton, &QPushButton::clicked, this, [this] { runMatch(); });
     connect(m_results, &QTableWidget::itemSelectionChanged, this, [this] {
@@ -986,8 +992,12 @@ void LibraryPage::fillResults() {
         auto* num = new QTableWidgetItem(QString::number(r + 1));
         num->setData(kIdRole, h.id);
         num->setTextAlignment(Qt::AlignCenter);
-        auto* name = new QTableWidgetItem(h.name);
+        auto* name = new QTableWidgetItem(h.bandList ? h.name + QStringLiteral(" (band list)") : h.name);
         QString tip = h.name;
+        if (h.bandList)
+            tip += QStringLiteral("\ncompared with a spectrum drawn from the literature band list (%1 cm⁻¹ wide bands, "
+                                  "taken from the query)")
+                       .arg(m_matcher.bandWidth(), 0, 'f', 0);
         if (h.matched >= 0)
             tip += QStringLiteral("\n%1 of %2 library bands matched (%3 query peaks)")
                        .arg(h.matched)
@@ -1113,7 +1123,7 @@ void LibraryPage::showHitOverlay(int row) {
                 cx.push_back(rx[i]);
                 cy.push_back(ry[i]);
             }
-        m_plot->addCurve(cx, normalisedMax(cy), QPen(hitColor, 1.2), QStringLiteral("Hit: %1").arg(h.name));
+        m_plot->addCurve(cx, normalisedMax(cy), QPen(hitColor, 1.2), h.bandList ? QStringLiteral("Hit: %1 (drawn from band list)").arg(h.name) : QStringLiteral("Hit: %1").arg(h.name));
     }
     m_plotTitle->setText(QStringLiteral("<b>%1</b> &nbsp;<span style='color:%2'>%3 %4 &nbsp;vs. query %5</span>")
                              .arg(esc(h.name), muted,

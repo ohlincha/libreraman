@@ -181,6 +181,46 @@ PeakScore peakScore(const std::vector<PeakEntry>& query0, const std::vector<Peak
     return s;
 }
 
+double typicalWidth(const Vec& x0, const Vec& y0) {
+    std::vector<PeakEntry> pk = pickPeaks(x0, y0, 5.0, 8);
+    Vec w;
+    for (const auto& p : pk)
+        if (std::isfinite(p.width) && p.width > 0) w.push_back(p.width);
+    if (w.empty()) return 10.0;
+    std::sort(w.begin(), w.end());
+    const double m = w.size() % 2 ? w[w.size() / 2] : 0.5 * (w[w.size() / 2 - 1] + w[w.size() / 2]);
+    return std::clamp(m, 4.0, 40.0);
+}
+
+void bandSpectrum(const std::vector<PeakEntry>& bands, double fwhm, Vec& x, Vec& y) {
+    x.clear();
+    y.clear();
+    if (bands.empty()) return;
+    bool rated = false;
+    double lo = std::numeric_limits<double>::infinity(), hi = -lo;
+    for (const auto& b : bands) {
+        rated = rated || b.intensity > 0;
+        lo = std::min(lo, b.position);
+        hi = std::max(hi, b.position);
+    }
+    lo = std::floor(lo - 150);
+    hi = std::ceil(hi + 150);
+    const size_t n = size_t(hi - lo) + 1;
+    x.resize(n);
+    y.assign(n, 0.0);
+    for (size_t i = 0; i < n; ++i) x[i] = lo + double(i);
+    for (const auto& b : bands) {
+        const double h = b.intensity > 0 ? std::min(b.intensity, 1.0) : (rated ? 0.2 : 1.0);
+        const double g = std::max(b.width > 0 ? b.width : 0.0, fwhm) / 2;   // half width
+        const double gs = g / std::sqrt(std::log(2.0));
+        const long a = std::max(0L, long(b.position - 12 * g - lo)), e = std::min(long(n) - 1, long(b.position + 12 * g - lo));
+        for (long i = a; i <= e; ++i) {
+            const double d = x[size_t(i)] - b.position;
+            y[size_t(i)] += h * (0.5 / (1 + d * d / (g * g)) + 0.5 * std::exp(-d * d / (gs * gs)));
+        }
+    }
+}
+
 // Lawson & Hanson (1974), "Solving Least Squares Problems", algorithm NNLS.
 Eigen::VectorXd nnls(const Eigen::MatrixXd& A, const Eigen::VectorXd& b, int maxIter) {
     const Eigen::Index n = A.cols();
@@ -241,7 +281,24 @@ Eigen::VectorXd nnls(const Eigen::MatrixXd& A, const Eigen::VectorXd& b, int max
 // ------------------------------------------------------------------------------------------------ Matcher
 void Matcher::setPreprocess(const Preprocess& p) {
     pre_ = p;
-    for (Ref& r : refs_) r.prep = r.x.empty() ? Prepared{} : prepare(r.x, r.y, pre_);
+    for (Ref& r : refs_) {
+        if (r.bands) drawBands(r);
+        else r.prep = r.x.empty() ? Prepared{} : prepare(r.x, r.y, pre_);
+    }
+}
+
+void Matcher::drawBands(const Ref& r) const {
+    Vec x, y;
+    bandSpectrum(r.peaks, bandWidth_, x, y);
+    r.prep = prepare(x, y, pre_);
+}
+
+void Matcher::setBandWidth(double fwhm) const {
+    fwhm = std::clamp(std::isfinite(fwhm) ? fwhm : 10.0, 1.0, 100.0);
+    if (std::abs(fwhm - bandWidth_) < 0.5) return;
+    bandWidth_ = fwhm;
+    for (const Ref& r : refs_)
+        if (r.bands) drawBands(r);
 }
 
 void Matcher::load(const library::Library& lib, const Filter& f) {
@@ -263,6 +320,8 @@ void Matcher::add(const Entry& e) {
         }
     }
     r.peaks = !e.peaks.empty() ? e.peaks : (r.x.empty() ? std::vector<PeakEntry>{} : pickPeaks(r.x, r.y));
+    r.bands = r.x.empty() && !r.peaks.empty();
+    if (r.bands) drawBands(r);
     for (Ref& old : refs_)
         if (e.id != 0 && old.meta.id == e.id) {
             old = std::move(r);
@@ -310,6 +369,7 @@ Hit Matcher::hitOf(const Ref& r) const {
 }
 
 std::vector<Hit> Matcher::search(const Vec& x, const Vec& y, int topN, const Filter& f) const {
+    setBandWidth(typicalWidth(x, y));
     return search(prepare(x, y, pre_), topN, f);
 }
 
@@ -323,6 +383,7 @@ std::vector<Hit> Matcher::search(const Prepared& q, int topN, const Filter& f) c
         if (hi - lo < minOverlap) continue;
         Hit h = hitOf(r);
         h.score = s;
+        h.bandList = r.bands;
         h.lo = lo;
         h.hi = hi;
         hits.push_back(std::move(h));
@@ -441,11 +502,13 @@ Mixture Matcher::fitMixture(const Vec& x, const Vec& y, const std::vector<qint64
         refs.push_back(r);
     }
     if (refs.empty()) fail(QStringLiteral("no components given"));
+    setBandWidth(typicalWidth(x, y));
     return fit(prepare(x, y, pre_), refs);
 }
 
 std::vector<Mixture> Matcher::searchMixtures(const Vec& x, const Vec& y, int candidates, int maxComponents, int topN,
                                              const Filter& f) const {
+    setBandWidth(typicalWidth(x, y));
     const Prepared q = prepare(x, y, pre_);
     const std::vector<Hit> hits = search(q, std::max(candidates, 1), f);
     std::vector<const Ref*> cand;

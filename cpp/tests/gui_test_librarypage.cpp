@@ -116,6 +116,8 @@ private slots:
         // "Match last spectrum"
         QSignalSpy matched(&page, &LibraryPage::matched);
         const Spectrum q = measure(sim, "ethanol");
+        QCOMPARE(page.method(), LibraryPage::Method::Peaks);   // the default
+        page.setMethod(LibraryPage::Method::Spectrum);
         auto hits = page.match(q);
         QVERIFY(!hits.empty());
         QCOMPARE(hits[0].name, QString("Ethanol"));
