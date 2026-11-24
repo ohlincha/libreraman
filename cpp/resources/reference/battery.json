@@ -2450,5 +2450,314 @@
   "rruff_id": "",
   "notes": "LiPF6 in PC, up to 3.2 M, Bruker FT-Raman 1064 nm, Voigt fit of 680-760 cm-1 with 3 components. The source does not give a separate ion-paired PF6- position (no ~745-750 band reported); at 3.2 M only ~30% of Li+ have PF6- in first shell from Raman. Solid LiPF6 entry is separate. Relative intensities are estimates of typical published spectra (AI-assisted, low confidence), not measured values.",
   "confidence": "medium"
+ },
+ {
+  "name": "Lignin, softwood (guaiacyl, milled-wood)",
+  "formula": "",
+  "cas": "9005-53-2",
+  "cls": "biopolymer",
+  "tags": [
+   "lignin",
+   "softwood",
+   "guaiacyl",
+   "biopolymer",
+   "paper"
+  ],
+  "laser_nm": 1064,
+  "peaks": [
+   {
+    "position": 730,
+    "intensity": 0.1,
+    "width": 0,
+    "label": "ring deformation (guaiacyl), out-of-plane"
+   },
+   {
+    "position": 1033,
+    "intensity": 0.15,
+    "width": 0,
+    "label": "aromatic C-H in-plane bend, OCH3"
+   },
+   {
+    "position": 1135,
+    "intensity": 0.25,
+    "width": 0,
+    "label": "ring C-H bend/coniferaldehyde-related"
+   },
+   {
+    "position": 1215,
+    "intensity": 0.15,
+    "width": 0,
+    "label": "nu(C-O) aryl, phenolic"
+   },
+   {
+    "position": 1272,
+    "intensity": 0.3,
+    "width": 0,
+    "label": "guaiacyl ring stretch with C-O (aryl-O-CH3)"
+   },
+   {
+    "position": 1330,
+    "intensity": 0.45,
+    "width": 0,
+    "label": "aliphatic OH bend / ring stretch (guaiacyl, 5-substituted)"
+   },
+   {
+    "position": 1460,
+    "intensity": 0.3,
+    "width": 0,
+    "label": "delta(CH3)/delta(CH2), OCH3"
+   },
+   {
+    "position": 1600,
+    "intensity": 1,
+    "width": 0,
+    "label": "nu(ring) aromatic C=C symmetric stretch"
+   },
+   {
+    "position": 1620,
+    "intensity": 0.25,
+    "width": 0,
+    "label": "nu(C=C) ring-conjugated, coniferaldehyde shoulder"
+   },
+   {
+    "position": 1655,
+    "intensity": 0.55,
+    "width": 0,
+    "label": "nu(C=C) of coniferyl alcohol + nu(C=O) of coniferaldehyde (ring-conjugated)"
+   },
+   {
+    "position": 2940,
+    "intensity": 0.35,
+    "width": 0,
+    "label": "nu(C-H) of OCH3 and aliphatic CH"
+   },
+   {
+    "position": 3070,
+    "intensity": 0.1,
+    "width": 0,
+    "label": "nu(C-H) aromatic"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Agarwal, U. P.; Ralph, S. A. (1997) Appl. Spectrosc. 51, 1648: FT-Raman spectroscopy of wood: identifying contributions of lignin and carbohydrate polymers in the spectrum of black spruce",
+    "doi_or_url": "",
+    "covers": "Lignin bands (1600, 1655, 1330, 1272, 1135) in spruce wood and isolated lignin"
+   },
+   {
+    "ref": "Agarwal, U. P. (2019) Molecules 24, 1659: Analysis of cellulose and lignocellulose materials by Raman spectroscopy: a review of the current status",
+    "doi_or_url": "10.3390/molecules24091659",
+    "covers": "Review of lignin and carbohydrate band assignments"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Strong fluorescence at 532 and 785 nm; lignin is best measured at 1064 nm (FT-Raman) or with UV/NIR-resonance-free conditions. Phase: amorphous polymer; milled-wood lignin or in-situ softwood lignin. Versus cellulose: lignin has strong aromatic bands at 1600 and 1655 cm-1 and no strong 2895, 1095 or 380 bands; the 1600 band is a convenient lignin marker and, because it is a resonance-free aromatic mode, scales with lignin content. Weak features near 1630-1660 vary with coniferaldehyde/alcohol content. Relative intensities are estimated from published spectra by eye/memory of band shapes, not read from tabulated values. Band list compiled with AI assistance from the cited literature; not checked line by line against the papers.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Pectin (citrus/apple, partly methyl-esterified)",
+  "formula": "",
+  "cas": "9000-69-5",
+  "cls": "biopolymer",
+  "tags": [
+   "pectin",
+   "polygalacturonic acid",
+   "polysaccharide",
+   "biopolymer",
+   "paper"
+  ],
+  "laser_nm": 1064,
+  "peaks": [
+   {
+    "position": 480,
+    "intensity": 0.2,
+    "width": 0,
+    "label": "skeletal deformation"
+   },
+   {
+    "position": 500,
+    "intensity": 0.2,
+    "width": 0,
+    "label": "skeletal deformation"
+   },
+   {
+    "position": 852,
+    "intensity": 1,
+    "width": 0,
+    "label": "alpha-anomeric/glycosidic ring mode (alpha-1,4-galacturonan) strongest low-frequency band"
+   },
+   {
+    "position": 960,
+    "intensity": 0.2,
+    "width": 0,
+    "label": "ring/C-O mode"
+   },
+   {
+    "position": 1095,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "nu(C-O-C) glycosidic / ring"
+   },
+   {
+    "position": 1145,
+    "intensity": 0.3,
+    "width": 0,
+    "label": "nu(C-O), nu(C-C) ring"
+   },
+   {
+    "position": 1380,
+    "intensity": 0.25,
+    "width": 0,
+    "label": "delta(C-H)"
+   },
+   {
+    "position": 1415,
+    "intensity": 0.25,
+    "width": 0,
+    "label": "nu_s(COO-) carboxylate; relatively stronger at low DE"
+   },
+   {
+    "position": 1450,
+    "intensity": 0.2,
+    "width": 0,
+    "label": "delta(CH3)/delta(CH2)"
+   },
+   {
+    "position": 1630,
+    "intensity": 0.1,
+    "width": 40,
+    "label": "nu_as(COO-) carboxylate; weak in Raman, grows with decreasing DE"
+   },
+   {
+    "position": 1745,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "nu(C=O) of methyl ester; intensity scales with degree of esterification (DE)"
+   },
+   {
+    "position": 2940,
+    "intensity": 0.35,
+    "width": 0,
+    "label": "nu(C-H) of OCH3 ester and ring CH"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Synytsya, A.; Copikova, J.; Matejka, P.; Machovic, V. (2003) Carbohydr. Polym. 54, 97: Fourier transform Raman and infrared spectroscopy of pectins",
+    "doi_or_url": "",
+    "covers": "Pectin Raman band positions and DE dependence (1745 ester vs 1630/1415 carboxylate)"
+   },
+   {
+    "ref": "Agarwal, U. P. (2019) Molecules 24, 1659: Analysis of cellulose and lignocellulose materials by Raman spectroscopy: a review of the current status",
+    "doi_or_url": "10.3390/molecules24091659",
+    "covers": "Pectin band summary"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Phase: amorphous solid, citrus or apple pectin, DE roughly 30-70%. Dependence on degree of esterification: the ester C=O band near 1745 cm-1 and the OCH3 C-H stretch near 2940 rise with DE; the carboxylate bands near 1630 (asym) and 1415 (sym) rise as DE falls; polygalacturonic acid (DE 0) in the free acid form shows C=O near 1735-1740 instead; the 852 cm-1 alpha-glycosidic ring band is present at all DE. Pectin has no 380/1095 crystalline cellulose pattern; 852 is distinct from cellulose 898. 1064 nm is preferred; commercial pectins fluoresce at visible wavelengths. DE trend is established in the literature; individual positions can shift by several cm-1 with counterions (Ca2+ etc.). Relative intensities are estimated from published spectra by eye/memory of band shapes, not read from tabulated values. Band list compiled with AI assistance from the cited literature; not checked line by line against the papers.",
+  "confidence": "medium"
+ },
+ {
+  "name": "Kraft pulp, unbleached",
+  "formula": "",
+  "cas": "",
+  "cls": "biopolymer",
+  "tags": [
+   "kraft pulp",
+   "pulp",
+   "lignocellulose",
+   "cellulose",
+   "paper"
+  ],
+  "laser_nm": 1064,
+  "peaks": [
+   {
+    "position": 380,
+    "intensity": 0.3,
+    "width": 0,
+    "label": "cellulose skeletal; crystallinity marker"
+   },
+   {
+    "position": 437,
+    "intensity": 0.25,
+    "width": 0,
+    "label": "cellulose skeletal"
+   },
+   {
+    "position": 898,
+    "intensity": 0.2,
+    "width": 0,
+    "label": "beta-glycosidic"
+   },
+   {
+    "position": 1095,
+    "intensity": 0.6,
+    "width": 0,
+    "label": "nu(C-O-C); crystallinity reference band"
+   },
+   {
+    "position": 1120,
+    "intensity": 0.5,
+    "width": 0,
+    "label": "nu(C-O-C) cellulose"
+   },
+   {
+    "position": 1335,
+    "intensity": 0.2,
+    "width": 0,
+    "label": "delta(C-OH) + lignin ring"
+   },
+   {
+    "position": 1378,
+    "intensity": 0.35,
+    "width": 0,
+    "label": "delta(C-H)"
+   },
+   {
+    "position": 1462,
+    "intensity": 0.3,
+    "width": 0,
+    "label": "delta(CH2)"
+   },
+   {
+    "position": 1600,
+    "intensity": 0.2,
+    "width": 0,
+    "label": "residual lignin aromatic ring (kappa-dependent)"
+   },
+   {
+    "position": 1655,
+    "intensity": 0.1,
+    "width": 0,
+    "label": "residual lignin C=C"
+   },
+   {
+    "position": 2895,
+    "intensity": 1,
+    "width": 0,
+    "label": "nu(C-H) cellulose"
+   },
+   {
+    "position": 2940,
+    "intensity": 0.3,
+    "width": 0,
+    "label": "nu(C-H) lignin OCH3"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Agarwal, U. P. (2019) Molecules 24, 1659: Analysis of cellulose and lignocellulose materials by Raman spectroscopy: a review of the current status",
+    "doi_or_url": "10.3390/molecules24091659",
+    "covers": "Pulp and residual lignin Raman, kappa number correlation with 1600 band; crystallinity index"
+   },
+   {
+    "ref": "Agarwal, U. P.; Ralph, S. A. (1997) Appl. Spectrosc. 51, 1648: FT-Raman spectroscopy of wood: identifying contributions of lignin and carbohydrate polymers in the spectrum of black spruce",
+    "doi_or_url": "",
+    "covers": "Lignin band positions"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Phase: semicrystalline cellulose I with 2-5% residual lignin plus xylan/glucomannan (kappa number about 20-100). Differs from cellulose mainly by a weak 1600 cm-1 (and 1655) lignin band whose size tracks lignin/kappa number; the carbohydrate bands are cellulose-like. Fluorescence from residual lignin rises strongly at 532 and 785 nm; use 1064 nm. Crystallinity marker: I380/I1096 (lower for less ordered/amorphous content; xylan lowers the effective CrI). Based on reference-literature band positions, not a single measured spectrum. Relative intensities are estimated from published spectra by eye/memory of band shapes, not read from tabulated values. Band list compiled with AI assistance from the cited literature; not checked line by line against the papers.",
+  "confidence": "medium"
  }
 ]
