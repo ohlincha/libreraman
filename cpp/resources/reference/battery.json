@@ -2466,93 +2466,124 @@
   "laser_nm": 1064,
   "peaks": [
    {
-    "position": 730,
-    "intensity": 0.1,
+    "position": 361,
+    "intensity": 0.15,
     "width": 0,
-    "label": "ring deformation (guaiacyl), out-of-plane"
+    "label": ""
+   },
+   {
+    "position": 731,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 787,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
    },
    {
     "position": 1033,
     "intensity": 0.15,
     "width": 0,
-    "label": "aromatic C-H in-plane bend, OCH3"
+    "label": "C-O / OCH3"
    },
    {
-    "position": 1135,
-    "intensity": 0.25,
-    "width": 0,
-    "label": "ring C-H bend/coniferaldehyde-related"
-   },
-   {
-    "position": 1215,
+    "position": 1089,
     "intensity": 0.15,
     "width": 0,
-    "label": "nu(C-O) aryl, phenolic"
+    "label": ""
+   },
+   {
+    "position": 1136,
+    "intensity": 0.35,
+    "width": 0,
+    "label": "coniferaldehyde/alcohol C-H, G ring"
+   },
+   {
+    "position": 1192,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
    },
    {
     "position": 1272,
-    "intensity": 0.3,
+    "intensity": 0.35,
     "width": 0,
-    "label": "guaiacyl ring stretch with C-O (aryl-O-CH3)"
+    "label": "guaiacyl ring + C=O"
    },
    {
-    "position": 1330,
-    "intensity": 0.45,
+    "position": 1298,
+    "intensity": 0.2,
     "width": 0,
-    "label": "aliphatic OH bend / ring stretch (guaiacyl, 5-substituted)"
+    "label": ""
    },
    {
-    "position": 1460,
-    "intensity": 0.3,
+    "position": 1334,
+    "intensity": 0.35,
     "width": 0,
-    "label": "delta(CH3)/delta(CH2), OCH3"
+    "label": "aliphatic O-H bend"
    },
    {
-    "position": 1600,
-    "intensity": 1,
+    "position": 1453,
+    "intensity": 0.35,
     "width": 0,
-    "label": "nu(ring) aromatic C=C symmetric stretch"
+    "label": "OCH3 deformation"
    },
    {
-    "position": 1620,
-    "intensity": 0.25,
+    "position": 1597,
+    "intensity": 1.0,
     "width": 0,
-    "label": "nu(C=C) ring-conjugated, coniferaldehyde shoulder"
+    "label": "aryl ring stretch (lignin marker)"
    },
    {
-    "position": 1655,
-    "intensity": 0.55,
+    "position": 1621,
+    "intensity": 0.2,
     "width": 0,
-    "label": "nu(C=C) of coniferyl alcohol + nu(C=O) of coniferaldehyde (ring-conjugated)"
+    "label": "ring-conjugated C=C"
+   },
+   {
+    "position": 1662,
+    "intensity": 0.6,
+    "width": 0,
+    "label": "ring-conjugated C=C (coniferyl alcohol) / C=O (coniferaldehyde)"
+   },
+   {
+    "position": 2845,
+    "intensity": 0.35,
+    "width": 0,
+    "label": "C-H stretch (OCH3)"
+   },
+   {
+    "position": 2890,
+    "intensity": 0.2,
+    "width": 0,
+    "label": ""
    },
    {
     "position": 2940,
     "intensity": 0.35,
     "width": 0,
-    "label": "nu(C-H) of OCH3 and aliphatic CH"
+    "label": "C-H stretch (OCH3 asym)"
    },
    {
-    "position": 3070,
-    "intensity": 0.1,
+    "position": 3071,
+    "intensity": 0.35,
     "width": 0,
-    "label": "nu(C-H) aromatic"
+    "label": "aromatic C-H stretch"
    }
   ],
   "sources": [
    {
-    "ref": "Agarwal, U. P.; Ralph, S. A. (1997) Appl. Spectrosc. 51, 1648: FT-Raman spectroscopy of wood: identifying contributions of lignin and carbohydrate polymers in the spectrum of black spruce",
+    "ref": "Agarwal, U. P.; Ralph, S. A., FT-Raman spectroscopy of wood: identifying contributions of lignin and carbohydrate polymers in the spectrum of black spruce (Picea mariana), Appl. Spectrosc. 51 (1997) 1648",
     "doi_or_url": "",
-    "covers": "Lignin bands (1600, 1655, 1330, 1272, 1135) in spruce wood and isolated lignin"
-   },
-   {
-    "ref": "Agarwal, U. P. (2019) Molecules 24, 1659: Analysis of cellulose and lignocellulose materials by Raman spectroscopy: a review of the current status",
-    "doi_or_url": "10.3390/molecules24091659",
-    "covers": "Review of lignin and carbohydrate band assignments"
+    "covers": "Table II: milled-wood lignin of black spruce"
    }
   ],
   "rruff_id": "",
-  "notes": "Strong fluorescence at 532 and 785 nm; lignin is best measured at 1064 nm (FT-Raman) or with UV/NIR-resonance-free conditions. Phase: amorphous polymer; milled-wood lignin or in-situ softwood lignin. Versus cellulose: lignin has strong aromatic bands at 1600 and 1655 cm-1 and no strong 2895, 1095 or 380 bands; the 1600 band is a convenient lignin marker and, because it is a resonance-free aromatic mode, scales with lignin content. Weak features near 1630-1660 vary with coniferaldehyde/alcohol content. Relative intensities are estimated from published spectra by eye/memory of band shapes, not read from tabulated values. Band list compiled with AI assistance from the cited literature; not checked line by line against the papers.",
-  "confidence": "medium"
+  "notes": "Milled-wood lignin of black spruce (softwood, guaiacyl). Lignin fluoresces strongly at 532 and 785 nm; 1064 nm avoids it. Versus cellulose: strong 1597 and 1662 bands, no strong 1096/2895/380 bands; the 1597 band is the usual lignin marker. Relative intensities from the paper's qualitative labels (vs=1, s=0.6, m=0.35, sh=0.2, w=0.15, vw=0.05), 1064 nm FT-Raman.",
+  "confidence": "high"
  },
  {
   "name": "Pectin (citrus/apple, partly methyl-esterified)",
@@ -2569,93 +2600,118 @@
   "laser_nm": 1064,
   "peaks": [
    {
-    "position": 480,
+    "position": 372,
+    "intensity": 0.1,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 441,
+    "intensity": 0.15,
+    "width": 0,
+    "label": "C-O-C torsion/deformation"
+   },
+   {
+    "position": 537,
+    "intensity": 0.1,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 853,
+    "intensity": 0.6,
+    "width": 0,
+    "label": "C6-C5-O5-C1-O1 skeletal (alpha-anomer)"
+   },
+   {
+    "position": 953,
+    "intensity": 0.15,
+    "width": 0,
+    "label": "CCH/COH deformation"
+   },
+   {
+    "position": 979,
+    "intensity": 0.1,
+    "width": 0,
+    "label": "O-CH3 stretch (methyl ester)"
+   },
+   {
+    "position": 1079,
     "intensity": 0.2,
     "width": 0,
-    "label": "skeletal deformation"
+    "label": "C-O + OH bend"
    },
    {
-    "position": 500,
+    "position": 1105,
     "intensity": 0.2,
     "width": 0,
-    "label": "skeletal deformation"
-   },
-   {
-    "position": 852,
-    "intensity": 1,
-    "width": 0,
-    "label": "alpha-anomeric/glycosidic ring mode (alpha-1,4-galacturonan) strongest low-frequency band"
-   },
-   {
-    "position": 960,
-    "intensity": 0.2,
-    "width": 0,
-    "label": "ring/C-O mode"
-   },
-   {
-    "position": 1095,
-    "intensity": 0.4,
-    "width": 0,
-    "label": "nu(C-O-C) glycosidic / ring"
+    "label": "C-C, C-O stretch"
    },
    {
     "position": 1145,
     "intensity": 0.3,
     "width": 0,
-    "label": "nu(C-O), nu(C-C) ring"
+    "label": "C-O-C glycosidic stretch"
    },
    {
-    "position": 1380,
-    "intensity": 0.25,
+    "position": 1254,
+    "intensity": 0.15,
     "width": 0,
-    "label": "delta(C-H)"
+    "label": "C-H bend"
    },
    {
-    "position": 1415,
-    "intensity": 0.25,
+    "position": 1330,
+    "intensity": 0.15,
     "width": 0,
-    "label": "nu_s(COO-) carboxylate; relatively stronger at low DE"
+    "label": "C-H bend"
    },
    {
-    "position": 1450,
-    "intensity": 0.2,
+    "position": 1378,
+    "intensity": 0.15,
     "width": 0,
-    "label": "delta(CH3)/delta(CH2)"
+    "label": "CH3 sym. deformation (ester)"
    },
    {
-    "position": 1630,
+    "position": 1458,
+    "intensity": 0.15,
+    "width": 0,
+    "label": "CH3 asym. deformation (ester)"
+   },
+   {
+    "position": 1607,
     "intensity": 0.1,
-    "width": 40,
-    "label": "nu_as(COO-) carboxylate; weak in Raman, grows with decreasing DE"
+    "width": 0,
+    "label": "COO- asym. stretch (pectate salts)"
    },
    {
-    "position": 1745,
-    "intensity": 0.4,
+    "position": 1750,
+    "intensity": 0.15,
     "width": 0,
-    "label": "nu(C=O) of methyl ester; intensity scales with degree of esterification (DE)"
+    "label": "C=O stretch, methyl ester (1740 for free COOH)"
    },
    {
-    "position": 2940,
-    "intensity": 0.35,
+    "position": 2941,
+    "intensity": 1.0,
     "width": 0,
-    "label": "nu(C-H) of OCH3 ester and ring CH"
+    "label": "C-H stretch (ring)"
+   },
+   {
+    "position": 2960,
+    "intensity": 0.3,
+    "width": 0,
+    "label": "CH3 asym. stretch (ester)"
    }
   ],
   "sources": [
    {
-    "ref": "Synytsya, A.; Copikova, J.; Matejka, P.; Machovic, V. (2003) Carbohydr. Polym. 54, 97: Fourier transform Raman and infrared spectroscopy of pectins",
-    "doi_or_url": "",
-    "covers": "Pectin Raman band positions and DE dependence (1745 ester vs 1630/1415 carboxylate)"
-   },
-   {
-    "ref": "Agarwal, U. P. (2019) Molecules 24, 1659: Analysis of cellulose and lignocellulose materials by Raman spectroscopy: a review of the current status",
-    "doi_or_url": "10.3390/molecules24091659",
-    "covers": "Pectin band summary"
+    "ref": "Synytsya, Čopíková, Matějka, Machovič, Fourier transform Raman and infrared spectroscopy of pectins, Carbohydr. Polym. 54 (2003) 97",
+    "doi_or_url": "https://doi.org/10.1016/S0144-8617(03)00158-9",
+    "covers": "Tables 2 and 3: pectic acid, pectates, methyl and acetyl esters"
    }
   ],
   "rruff_id": "",
-  "notes": "Phase: amorphous solid, citrus or apple pectin, DE roughly 30-70%. Dependence on degree of esterification: the ester C=O band near 1745 cm-1 and the OCH3 C-H stretch near 2940 rise with DE; the carboxylate bands near 1630 (asym) and 1415 (sym) rise as DE falls; polygalacturonic acid (DE 0) in the free acid form shows C=O near 1735-1740 instead; the 852 cm-1 alpha-glycosidic ring band is present at all DE. Pectin has no 380/1095 crystalline cellulose pattern; 852 is distinct from cellulose 898. 1064 nm is preferred; commercial pectins fluoresce at visible wavelengths. DE trend is established in the literature; individual positions can shift by several cm-1 with counterions (Ca2+ etc.). Relative intensities are estimated from published spectra by eye/memory of band shapes, not read from tabulated values. Band list compiled with AI assistance from the cited literature; not checked line by line against the papers.",
-  "confidence": "medium"
+  "notes": "Backbone bands from polygalacturonic acid/pectate (Table 2), ester bands from Table 3. The strongest FT-Raman band is the 2941 C-H stretch, then 853. Degree of esterification: ester C=O (1750) and CH3 bands (2960, 1458, 1378, 979) grow with DE; the carboxylate bands (1607, 1405) appear in pectate salts. Sugar-beet pectin also shows sharp ferulate bands at 1630 and 1603. Relative intensities are estimates (the paper gives no intensity table).",
+  "confidence": "high"
  },
  {
   "name": "Kraft pulp, unbleached",
@@ -2720,13 +2776,13 @@
     "label": "delta(CH2)"
    },
    {
-    "position": 1600,
+    "position": 1597,
     "intensity": 0.2,
     "width": 0,
     "label": "residual lignin aromatic ring (kappa-dependent)"
    },
    {
-    "position": 1655,
+    "position": 1662,
     "intensity": 0.1,
     "width": 0,
     "label": "residual lignin C=C"
@@ -2757,7 +2813,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Phase: semicrystalline cellulose I with 2-5% residual lignin plus xylan/glucomannan (kappa number about 20-100). Differs from cellulose mainly by a weak 1600 cm-1 (and 1655) lignin band whose size tracks lignin/kappa number; the carbohydrate bands are cellulose-like. Fluorescence from residual lignin rises strongly at 532 and 785 nm; use 1064 nm. Crystallinity marker: I380/I1096 (lower for less ordered/amorphous content; xylan lowers the effective CrI). Based on reference-literature band positions, not a single measured spectrum. Relative intensities are estimated from published spectra by eye/memory of band shapes, not read from tabulated values. Band list compiled with AI assistance from the cited literature; not checked line by line against the papers.",
+  "notes": "Phase: semicrystalline cellulose I with 2-5% residual lignin plus xylan/glucomannan (kappa number about 20-100). Differs from cellulose mainly by a weak 1597 cm-1 (and 1662) lignin band whose size tracks lignin/kappa number; the carbohydrate bands are cellulose-like. Fluorescence from residual lignin rises strongly at 532 and 785 nm; use 1064 nm. Crystallinity marker: I380/I1096 (lower for less ordered/amorphous content; xylan lowers the effective CrI). Based on reference-literature band positions, not a single measured spectrum. Relative intensities are estimated from published spectra by eye/memory of band shapes, not read from tabulated values. Band list compiled with AI assistance from the cited literature; not checked line by line against the papers.",
   "confidence": "medium"
  },
  {
@@ -2771,7 +2827,7 @@
    "pigment",
    "resonance Raman"
   ],
-  "laser_nm": 0,
+  "laser_nm": 514.5,
   "peaks": [
    {
     "position": 1005,
@@ -2780,45 +2836,267 @@
     "label": "ν3 CH3 in-plane rock"
    },
    {
-    "position": 1157,
+    "position": 1155,
     "intensity": 0.8,
     "width": 0,
-    "label": "ν2 C–C stretch"
+    "label": "ν2 C-C stretch"
    },
    {
-    "position": 1524,
+    "position": 1519,
     "intensity": 1.0,
     "width": 0,
     "label": "ν1 C=C stretch (polyene chain)"
    },
    {
-    "position": 2160,
-    "intensity": 0.03,
-    "width": 0,
-    "label": "ν1+ν3 combination"
-   },
-   {
     "position": 2310,
     "intensity": 0.05,
     "width": 0,
-    "label": "2ν2 overtone"
+    "label": "2ν2 overtone (approx.)"
    },
    {
-    "position": 2670,
+    "position": 2675,
     "intensity": 0.08,
     "width": 0,
-    "label": "ν1+ν2 combination"
+    "label": "ν1+ν2 combination (approx.)"
    }
   ],
   "sources": [
    {
     "ref": "Withnall, Chowdhry, Silver, Edwards, de Oliveira, Raman spectra of carotenoids in natural products, Spectrochim. Acta A 59 (2003) 2207",
-    "doi_or_url": "",
-    "covers": "ν1, ν2, ν3 positions of carotenoids in plant tissue"
+    "doi_or_url": "https://doi.org/10.1016/S1386-1425(03)00064-7",
+    "covers": "ν1, ν2, ν3 of carotenoids in carrot, tomato, red pepper in situ (514.5 nm)"
    }
   ],
   "rruff_id": "",
-  "notes": "Resonance-enhanced at 488-532 nm: in carrot and many plant tissues carotenoids dominate the spectrum even at trace levels. ν1 shifts 1510-1530 with conjugation length and environment. Overtone/combination positions and all relative intensities are approximate.",
+  "notes": "Carotenoids in carrot measured in situ (1005, 1155, 1519). Resonance-enhanced at 488-532 nm: in carrot and many plant tissues carotenoids dominate the spectrum even at trace levels. ν1 moves 1510-1530 with conjugation length. Overtone/combination positions are computed and all relative intensities approximate.",
+  "confidence": "high"
+ },
+ {
+  "name": "Xylan (beech glucuronoxylan, hemicellulose)",
+  "formula": "",
+  "cas": "9014-63-5",
+  "cls": "biopolymer",
+  "tags": [
+   "hemicellulose",
+   "wood",
+   "paper"
+  ],
+  "laser_nm": 1064,
+  "peaks": [
+   {
+    "position": 315,
+    "intensity": 0.35,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 377,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 421,
+    "intensity": 0.35,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 494,
+    "intensity": 0.6,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 535,
+    "intensity": 0.35,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 614,
+    "intensity": 0.35,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 900,
+    "intensity": 0.35,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 984,
+    "intensity": 0.35,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1091,
+    "intensity": 0.6,
+    "width": 0,
+    "label": "C-O-C / C-C stretch"
+   },
+   {
+    "position": 1126,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "C-O-C glycosidic stretch"
+   },
+   {
+    "position": 1247,
+    "intensity": 0.35,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1318,
+    "intensity": 0.35,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1378,
+    "intensity": 0.35,
+    "width": 0,
+    "label": "HCC/HCO bend"
+   },
+   {
+    "position": 1413,
+    "intensity": 0.35,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1471,
+    "intensity": 0.35,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2896,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "C-H stretch"
+   },
+   {
+    "position": 2997,
+    "intensity": 0.35,
+    "width": 0,
+    "label": ""
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Agarwal, U. P.; Ralph, S. A., FT-Raman spectroscopy of wood: identifying contributions of lignin and carbohydrate polymers in the spectrum of black spruce (Picea mariana), Appl. Spectrosc. 51 (1997) 1648",
+    "doi_or_url": "",
+    "covers": "Table III: xylan from Japanese beech (Fagus crenata)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Hardwood hemicellulose extracted with KOH from beech holocellulose; residual-lignin bands (1593) omitted. Grass arabinoxylans may carry ferulate bands near 1600/1630. Relative intensities from the paper's qualitative labels (vs=1, s=0.6, m=0.35, sh=0.2, w=0.15, vw=0.05), 1064 nm FT-Raman.",
+  "confidence": "high"
+ },
+ {
+  "name": "Glucomannan (softwood galactoglucomannan, hemicellulose)",
+  "formula": "",
+  "cas": "",
+  "cls": "biopolymer",
+  "tags": [
+   "hemicellulose",
+   "wood",
+   "paper"
+  ],
+  "laser_nm": 1064,
+  "peaks": [
+   {
+    "position": 307,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 346,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 423,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 492,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 672,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 897,
+    "intensity": 0.15,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1089,
+    "intensity": 0.35,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1121,
+    "intensity": 0.35,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1267,
+    "intensity": 0.35,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1374,
+    "intensity": 0.35,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 1463,
+    "intensity": 0.35,
+    "width": 0,
+    "label": ""
+   },
+   {
+    "position": 2918,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "C-H stretch"
+   },
+   {
+    "position": 2935,
+    "intensity": 0.2,
+    "width": 0,
+    "label": ""
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Agarwal, U. P.; Ralph, S. A., FT-Raman spectroscopy of wood: identifying contributions of lignin and carbohydrate polymers in the spectrum of black spruce (Picea mariana), Appl. Spectrosc. 51 (1997) 1648",
+    "doi_or_url": "",
+    "covers": "Table III: glucomannan from Japanese black pine (Pinus thunbergii)"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Softwood hemicellulose; residual-lignin bands (1598, 1662) omitted. Relative intensities from the paper's qualitative labels (vs=1, s=0.6, m=0.35, sh=0.2, w=0.15, vw=0.05), 1064 nm FT-Raman.",
   "confidence": "high"
  }
 ]
