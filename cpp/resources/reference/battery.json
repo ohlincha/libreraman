@@ -2759,5 +2759,66 @@
   "rruff_id": "",
   "notes": "Phase: semicrystalline cellulose I with 2-5% residual lignin plus xylan/glucomannan (kappa number about 20-100). Differs from cellulose mainly by a weak 1600 cm-1 (and 1655) lignin band whose size tracks lignin/kappa number; the carbohydrate bands are cellulose-like. Fluorescence from residual lignin rises strongly at 532 and 785 nm; use 1064 nm. Crystallinity marker: I380/I1096 (lower for less ordered/amorphous content; xylan lowers the effective CrI). Based on reference-literature band positions, not a single measured spectrum. Relative intensities are estimated from published spectra by eye/memory of band shapes, not read from tabulated values. Band list compiled with AI assistance from the cited literature; not checked line by line against the papers.",
   "confidence": "medium"
+ },
+ {
+  "name": "β-Carotene (carotenoids)",
+  "formula": "C40H56",
+  "cas": "7235-40-7",
+  "cls": "biopolymer",
+  "tags": [
+   "carotenoid",
+   "carrot",
+   "pigment",
+   "resonance Raman"
+  ],
+  "laser_nm": 0,
+  "peaks": [
+   {
+    "position": 1005,
+    "intensity": 0.3,
+    "width": 0,
+    "label": "ν3 CH3 in-plane rock"
+   },
+   {
+    "position": 1157,
+    "intensity": 0.8,
+    "width": 0,
+    "label": "ν2 C–C stretch"
+   },
+   {
+    "position": 1524,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "ν1 C=C stretch (polyene chain)"
+   },
+   {
+    "position": 2160,
+    "intensity": 0.03,
+    "width": 0,
+    "label": "ν1+ν3 combination"
+   },
+   {
+    "position": 2310,
+    "intensity": 0.05,
+    "width": 0,
+    "label": "2ν2 overtone"
+   },
+   {
+    "position": 2670,
+    "intensity": 0.08,
+    "width": 0,
+    "label": "ν1+ν2 combination"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Withnall, Chowdhry, Silver, Edwards, de Oliveira, Raman spectra of carotenoids in natural products, Spectrochim. Acta A 59 (2003) 2207",
+    "doi_or_url": "",
+    "covers": "ν1, ν2, ν3 positions of carotenoids in plant tissue"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Resonance-enhanced at 488-532 nm: in carrot and many plant tissues carotenoids dominate the spectrum even at trace levels. ν1 shifts 1510-1530 with conjugation length and environment. Overtone/combination positions and all relative intensities are approximate.",
+  "confidence": "high"
  }
 ]

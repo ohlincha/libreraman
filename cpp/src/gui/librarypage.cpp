@@ -538,8 +538,9 @@ QWidget* LibraryPage::buildMatchPanel() {
         m_baseline->setEnabled(m != Method::Peaks);
         m_deriv->setEnabled(m != Method::Peaks);
     };
-    // Peaks is the default: it covers every entry, including the literature band lists
-    m_method->setCurrentIndex(std::clamp(QSettings().value(QLatin1String(kMethodKey), int(Method::Peaks)).toInt(), 0, 2));
+    // Full spectrum is the default: band-list entries take part too, and it copes with fluorescence and broad bands
+    // (tested with the Cora recordings in the simulator) where peak picking does not
+    m_method->setCurrentIndex(std::clamp(QSettings().value(QLatin1String(kMethodKey), int(Method::Spectrum)).toInt(), 0, 2));
     connect(m_method, qOverload<int>(&QComboBox::currentIndexChanged), this, methodChanged);
     connect(m_method, qOverload<int>(&QComboBox::activated), this,
             [](int i) { QSettings().setValue(QLatin1String(kMethodKey), i); });
