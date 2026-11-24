@@ -809,7 +809,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -874,7 +874,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -968,7 +968,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -1026,7 +1026,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -1108,7 +1108,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -1119,65 +1119,65 @@
   "tags": [
    "EtOH"
   ],
-  "laser_nm": 785,
+  "laser_nm": 532,
   "peaks": [
    {
     "position": 443,
-    "intensity": 0.1,
+    "intensity": 0.02,
     "width": 0,
     "label": ""
    },
    {
     "position": 883,
-    "intensity": 0.6,
+    "intensity": 0.34,
     "width": 0,
     "label": ""
    },
    {
     "position": 1052,
-    "intensity": 0.2,
+    "intensity": 0.13,
     "width": 0,
     "label": ""
    },
    {
     "position": 1096,
-    "intensity": 0.2,
+    "intensity": 0.13,
     "width": 0,
     "label": ""
    },
    {
     "position": 1276,
-    "intensity": 0.1,
+    "intensity": 0.07,
     "width": 0,
     "label": ""
    },
    {
     "position": 1454,
-    "intensity": 0.3,
+    "intensity": 0.21,
     "width": 0,
     "label": ""
    },
    {
     "position": 2718,
-    "intensity": 0.05,
+    "intensity": 0.08,
     "width": 0,
     "label": ""
    },
    {
     "position": 2878,
-    "intensity": 1.0,
+    "intensity": 0.65,
     "width": 0,
     "label": ""
    },
    {
     "position": 2929,
-    "intensity": 0.85,
+    "intensity": 1.0,
     "width": 0,
     "label": ""
    },
    {
     "position": 2973,
-    "intensity": 0.55,
+    "intensity": 0.46,
     "width": 0,
     "label": ""
    }
@@ -1190,7 +1190,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid. Assignments not given by the source. Relative heights measured on the lab's Cora 5000 (532 nm, 2026-11-24; not response-corrected).",
   "confidence": "medium"
  },
  {
@@ -1302,7 +1302,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -1385,7 +1385,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -1485,7 +1485,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, medium confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -1591,7 +1591,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, low confidence), not measured values.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, low confidence), not measured values.",
   "confidence": "medium"
  },
  {
@@ -1709,7 +1709,7 @@
    }
   ],
   "rruff_id": "",
-  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid; intensity 0 = unknown. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, low confidence), not measured values.",
+  "notes": "Positions only (no intensities or assignments in source); measured with a 785 nm Kaiser Raman Rxn2 analyser, 1 cm-1 resolution, neat liquid. Assignments not given by the source. Relative intensities are estimates of typical published spectra (AI-assisted, low confidence), not measured values.",
   "confidence": "medium"
  },
  {
