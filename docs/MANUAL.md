@@ -1,6 +1,6 @@
 # LibreRamen — quick manual
 
-This covers the desktop application (version 0.3.4). For installation see the [README](../README.md).
+This covers the desktop application (version 0.3.5). For installation see the [README](../README.md).
 
 ## The window
 
@@ -110,7 +110,7 @@ matched them to the wrong entry).
 **Reference entries.** The default library comes with literature reference entries: band positions of battery
 materials (cathodes, carbons and anodes, binders and cellulose, electrolyte salts and anions, SEI products), carbonate
 electrolytes (EC, PC, DMC, EMC, DEC, FEC, VC, the Li⁺-solvated EC and PC bands, LP30, the BF₄⁻ and ClO₄⁻
-ion-pairing bands, LiBOB, LiDFOB), lignocellulose for paper separators (softwood lignin, xylan, glucomannan, pectin, unbleached kraft pulp, carotenoids; cellulose I and II are with the binders), common
+ion-pairing bands, LiBOB, LiDFOB), lignocellulose for paper separators (softwood and grass lignin, xylan, glucomannan, pectin, unbleached kraft pulp, carotenoids; cellulose I and II are with the binders), common
 solvents (water, alcohols, acetone, acetonitrile, DMSO, DMF, chlorinated and aromatic solvents, alkanes) and the
 ASTM E1840 shift standards (cyclohexane, paracetamol, naphthalene, polystyrene, sulfur, toluene). Band-list
 entries come with their sources (DOIs), the excitation laser, notes on composition and phase, and a confidence. Most bands carry a

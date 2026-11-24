@@ -3098,5 +3098,73 @@
   "rruff_id": "",
   "notes": "Softwood hemicellulose; residual-lignin bands (1598, 1662) omitted. Relative intensities from the paper's qualitative labels (vs=1, s=0.6, m=0.35, sh=0.2, w=0.15, vw=0.05), 1064 nm FT-Raman.",
   "confidence": "high"
+ },
+ {
+  "name": "Grass (GSH) lignin with hydroxycinnamate esters",
+  "formula": "",
+  "cas": "",
+  "cls": "biopolymer",
+  "tags": [
+   "lignin",
+   "grass",
+   "straw",
+   "p-coumarate",
+   "ferulate",
+   "hydroxycinnamate",
+   "paper"
+  ],
+  "laser_nm": 785,
+  "peaks": [
+   {
+    "position": 1170,
+    "intensity": 0.35,
+    "width": 0,
+    "label": "hydroxycinnamate ester (p-coumarate/ferulate) band, 1131-1190 region"
+   },
+   {
+    "position": 1270,
+    "intensity": 0.2,
+    "width": 0,
+    "label": "guaiacyl ring / aryl-O (lignin aromatics)"
+   },
+   {
+    "position": 1600,
+    "intensity": 1.0,
+    "width": 0,
+    "label": "aromatic ring C=C stretch (symmetric)"
+   },
+   {
+    "position": 1630,
+    "intensity": 0.5,
+    "width": 0,
+    "label": "ring-conjugated C=C of hydroxycinnamate (p-coumarate/ferulate)"
+   },
+   {
+    "position": 1655,
+    "intensity": 0.4,
+    "width": 0,
+    "label": "C=C of coniferyl/sinapyl alcohol end groups, C=O conj. (lignin)"
+   }
+  ],
+  "sources": [
+   {
+    "ref": "Raman-based diagnostics of stalk rot disease of maize (Front Plant Sci 2021, PMC8415789), read via Europe PMC full text",
+    "doi_or_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8415789/",
+    "covers": "maize stalk/leaf: lignin 1168, phenylpropanoids 1601-1630 cm-1"
+   },
+   {
+    "ref": "Local variations in carbohydrates and matrix lignin in mechanically graded bamboo culms (Polymers 2022, PMC8747746), read via Europe PMC full text",
+    "doi_or_url": "https://doi.org/10.3390/polym14010143",
+    "covers": "grass (bamboo) lignin 1598/1656; hydroxycinnamate esters 1172 (1131-1190 region)"
+   },
+   {
+    "ref": "Raman spectroscopy mapping of cell wall polymers (Front Plant Sci 2022, PMC9442035), read",
+    "doi_or_url": "https://doi.org/10.3389/fpls.2022.976351",
+    "covers": "lignin/aromatics 1270, 1599"
+   }
+  ],
+  "rruff_id": "",
+  "notes": "Positions from plant-tissue Raman papers (maize, bamboo; not isolated wheat-straw/miscanthus lignin), so +-3 cm-1. Intensities are ESTIMATED (relative to the 1600 band), not read from spectra. Hydroxycinnamate content varies by species; 1630/1170 grow with p-coumarate/ferulate. Ferulate C=C/ring bands at 1630/1603 are also reported for sugar-beet pectin (Synytsya et al. 2003). Band list compiled with AI assistance from the cited papers.",
+  "confidence": "medium"
  }
 ]
