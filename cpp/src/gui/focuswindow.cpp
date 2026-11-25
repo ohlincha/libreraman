@@ -218,12 +218,12 @@ void FocusWindow::onSpectrum(const lr::Spectrum& sp, const QString& tag) {
 
 void FocusWindow::onStatus(const StatusView& st) {
     m_status = st;
-    if (m_running && st.compartmentOpen) {
-        m_banner->setText(QStringLiteral("⚠  LASER ON WITH THE LID OPEN — wear laser goggles; keep eyes and skin out of the beam."));
+    if (m_running) {   // the lid-open accessory makes the lid read closed: assume it may be open
+        m_banner->setText(st.compartmentOpen
+                              ? QStringLiteral("⚠  LASER ON WITH THE LID OPEN — wear laser goggles; keep eyes and skin out of the beam.")
+                              : QStringLiteral("⚠  LASER ON — the lid may be open (lid-open accessory): wear laser goggles; keep eyes "
+                                               "and skin out of the beam. Stop or Esc switches it off."));
         m_banner->setStyleSheet(QStringLiteral("QLabel { background: #c62828; color: white; font-weight: 700; padding: 8px; }"));
-    } else if (m_running) {
-        m_banner->setText(QStringLiteral("Laser on (focus mode). Stop or Esc switches it off."));
-        m_banner->setStyleSheet(QStringLiteral("QLabel { background: #fdecea; border-left: 4px solid #c62828; padding: 6px; }"));
     } else {
         m_banner->setText(QString::fromUtf8(kBannerOff) + (st.armed ? QString() : QStringLiteral("  (Not armed now.)")));
         m_banner->setStyleSheet(QStringLiteral("QLabel { background: #fff3cd; border-left: 4px solid #e0a800; padding: 6px; }"));

@@ -72,10 +72,11 @@ each with the **best so far** and a bar showing how close the current spectrum i
 *Saturated* means the exposure is too long. Nothing is saved, except with **Keep this spectrum** (a CSV in the
 Measure folder). The laser goes off with **STOP**, Esc, closing the window, or after *Laser off after* (5 min).
 
-With the **lid-open accessory** attached, Focus mode also runs with the compartment open (normal measurements do
-not): the banner turns red while the laser is on with the lid open. The instrument must still be armed. How the
-real accessory behaves (whether the compartment then reads open, whether ARM works with the lid open) has not
-been tried yet; the simulator's *Lid-open accessory* box assumes that ARM works and stays on.
+With the **lid-open accessory** the laser can run with the lid open. The accessory most likely makes the lid read
+closed, so LibreRamen cannot tell: while Focus mode has the laser on, a red banner always warns that the lid may be
+open — wear laser goggles. (If the compartment does read open, Focus mode still runs, normal measurements do not.)
+The instrument must be armed. Not yet tried with the real accessory; the simulator's *Lid-open accessory* box
+assumes that ARM works and stays on with the lid open.
 
 ## Data
 

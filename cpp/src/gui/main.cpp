@@ -230,9 +230,8 @@ int main(int argc, char** argv) {
                     m->sampleEdit()->setText(QStringLiteral("CCl4"));
                     m->exposureBox()->setValue(0.5);
                     m->averagesBox()->setValue(1);
-                    if (demo == QLatin1String("focus")) {   // lid open with the accessory, focus mode running
+                    if (demo == QLatin1String("focus")) {   // focus mode running (the accessory: the lid reads closed)
                         ctl.simSetLidAccessory(true);
-                        ctl.simOpenCompartment();
                         m->openFocus();
                         if (auto* f = m->findChild<FocusWindow*>())
                             QTimer::singleShot(300, f, [f] { f->startButton()->click(); });
