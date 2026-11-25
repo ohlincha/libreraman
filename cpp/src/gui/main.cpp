@@ -1,6 +1,6 @@
 // LibreRamen graphical program (Python: gui/app.py main, selftest.py, the gui/selftest/watchdog parts of
 // __main__.py).
-//   LibreRamen [--sim] [--dark | --light] [--screenshot FILE [--demo single|series]]
+//   LibreRamen [--sim] [--dark | --light] [--screenshot FILE [--demo single|series|focus]]
 //              [--api-port N] [--no-api]   local API (default: settings, port 8765; see apiserver.h)
 //   LibreRamen --selftest        GUI + simulator self-test (offscreen unless QT_QPA_PLATFORM is set); exit 0 = OK
 //   LibreRamen --watchdog --port P --parent PID     laser watchdog process (started by the program itself)
@@ -13,6 +13,9 @@
 #include "controller.h"
 #include "decimalpoint.h"
 #include "icon.h"
+#include <QPushButton>
+
+#include "focuswindow.h"
 #include "mainwindow.h"
 #include "measurepage.h"
 #include "page.h"
@@ -227,7 +230,13 @@ int main(int argc, char** argv) {
                     m->sampleEdit()->setText(QStringLiteral("CCl4"));
                     m->exposureBox()->setValue(0.5);
                     m->averagesBox()->setValue(1);
-                    if (demo == QLatin1String("series")) {
+                    if (demo == QLatin1String("focus")) {   // lid open with the accessory, focus mode running
+                        ctl.simSetLidAccessory(true);
+                        ctl.simOpenCompartment();
+                        m->openFocus();
+                        if (auto* f = m->findChild<FocusWindow*>())
+                            QTimer::singleShot(300, f, [f] { f->startButton()->click(); });
+                    } else if (demo == QLatin1String("series")) {
                         m->intervalUnitBox()->setCurrentText(QStringLiteral("s"));
                         m->intervalBox()->setValue(std::max(2.5, std::ceil(m->minInterval() * 10) / 10));
                         m->countBox()->setValue(40);
@@ -241,7 +250,9 @@ int main(int argc, char** argv) {
         QTimer::singleShot(15000, &win, [&] {
             if (!win.isVisible())
                 win.show();
-            win.grab().save(shot);
+            QWidget* target = &win;
+            if (auto* f = win.findChild<FocusWindow*>(); f && f->isVisible()) target = f;
+            target->grab().save(shot);
             win.close();
             QApplication::quit();
         });

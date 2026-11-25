@@ -107,7 +107,9 @@ from the vendor software's `BS_System` folder); without it, the development unit
 
 LibreRamen only switches the laser on when the instrument is **armed** (the ARM button on the
 instrument). The instrument's own interlock cuts
-the laser when the sample compartment is open. Always use your laboratory's laser precautions.
+the laser when the sample compartment is open. *Focus* mode (laser on continuously while the sample distance is
+set) also runs with the compartment open when the lid-open accessory is attached, with a red warning: wear laser
+goggles. Always use your laboratory's laser precautions.
 
 ## Calibration
 

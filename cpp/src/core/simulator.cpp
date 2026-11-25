@@ -93,12 +93,12 @@ void SimCora::sleepScaled(double s, const std::atomic<bool>* stop) const {
 }
 
 void SimCora::pressArm() {
-    if (!open_) armed_ = true;
+    if (!open_ || accessory_) armed_ = true;
 }
 
 void SimCora::openCompartment() {
     open_ = true;
-    armed_ = false;
+    if (!accessory_) armed_ = false;
 }
 
 void SimCora::closeCompartment() { open_ = false; }
@@ -241,8 +241,8 @@ void SimCora::laserOff() {
 // Python SimCora._laser(): no MCP2200 pulse, 1 s (scaled) settle.
 class SimCora::LaserGuard {
 public:
-    explicit LaserGuard(SimCora& c) : c_(c) {
-        if (c_.open_) throw NotArmed("The sample compartment is open.");
+    explicit LaserGuard(SimCora& c, bool allowOpen = false) : c_(c) {
+        if (c_.open_ && !allowOpen) throw NotArmed("The sample compartment is open.");
         if (!c_.armed_) throw NotArmed("Not armed: press ARM on the instrument (needed after every opening).");
         c_.laserOn_ = true;
         c_.log("Laser ON (532 nm, simulated)");
@@ -334,7 +334,7 @@ void SimCora::acquireLaserOn(const AcquireOptions& o, const Vec& background, con
     std::lock_guard<std::recursive_mutex> lk(lock_);
     const int ch = channel_;
     if (ch == 0) throw Error("not initialized");
-    LaserGuard laser(*this);
+    LaserGuard laser(*this, o.allowOpenCompartment);
     try {
         while (!(o.stop && *o.stop) && (!more || more())) {
             const Vec sig = meanFrames(frames(o.exposure_s, o.averages, o.stop));

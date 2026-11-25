@@ -51,6 +51,10 @@ struct AcquireOptions {
     double power_mw = 0.0;                    // 1064 nm only; 0 = default
     double prebleach_s = 0.0;
     const std::atomic<bool>* stop = nullptr;  // set -> throw Stopped (checked between frames / while bleaching)
+    // Focus mode only (acquireLaserOn): the laser may be switched on while the compartment reads open, for the
+    // accessory that lets the laser run with the lid open (adjusting the sample distance). Still only when armed;
+    // the instrument's own interlock decides whether light comes out.
+    bool allowOpenCompartment = false;
 };
 
 class Instrument {

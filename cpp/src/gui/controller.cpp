@@ -329,6 +329,37 @@ bool Controller::acquire(const MeasureSettings& s, const QString& tag) {
     });
 }
 
+bool Controller::startFocus(double exposure_s, int channel, double maxSeconds, const QString& origin) {
+    if (!m_inst || m_conn != Connection::Connected) {
+        emit error(QStringLiteral("No instrument connected."));
+        return false;
+    }
+    if (m_busy) {
+        emit error(QStringLiteral("Busy: stop the current measurement first."));
+        return false;
+    }
+    emit log(QStringLiteral("%1: focus mode, %2 s spectra, laser on continuously (at most %3 min)")
+                 .arg(origin, num(exposure_s), num(maxSeconds / 60)));
+    return run([this, exposure_s, channel, maxSeconds] {
+        selectChannel(channel);
+        const lr::Vec bg = m_inst->dark(exposure_s, 1);   // laser off
+        lr::AcquireOptions o;
+        o.exposure_s = exposure_s;
+        o.averages = 1;
+        o.stop = &m_stop;
+        o.allowOpenCompartment = true;
+        QElapsedTimer t;
+        t.start();
+        m_inst->acquireLaserOn(
+            o, bg, [&t, maxSeconds] { return t.elapsed() < maxSeconds * 1000; },
+            [this](lr::Spectrum& sp) {
+                sp.setMeta(QStringLiteral("mode"), QStringLiteral("focus"));
+                emit acquired(sp, QStringLiteral("focus"));
+            });
+        if (t.elapsed() >= maxSeconds * 1000) emit log(QStringLiteral("Focus: stopped after %1 min (laser off)").arg(num(maxSeconds / 60)));
+    });
+}
+
 bool Controller::startSeries(const lr::SeriesSettings& s, int channel, const QString& origin) {
     if (!m_inst || m_conn != Connection::Connected) {
         emit error(QStringLiteral("No instrument connected."));
@@ -460,6 +491,11 @@ void Controller::simPressArm() {
 void Controller::simOpenCompartment() {
     if (auto* s = simControls())
         s->openCompartment();
+}
+
+void Controller::simSetLidAccessory(bool attached) {
+    if (auto* s = simControls())
+        s->setLidAccessory(attached);
 }
 
 void Controller::simCloseCompartment() {

@@ -26,8 +26,9 @@ extension.
 program and the instrument did; the **Instrument** menu has *Reconnect*, *Use simulator*, *Shut down instrument…* and what to do with the
 instrument when LibreRamen closes.
 
-> **Laser safety.** The laser only switches on when the instrument is armed and the compartment is closed.
-> Follow your laboratory's laser rules regardless.
+> **Laser safety.** The laser only switches on when the instrument is armed and the compartment is closed —
+> except in *Focus* mode, which also runs with the compartment open when the lid-open accessory is attached (a red
+> warning stays on). Follow your laboratory's laser rules regardless: laser goggles with the lid open.
 
 ## Measure
 
@@ -56,6 +57,25 @@ high as the strongest band, e.g. ZnS); hover it for advice. The default *arPLS* 
 Spectra are saved automatically (*Saved in* shows the folder); a series is saved as a folder with one CSV per spectrum plus `series.csv`.
 **Add to library…** in the *Last spectrum* box stores the newest spectrum in the library; the **⋯** menu
 has *Clear*.
+
+### Focus mode
+
+**◎ Focus…** (below Stop on the Measure page) opens a window for setting the sample distance with the instrument's
+distance knob. **START FOCUS** takes a dark background, switches the laser on and keeps it on, and measures short
+spectra one after another (*Exposure*, 0.2 s by default). For each spectrum it shows
+
+- the **strongest band**: its height above the background and where it is (or the band at *Follow band*), and
+- the **total Raman signal**: everything above the background and the noise, 200–3200 cm⁻¹,
+
+each with the **best so far** and a bar showing how close the current spectrum is to it, a trend of the last minute
+(% of the best) and the live spectrum. Turn the knob slowly until the numbers peak, and go back to the best.
+*Saturated* means the exposure is too long. Nothing is saved, except with **Keep this spectrum** (a CSV in the
+Measure folder). The laser goes off with **STOP**, Esc, closing the window, or after *Laser off after* (5 min).
+
+With the **lid-open accessory** attached, Focus mode also runs with the compartment open (normal measurements do
+not): the banner turns red while the laser is on with the lid open. The instrument must still be armed. How the
+real accessory behaves (whether the compartment then reads open, whether ARM works with the lid open) has not
+been tried yet; the simulator's *Lid-open accessory* box assumes that ARM works and stays on.
 
 ## Data
 

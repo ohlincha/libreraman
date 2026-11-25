@@ -101,6 +101,10 @@ public slots:
     bool acquire(const lr::gui::MeasureSettings& s, const QString& tag);
     // Time series (runTimeSeries); channel 0 keeps the current channel.
     bool startSeries(const lr::SeriesSettings& s, int channel = 0, const QString& origin = QStringLiteral("GUI"));
+    // Focus mode: background once (laser off), then the laser stays on and spectra of exposure_s come one after
+    // another, delivered by acquired(sp, "focus") (not saved), until stop() or maxSeconds. The compartment may
+    // read open (lid-open accessory); arming is still needed. channel 0 keeps the current channel.
+    bool startFocus(double exposure_s, int channel = 0, double maxSeconds = 300, const QString& origin = QStringLiteral("GUI"));
     // Stop button: stop flag + laser(s) off right away, without waiting for the running job.
     void stop();
     void setPaused(bool paused);              // series waits before its next spectrum while paused
@@ -112,6 +116,7 @@ public slots:
     void simPressArm();
     void simOpenCompartment();
     void simCloseCompartment();
+    void simSetLidAccessory(bool attached);
     void simSetSample(const QString& name);
 
     void poll();                              // status poll (timer; public for tests)

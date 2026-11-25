@@ -1,5 +1,7 @@
 #include "measurepage.h"
 
+#include "focuswindow.h"
+
 #include "plotwidget.h"
 #include "statusstrip.h"
 #include "theme.h"
@@ -365,6 +367,12 @@ QWidget* MeasurePage::buildSettingsPanel() {
     stopRow->addWidget(m_btnStop, 2);
     stopRow->addWidget(m_btnPause, 1);
     ov->addLayout(stopRow);
+    auto* focusBtn = new QPushButton(QStringLiteral("◎  Focus…"));
+    focusBtn->setObjectName(QStringLiteral("focus"));
+    focusBtn->setToolTip(QStringLiteral("Focus mode: laser on continuously and live spectra, to set the sample "
+                                        "distance (the instrument's distance knob)"));
+    connect(focusBtn, &QPushButton::clicked, this, &MeasurePage::openFocus);
+    ov->addWidget(focusBtn);
 
     auto* scroll = m_settingsScroll = new QScrollArea;
     scroll->setWidgetResizable(true);
@@ -657,6 +665,14 @@ QWidget* MeasurePage::buildSettingsPanel() {
 }
 
 // ============================================================================================ settings
+void MeasurePage::openFocus() {
+    if (!m_focus)
+        m_focus = new FocusWindow(m_ctl, [this] { return m_folder; }, [this] { return channel(); }, this);
+    m_focus->show();
+    m_focus->raise();
+    m_focus->activateWindow();
+}
+
 QString MeasurePage::defaultFolder(const QDate& day) {
     return QDir(QDir::homePath()).filePath(QStringLiteral("Documents/LibreRamen/") +
                                            day.toString(QStringLiteral("yyyy-MM-dd")));

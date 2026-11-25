@@ -39,6 +39,7 @@ namespace lr::gui {
 
 class Curve;
 class ElidedLabel;
+class FocusWindow;
 class PeakLabels;
 class PlotWidget;
 
@@ -176,6 +177,10 @@ private:
     QProgressBar* m_bar;
     QSpinBox* m_band;
     QToolButton* m_peakBtn;
+    FocusWindow* m_focus = nullptr;           // Focus mode window (made when first opened)
+public:
+    void openFocus();                         // the Focus mode window (laser on continuously, distance knob)
+private:
     QMenu* m_peakMenu;
     QComboBox* m_trendMode;
     PlotWidget* m_tplot;

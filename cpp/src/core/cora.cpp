@@ -28,14 +28,16 @@ void sleepS(double s) {
 }  // namespace
 
 // ----------------------------------------------------------------------------- laser guard
-// Python Cora._laser() context manager. Constructor: refuse unless armed and closed, MCP2200 pulse, laser on,
+// Python Cora._laser() context manager. Constructor: refuse unless armed and closed (closed: not required in
+// focus mode, see AcquireOptions::allowOpenCompartment), MCP2200 pulse, laser on,
 // settle. release() (normal exit) and the destructor (exception/stop) switch it off and pulse again.
 class Cora::LaserGuard {
 public:
-    LaserGuard(Cora& c, double power_mw) : c_(c) {
+    LaserGuard(Cora& c, double power_mw, bool allowOpen = false) : c_(c) {
         auto arm = c_.armStatus();
         const hw::ArmState st = arm->state();
-        if (st.compartmentOpen) throw NotArmed("The sample compartment is open.");
+        if (st.compartmentOpen && !allowOpen) throw NotArmed("The sample compartment is open.");
+        if (st.compartmentOpen) c_.log("Focus: the compartment reads OPEN; laser allowed (lid-open accessory)");
         if (!st.armed) throw NotArmed("Not armed: press ARM on the instrument (needed after every opening).");
         arm->pulse();
         try {
@@ -429,7 +431,7 @@ void Cora::acquireLaserOn(const AcquireOptions& o, const Vec& background, const 
     std::lock_guard<std::recursive_mutex> lk(lock_);
     const int ch = channel_;
     if (ch == 0) throw Error("not initialized");
-    LaserGuard laser(*this, o.power_mw);
+    LaserGuard laser(*this, o.power_mw, o.allowOpenCompartment);
     try {
         while (!(o.stop && *o.stop) && (!more || more())) {
             const Vec sig = meanFrames(frames(o.exposure_s, o.averages, o.stop));

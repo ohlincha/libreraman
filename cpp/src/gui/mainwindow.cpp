@@ -260,6 +260,10 @@ QWidget* MainWindow::buildSimulatorBar() {
         connect(b, &QPushButton::clicked, m_ctl, slot);
         sl->addWidget(b);
     }
+    auto* acc = new QCheckBox(QStringLiteral("Lid-open accessory"));
+    acc->setToolTip(QStringLiteral("Simulates the accessory that lets the laser run with the lid open (Focus)"));
+    connect(acc, &QCheckBox::toggled, m_ctl, &Controller::simSetLidAccessory);
+    sl->addWidget(acc);
     sl->addStretch();
     return bar;
 }

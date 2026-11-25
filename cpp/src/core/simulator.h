@@ -24,6 +24,9 @@ public:
     virtual void pressArm() = 0;              // arms only with the compartment closed
     virtual void openCompartment() = 0;       // also disarms
     virtual void closeCompartment() = 0;
+    // The accessory that lets the laser run with the lid open (focusing): attached, ARM works and stays on with
+    // the compartment open. (How the real accessory behaves is not known yet; this is the assumption.)
+    virtual void setLidAccessory(bool attached) = 0;
     virtual void setSample(const QString& name) = 0;   // one of sampleNames(); throws Error otherwise
     virtual QString sample() const = 0;
     virtual QStringList sampleNames() const = 0;
@@ -69,6 +72,7 @@ public:
     // SimControls
     void pressArm() override;
     void openCompartment() override;
+    void setLidAccessory(bool attached) override { accessory_ = attached; }
     void closeCompartment() override;
     void setSample(const QString& name) override;
     QString sample() const override;
@@ -85,7 +89,7 @@ private:
 
     const SimData& data_;
     std::atomic<double> speed_;
-    std::atomic<bool> armed_{false}, open_{false}, initialized_{false};
+    std::atomic<bool> armed_{false}, open_{false}, initialized_{false}, accessory_{false};
     mutable std::mutex m_;                    // sample_, laserTime_, rng_
     QString sample_ = QStringLiteral("ethanol");
     std::map<QString, double> laserTime_;     // sample -> accumulated laser exposure (s), for bleaching
