@@ -1,6 +1,6 @@
 # LibreRamen — manual
 
-This covers the desktop application (version 0.3.8). For the everyday steps see the [quick start](QUICKSTART.md);
+This covers the desktop application (version 0.3.9). For the everyday steps see the [quick start](QUICKSTART.md);
 for installation, the [README](../README.md). In the program both documents are under **Help**.
 
 ## The window
