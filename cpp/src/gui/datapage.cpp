@@ -12,6 +12,7 @@
 
 #include <QAbstractItemView>
 #include <QApplication>
+#include <QClipboard>
 #include <QCheckBox>
 #include <QColorDialog>
 #include <QComboBox>
@@ -1369,6 +1370,7 @@ void DataPage::fillPlotMenu(QMenu& menu, double x) {
             menu.addAction(tr("Reset the peaks of this spectrum"), this, [this, row] { resetPeaks(row); });
         menu.addSeparator();
         menu.addAction(tr("Fit peaks in view"), this, [this] { fitView(); });
+        menu.addAction(tr("Carbon D/G…"), this, [this] { carbonDialog(); });
         if (hasFit()) {
             menu.addAction(tr("Refit"), this, [this] { refit(); });
             menu.addAction(tr("Clear fit"), this, [this] {
@@ -1397,6 +1399,8 @@ void DataPage::clearFit() {
     m_fitPositions.clear();
     m_fitResultPositions.clear();
     m_fitPeaks.clear();
+    m_fitShape.clear();
+    m_carbon.reset();
     m_fitLabel->clear();
 }
 
@@ -1410,6 +1414,34 @@ bool DataPage::refit(QString* error) {
     if (!m_fitRegion) return fitView(error);
     const Range r = m_fitRegion->region();
     return fitRange(r.lo, r.hi, error);
+}
+
+void DataPage::drawFit(const peaks::FitResult& res, int row) {
+    // stacked waterfall: draw the fit where the spectrum is drawn
+    double dx = 0, dy = 0;
+    for (const Drawn& d : m_drawn)
+        if (d.row == row) dx = d.dx, dy = d.dy;
+    Vec fx = res.x;
+    for (double& v : fx) v += dx;
+    Vec model = res.model;
+    for (double& v : model) v += dy;
+    const PlotPalette& pal = m_plot->plotPalette();
+    Curve* mc = m_plot->addCurve(fx, std::move(model), QPen(pal.label, 1.2, Qt::DashLine));
+    mc->setAutoScale(false);
+    mc->setZValue(5);
+    m_fitItems.push_back(mc);
+    double xm = 0;
+    for (double v : res.x) xm += v;
+    xm /= double(std::max<std::size_t>(1, res.x.size()));
+    for (std::size_t k = 0; k < res.components.size(); ++k) {
+        Vec yc = res.components[k];
+        for (std::size_t i = 0; i < yc.size() && i < res.x.size(); ++i)
+            yc[i] += res.baseline.first + res.baseline.second * (res.x[i] - xm) + dy;
+        Curve* c = m_plot->addCurve(fx, std::move(yc), QPen(pal.seriesColor(int(k) + 3), 1));
+        c->setAutoScale(false);
+        c->setZValue(4);
+        m_fitItems.push_back(c);
+    }
 }
 
 bool DataPage::fitRange(double lo, double hi, QString* error) {
@@ -1457,36 +1489,18 @@ bool DataPage::fitRange(double lo, double hi, QString* error) {
     }
     for (PlotItem* it : m_fitItems) m_plot->removeItem(it);
     m_fitItems.clear();
+    m_carbon.reset();
     m_fitPositions.clear();
     for (const peaks::Peak& g : guesses) m_fitPositions.push_back(g.position);
     m_fitResultPositions.clear();
     for (const peaks::FitPeak& p : res.peaks) m_fitResultPositions.push_back(p.position);
     m_fitPeaks = res.peaks;
-    // stacked waterfall: draw the fit where the current spectrum is drawn
-    double dx = 0, dy = 0;
-    for (const Drawn& d : m_drawn)
-        if (d.row == row) dx = d.dx, dy = d.dy;
-    Vec fx = res.x;
-    for (double& v : fx) v += dx;
-    Vec model = res.model;
-    for (double& v : model) v += dy;
+    m_fitShape = m_profile->currentText();
+    drawFit(res, row);
     const PlotPalette& pal = m_plot->plotPalette();
-    Curve* mc = m_plot->addCurve(fx, std::move(model), QPen(pal.label, 1.2, Qt::DashLine));
-    mc->setAutoScale(false);
-    mc->setZValue(5);
-    m_fitItems.push_back(mc);
-    double xm = 0;
-    for (double v : res.x) xm += v;
-    xm /= double(std::max<std::size_t>(1, res.x.size()));
-    for (std::size_t k = 0; k < res.components.size(); ++k) {
-        Vec yc = res.components[k];
-        for (std::size_t i = 0; i < yc.size() && i < res.x.size(); ++i)
-            yc[i] += res.baseline.first + res.baseline.second * (res.x[i] - xm) + dy;
-        Curve* c = m_plot->addCurve(fx, std::move(yc), QPen(pal.seriesColor(int(k) + 3), 1));
-        c->setAutoScale(false);
-        c->setZValue(4);
-        m_fitItems.push_back(c);
-    }
+    double dx = 0;
+    for (const Drawn& d : m_drawn)
+        if (d.row == row) dx = d.dx;
     if (!m_fitRegion) {
         m_fitRegion = m_plot->addRegion(lo + dx, hi + dx);
         m_fitRegion->setAutoScale(false);
@@ -1517,6 +1531,152 @@ bool DataPage::fitRange(double lo, double hi, QString* error) {
     else
         setNote({});
     return true;
+}
+
+// ------------------------------------------------------------------------------------------ carbon D/G
+bool DataPage::carbonAnalysis(carbon::Model model, QString* error) {
+    const int row = currentRow();
+    if (row < 0 || row >= count()) {
+        if (error) *error = tr("no spectrum");
+        return false;
+    }
+    const fileio::DataSpectrum& sp = m_entries[size_t(row)].sp;
+    carbon::Result r;
+    try {
+        carbon::Options o;
+        o.model = model;
+        r = carbon::analyse(sp.x, shownY(row), o);
+    } catch (const std::exception& e) {
+        const QString msg = tr("no carbon D/G analysis: %1").arg(QString::fromUtf8(e.what()));
+        if (error) *error = msg;
+        setNote(msg);
+        return false;
+    }
+    clearFit();
+    drawFit(r.fit, row);
+    std::vector<carbon::Band> bands = r.bands;
+    m_fitPeaks = r.fit.peaks;
+    if (r.band2d && r.fit2d) {
+        drawFit(*r.fit2d, row);
+        bands.push_back(*r.band2d);
+        m_fitPeaks.push_back(r.fit2d->peaks[0]);
+    }
+    for (std::size_t k = 0; k < bands.size() && k < m_fitPeaks.size(); ++k)   // bwf: the maximum, as in the table
+        m_fitPeaks[k].position = bands[k].position;
+    m_fitShape = QStringLiteral("carbon ") + carbon::modelKey(model);
+    m_table->setRowCount(0);
+    const int dh = heightDecimals();
+    for (const carbon::Band& b : bands) {
+        fillPeakRow({{b.position, 1}, {b.positionErr, 2}, {b.height, dh}, {b.fwhm, 1}, {b.area, dh},
+                     {b.q ? *b.q : NaN, 2}});
+        auto* it = new QTableWidgetItem(b.name + QStringLiteral(" (carbon)"));
+        m_table->setItem(m_table->rowCount() - 1, 6, it);
+    }
+    m_fitLabel->setText(QStringLiteral("Carbon D/G (%1): I_D/I_G = %2 (area), %3 (height); L_a = %4 nm; R² = %5")
+                            .arg(carbon::modelName(model), py::fixed(r.idigArea, 3), py::fixed(r.idigHeight, 3),
+                                 py::fixed(r.la, 1), py::fixed(r.fit.r2, 5)));
+    m_carbon = std::move(r);
+    m_carbonSpectrum = sp.name;
+    setNote({});
+    updatePeakOverlay();
+    if (m_carbonTable) fillCarbonTable();
+    return true;
+}
+
+void DataPage::fillCarbonTable() {
+    if (!m_carbonTable) return;
+    m_carbonTable->setRowCount(0);
+    if (!m_carbon) return;
+    for (const QStringList& r : m_carbon->rows()) {
+        const int n = m_carbonTable->rowCount();
+        m_carbonTable->insertRow(n);
+        for (int c = 0; c < 4 && c < int(r.size()); ++c) {
+            auto* it = new QTableWidgetItem(r[c]);
+            if (c == 1 || c == 2) it->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+            m_carbonTable->setItem(n, c, it);
+        }
+    }
+}
+
+bool DataPage::exportCarbon(const QString& path) {
+    if (!m_carbon) return false;
+    QSaveFile f(path);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        warn(tr("Export"), tr("Could not write %1").arg(path));
+        return false;
+    }
+    f.write(m_carbon->csv(m_carbonSpectrum).toUtf8());
+    if (!f.commit()) {
+        warn(tr("Export"), tr("Could not write %1").arg(path));
+        return false;
+    }
+    return true;
+}
+
+void DataPage::carbonDialog() {
+    if (!m_carbonDlg) {
+        m_carbonDlg = new QDialog(this);
+        m_carbonDlg->setWindowTitle(tr("Carbon D/G analysis"));
+        auto* v = new QVBoxLayout(m_carbonDlg);
+        auto* top = new QHBoxLayout;
+        top->addWidget(new QLabel(tr("Model")));
+        m_carbonModel = new QComboBox;
+        m_carbonModel->addItem(carbon::modelName(carbon::Model::LorentzBwf));
+        m_carbonModel->addItem(carbon::modelName(carbon::Model::Sadezky));
+        top->addWidget(m_carbonModel, 1);
+        auto* again = new QPushButton(tr("Analyse current spectrum"));
+        top->addWidget(again);
+        v->addLayout(top);
+        m_carbonNote = new QLabel;
+        m_carbonNote->setWordWrap(true);
+        m_carbonNote->setTextInteractionFlags(Qt::TextSelectableByMouse);
+        v->addWidget(m_carbonNote);
+        m_carbonTable = new QTableWidget(0, 4);
+        m_carbonTable->setHorizontalHeaderLabels({tr("quantity"), tr("value"), QStringLiteral("±"), tr("unit")});
+        m_carbonTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+        m_carbonTable->verticalHeader()->setVisible(false);
+        m_carbonTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        m_carbonTable->setAlternatingRowColors(true);
+        m_carbonTable->setColumnWidth(0, 330);
+        v->addWidget(m_carbonTable, 1);
+        auto* help = new QLabel(tr("<small>Spectrum as shown (baseline-corrected); fit region 950–1800 cm⁻¹ with a "
+                                   "linear baseline. G (BWF): position = maximum ω0 + Γ/(2q), q &lt; 0 = tail to low "
+                                   "shift. L_a = 2.4·10⁻¹⁰ λ⁴ / (I_D/I_G) nm from the <b>area</b> ratio (Cançado 2006, "
+                                   "λ = 532 nm), valid for nanocrystalline graphite (L_a ≳ 2 nm).</small>"));
+        help->setWordWrap(true);
+        v->addWidget(help);
+        auto* bb = new QDialogButtonBox(QDialogButtonBox::Close);
+        auto* copy = bb->addButton(tr("Copy"), QDialogButtonBox::ActionRole);
+        auto* save = bb->addButton(tr("Save CSV…"), QDialogButtonBox::ActionRole);
+        v->addWidget(bb);
+        connect(bb, &QDialogButtonBox::rejected, m_carbonDlg, &QDialog::close);
+        connect(copy, &QPushButton::clicked, this, [this] {
+            if (m_carbon) QApplication::clipboard()->setText(m_carbonSpectrum + '\n' + m_carbon->table() + '\n');
+        });
+        connect(save, &QPushButton::clicked, this, [this] {
+            if (!m_carbon) return;
+            const QString p = QFileDialog::getSaveFileName(m_carbonDlg, tr("Save carbon D/G results"),
+                                                           QStringLiteral("carbon.csv"), QStringLiteral("CSV (*.csv)"));
+            if (!p.isEmpty()) exportCarbon(p);
+        });
+        connect(again, &QPushButton::clicked, this, &DataPage::runCarbon);
+        connect(m_carbonModel, qOverload<int>(&QComboBox::currentIndexChanged), this, &DataPage::runCarbon);
+        m_carbonDlg->resize(560, 620);
+    }
+    m_carbonDlg->show();
+    m_carbonDlg->raise();
+    runCarbon();
+}
+
+void DataPage::runCarbon() {
+    QString err;
+    const auto model = m_carbonModel->currentIndex() == 1 ? carbon::Model::Sadezky : carbon::Model::LorentzBwf;
+    if (carbonAnalysis(model, &err)) {
+        m_carbonNote->setText(tr("Spectrum: %1").arg(m_carbonSpectrum.toHtmlEscaped()));
+    } else {
+        m_carbonNote->setText(err.toHtmlEscaped());
+        m_carbonTable->setRowCount(0);
+    }
 }
 
 // =========================================================================================== calculator
@@ -1631,7 +1791,7 @@ bool DataPage::exportPeaks(const QString& path) {
         const QString name = quoted(m_entries[size_t(currentRow())].sp.name);
         for (const peaks::FitPeak& p : m_fitPeaks)
             lines << QStringList{name, num(p.position), num(p.positionErr), num(p.height), num(p.fwhm), num(p.area),
-                                 p.eta ? num(*p.eta) : QString(), m_profile->currentText(),
+                                 p.eta ? num(*p.eta) : QString(), m_fitShape,
                                  quoted(assignmentText(p.position))}
                          .join(',');
     } else {

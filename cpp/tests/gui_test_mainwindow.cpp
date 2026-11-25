@@ -16,6 +16,7 @@
 #include "core/simulator.h"
 
 #include <QApplication>
+#include <QDialog>
 #include <QTabWidget>
 #include <QComboBox>
 #include <QLabel>
@@ -90,6 +91,7 @@ private slots:
     void stopSwitchesLaserOff();
     void addToLibraryAndClear();
     void dataMatchGoesToLibrary();
+    void carbonMenu();
     void peaksOnlyInUsefulRange();
     void settingsFitWithoutScrolling();
     void simulatorReactionsListed();
@@ -423,6 +425,20 @@ void GuiTestMainWindow::dataMatchGoesToLibrary() {
     QVERIFY(g_recorder->matches.back().contains(QStringLiteral("match me")));
     QCOMPARE(m_win->page(QStringLiteral("Library"))->isVisible(), true);
     m_win->showArea(0);                         // the later tests work on the Measure area
+}
+
+// Tools > Carbon D/G analysis…: shows the Data area and its carbon window (no button on the Data page).
+void GuiTestMainWindow::carbonMenu() {
+    auto* host = dynamic_cast<DataPageHost*>(m_win->page(QStringLiteral("Data")));
+    QVERIFY(host);
+    auto* act = m_win->findChild<QAction*>(QStringLiteral("carbonAction"));
+    QVERIFY(act);
+    QCOMPARE(act->text(), QStringLiteral("Carbon D/G analysis…"));
+    act->trigger();
+    QVERIFY(host->isVisible());
+    QVERIFY(host->dataPage()->carbonWindow() && host->dataPage()->carbonWindow()->isVisible());
+    host->dataPage()->carbonWindow()->close();
+    m_win->showArea(0);
 }
 
 // Junk far beyond the detector range (6000-9000 cm-1, taller than the real bands) and below 100 cm-1

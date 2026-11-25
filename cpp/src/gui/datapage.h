@@ -25,15 +25,18 @@
 #include <QWidget>
 
 #include <functional>
+#include <optional>
 #include <utility>
 #include <vector>
 
+#include "core/carbon.h"
 #include "core/fileio.h"
 #include "core/peaks.h"
 #include "core/processing.h"
 #include "core/spectrum.h"
 
 class QCheckBox;
+class QDialog;
 class QComboBox;
 class QPushButton;
 class QLabel;
@@ -166,6 +169,16 @@ public:
     bool hasFit() const { return !m_fitItems.empty(); }
     int fitComponents() const { return int(m_fitPositions.size()); }
 
+    // ---- carbon D/G analysis (core/carbon.h) of the current spectrum as shown: draws the fit (components and,
+    // if resolved, the 2D band) like a fit without a fit window, fills the peak table with the bands and the fit
+    // line with I_D/I_G and L_a. On failure returns false and the message (also in the note line). Cleared
+    // like a fit (clearFit, redraw); a normal fit replaces it.
+    bool carbonAnalysis(carbon::Model model = carbon::Model::LorentzBwf, QString* error = nullptr);
+    const std::optional<carbon::Result>& carbonResult() const { return m_carbon; }
+    bool exportCarbon(const QString& path);      // the carbon results as CSV (spectrum, quantity, value, error, unit)
+    QDialog* carbonWindow() const { return m_carbonDlg; }         // nullptr until carbonDialog()
+    QTableWidget* carbonTable() const { return m_carbonTable; }   // the window's results table
+
     // ---- calculator: a·A + b·B + c (rows; bRow < 0: no B); adds the result, returns its row (-1: none)
     int calculate(int aRow, double a, int bRow, double b, double c);
 
@@ -192,6 +205,10 @@ public slots:
     void openFilesDialog();
     void calculatorDialog();
     void exportDialog(const QString& kind);      // "csv", "jdx", "table", "peaks", "onejdx", "onespc", "png", "svg"
+    // Carbon D/G window (menu Tools ▸ Carbon D/G analysis…, or the plot's context menu; no button on the page):
+    // the model choice, the results table (Copy, Save CSV…) and Analyse again; analyses the current spectrum
+    // when opened.
+    void carbonDialog();
     void redraw();
 
 signals:
@@ -300,6 +317,17 @@ private:
     Vec m_fitPositions;                          // start positions of the fit components
     Vec m_fitResultPositions;                    // fitted positions (same order)
     std::vector<peaks::FitPeak> m_fitPeaks;
+    QString m_fitShape;                          // profile (or "carbon <model>") of m_fitPeaks, for the export
+    void drawFit(const peaks::FitResult& res, int row);   // model and component curves where `row` is drawn
+    // carbon D/G
+    std::optional<carbon::Result> m_carbon;
+    QString m_carbonSpectrum;                    // name of the analysed spectrum
+    QDialog* m_carbonDlg = nullptr;
+    QComboBox* m_carbonModel = nullptr;
+    QTableWidget* m_carbonTable = nullptr;
+    QLabel* m_carbonNote = nullptr;
+    void fillCarbonTable();
+    void runCarbon();                            // the window's model on the current spectrum
 };
 
 }  // namespace lr::gui

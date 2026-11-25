@@ -231,7 +231,7 @@ private slots:
         QVERIFY(std::abs(r.error[0] - 2 * std::sqrt(0.01 + 0.01)) < 1e-12);
         QVERIFY(std::isnan(r.value[1]));
         // names, units
-        QCOMPARE(quantityNames().size(), 8);
+        QCOMPARE(quantityNames().size(), 12);
         QCOMPARE(quantityKey(Quantity::FitArea), QString("fit_area"));
         QVERIFY(needsFit(Quantity::FitFwhm) && !needsFit(Quantity::Fwhm));
         QCOMPARE(quantityUnit(Quantity::Centroid), QString("cm⁻¹"));

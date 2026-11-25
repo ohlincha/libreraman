@@ -106,6 +106,19 @@ Open spectra (CSV, TXT, SPC, JCAMP-DX, vendor files) and compare them: overlay, 
 - **Peaks:** peaks are picked automatically; click the plot to add one, right-click near one to remove it.
 - **Fitting:** zoom in on the bands of interest and press **Fit peaks in view**. The fitted window is shaded;
   drag it or its edges to fit another range. The table gives position, height, FWHM and area per band.
+- **Carbon D/G** (**Tools ▸ Carbon D/G analysis…**, or right-click the plot): D and G bands of carbons (anodes,
+  conductive carbons, chars) in the current spectrum as shown (baseline-corrected), fitted in 950–1800 cm⁻¹ with
+  a linear baseline. Models: *D Lorentzian + G Breit–Wigner–Fano* (D′ ~1620 cm⁻¹ is added when resolved) or
+  *Sadezky five-band* (G, D1, D2 = D′, D4 Lorentzian, D3 Gaussian; I_D/I_G is then D1/G). The window lists
+  I_D/I_G by height and by area, positions, FWHM, heights and areas with standard errors, the crystallite size
+  L_a and, if the spectrum reaches 2800 cm⁻¹, the 2D band (~2700 cm⁻¹) with I_2D/I_G. **Copy** (tab-separated, for
+  a spreadsheet) or **Save CSV…**; the fit is drawn on the plot and the peak table/peak CSV export list the bands.
+  - G (BWF): I(ω) = I₀(1 + 2(ω−ω₀)/(qΓ))² / (1 + (2(ω−ω₀)/Γ)²). The reported G position is the **maximum**
+    ω₀ + Γ/(2q), not ω₀ (also listed). q < 0 puts the tail on the low-shift side (Ferrari & Robertson); a large
+    |q| is a Lorentzian. The BWF area is taken above its asymptote I₀/q²: π I₀ Γ (1 − 1/q²)/2.
+  - L_a (nm) = 2.4·10⁻¹⁰ λ⁴ / (I_D/I_G) from the **area** ratio (Cançado et al. 2006), λ = 532 nm: 19.2 nm / (I_D/I_G).
+    Valid for nanocrystalline graphite (L_a ≳ 2 nm); for amorphous carbon it is meaningless.
+  - For a series, use the *Carbon* quantities in **Analysis ▸ Peak trends**.
 - **Band help:** tick *organic*, *inorganic* or both (mixed samples) to show the typical Raman ranges of
   functional groups, ions, minerals and oxides above the spectrum (about 290 entries; zoom in to see more, hover
   a bar for details). The peak table then lists possible assignments for every peak, most specific first, and
@@ -151,7 +164,9 @@ re-picked the same way the first time the library is opened for writing; edited 
 
 Multivariate analysis of a data set (e.g. a time series): **PCA**, **EFA**, **MCR-ALS** (with
 non-negativity, unimodality and closure constraints), **NNLS fit** against known spectra, and **Peak trends**
-(band areas vs time with kinetic fits). Computed spectra from Gaussian, ORCA, xtb and others can be loaded for
+(band areas vs time with kinetic fits). Peak trends also offer the carbon D/G quantities *Carbon I_D/I_G
+(area)*, *(height)*, *Carbon L_a* and *Carbon G position* (D Lorentzian + G BWF as in **Tools ▸ Carbon D/G
+analysis…**; the fit region is the band's range if it spans 1300–1620 cm⁻¹, else 950–1800 cm⁻¹). Computed spectra from Gaussian, ORCA, xtb and others can be loaded for
 comparison.
 
 ## Calibration

@@ -1,5 +1,7 @@
 #include "core/calibration.h"
 #include "mainwindow.h"
+#include "datapage.h"
+#include "datapagehost.h"
 
 #include "apiserver.h"
 #include "desktopentry.h"
@@ -340,6 +342,17 @@ void MainWindow::buildMenus() {
     m->addSeparator();
     m->addAction(QStringLiteral("Repair USB drivers…"), this, &MainWindow::repairDrivers);
 #endif
+
+    m = menuBar()->addMenu(QStringLiteral("&Tools"));
+    QAction* carbonAct = m->addAction(QStringLiteral("Carbon D/G analysis…"), this, [this] {
+        auto* host = qobject_cast<DataPageHost*>(page(QStringLiteral("Data")));
+        if (!host) return;
+        showArea(int(pageAreas().indexOf(QStringLiteral("Data"))));
+        host->dataPage()->carbonDialog();
+    });
+    carbonAct->setObjectName(QStringLiteral("carbonAction"));
+    carbonAct->setToolTip(QStringLiteral("D/G bands of carbons (current spectrum of the Data area): I_D/I_G, L_a "
+                                         "(532 nm), D′, 2D band"));
 
     m = menuBar()->addMenu(QStringLiteral("&Help"));
     QAction* qs = m->addAction(QStringLiteral("Quick start"), this, [this] { showHelp(HelpWindow::Doc::QuickStart); });

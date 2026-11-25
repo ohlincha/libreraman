@@ -2255,7 +2255,8 @@ void AnalysisPage::refreshBandTable() {
         q->setToolTip(QStringLiteral("<p>Height: maximum in the band. Area: integrated (trapezoid). Centroid: centre of "
                                      "the part above half maximum. FWHM: interpolated width at half maximum. Fitted: "
                                      "profile fit of the band (number of peaks from the mean spectrum), main peak; "
-                                     "with standard errors.</p>"));
+                                     "with standard errors. Carbon: D/G analysis of the whole spectrum (D Lorentzian + G BWF, as Data ▸ "
+                                     "Carbon D/G…; fit region = the band if it spans 1300–1620 cm⁻¹, else 950–1800 cm⁻¹).</p>"));
         const int id = tb.id;
         connect(q, &QComboBox::currentIndexChanged, this, [this, id](int qi) {
             if (m_updating) return;
@@ -2270,7 +2271,7 @@ void AnalysisPage::refreshBandTable() {
         auto* pr = new QComboBox;
         pr->addItems(peaks::profiles());
         pr->setCurrentIndex(std::max(0, pr->findText(tb.band.profile)));
-        pr->setEnabled(bandtrend::needsFit(tb.band.quantity));
+        pr->setEnabled(bandtrend::needsFit(tb.band.quantity) && !bandtrend::isCarbon(tb.band.quantity));
         connect(pr, &QComboBox::currentTextChanged, this, [this, id](const QString& shape) {
             if (m_updating) return;
             for (size_t k = 0; k < m_trendBands.size(); ++k)
@@ -2311,7 +2312,8 @@ void AnalysisPage::trendBandsChanged(bool redrawSpectra) {
         m_trendRef->setItemText(i, m_trendBands[size_t(i)].band.name);
     for (int r = 0; r < m_bandTable->rowCount() && r < int(m_trendBands.size()); ++r)
         if (auto* pr = qobject_cast<QComboBox*>(m_bandTable->cellWidget(r, ColProfile)))
-            pr->setEnabled(bandtrend::needsFit(m_trendBands[size_t(r)].band.quantity));
+            pr->setEnabled(bandtrend::needsFit(m_trendBands[size_t(r)].band.quantity) &&
+                          !bandtrend::isCarbon(m_trendBands[size_t(r)].band.quantity));
     m_updating = false;
     m_dirty[methodIndex(Method::Trends)] = true;
     if (redrawSpectra) drawTrendSpectra();

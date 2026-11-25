@@ -118,7 +118,7 @@ private slots:
                     "voigt (gaussian limit)");
         COMPARE_VEC(map([](double t) { return peaks::voigt(t, 1.0, 0.0, 0.0, 6.0); }), golden::vec(p["voigt_narrow_g"]), 1e-13, 1e-9,
                     "voigt (lorentzian limit)");
-        QCOMPARE(peaks::profiles(), (QStringList{"lorentz", "gauss", "pvoigt", "voigt"}));
+        QCOMPARE(peaks::profiles(), (QStringList{"lorentz", "gauss", "pvoigt", "voigt", "bwf"}));
         QCOMPARE(peaks::profileParams("gauss"), 3);
         QCOMPARE(peaks::profileParams("voigt"), 4);
         QVERIFY(golden::throws<Error>([&] { peaks::profileParams("cauchy"); }));

@@ -8,9 +8,13 @@
 #include "gui/theme.h"
 
 #include "core/fileio.h"
+#include "core/carbon.h"
 #include "core/peaks.h"
 
 #include <QApplication>
+#include <QClipboard>
+#include <QComboBox>
+#include <QDialog>
 #include <QDir>
 #include <QFileInfo>
 #include <QListWidget>
@@ -97,6 +101,7 @@ private slots:
     void peakTable();
     void fitting();
     void fitComponents();
+    void carbonDG();
     void peakPicking();
     void peakClicks();
     void addToLibrary();
@@ -518,6 +523,85 @@ void GuiTestDataPage::fitComponents() {
     for (QAction* a : menu.actions())
         if (a->text().startsWith(QStringLiteral("Remove peak"))) a->trigger();
     QCOMPARE(p.fitComponents(), 1);
+}
+
+void GuiTestDataPage::carbonDG() {
+    // a carbon spectrum: D Lorentzian, G BWF (I0 1000, ω0 1595, Γ 60, q -8), 2D band; no baseline correction
+    DataPage p;
+    plain(p);
+    p.resize(1000, 700);
+    DataSpectrum d;
+    d.name = QStringLiteral("hard carbon");
+    std::mt19937 rng(4);
+    std::normal_distribution<double> noise(0, 2);
+    for (double x = 150; x <= 3200; x += 1.5) {
+        d.x.push_back(x);
+        d.y.push_back(600 / (1 + std::pow((x - 1350) / 60, 2)) + lr::peaks::bwf(x, 1000, 1595, 60, -8) +
+                      300 / (1 + std::pow((x - 2700) / 40, 2)) + 20 + noise(rng));
+    }
+    p.addSpectrum(d);
+    // no permanent button on the page (menu Tools and the plot's context menu)
+    for (QPushButton* b : p.findChildren<QPushButton*>()) QVERIFY(!b->text().contains(QStringLiteral("Carbon")));
+    {
+        QMenu menu;
+        p.fillPlotMenu(menu, 1500);
+        bool found = false;
+        for (QAction* a : menu.actions()) found |= a->text() == QStringLiteral("Carbon D/G…");
+        QVERIFY(found);
+    }
+    QString err;
+    QVERIFY2(p.carbonAnalysis(lr::carbon::Model::LorentzBwf, &err), qPrintable(err));
+    QVERIFY(p.hasFit() && p.carbonResult());
+    const lr::carbon::Result& r = *p.carbonResult();
+    const double gArea = M_PI * 1000 * 60 * (1 - 1 / 64.0) / 2, dArea = M_PI * 600 * 120 / 2;
+    QVERIFY2(std::abs(r.idigArea / (dArea / gArea) - 1) < 0.03, qPrintable(QString::number(r.idigArea)));
+    QVERIFY2(p.fitText().startsWith(QStringLiteral("Carbon D/G (D Lorentzian + G Breit–Wigner–Fano): I_D/I_G = ")),
+             qPrintable(p.fitText()));
+    QVERIFY(p.fitText().contains(QStringLiteral("L_a = ")));
+    // peak table: D, G (BWF maximum), 2D
+    QCOMPARE(p.peakTable()->rowCount(), 3);
+    QVERIFY(std::abs(p.peakTable()->item(1, 0)->text().toDouble() - (1595 - 60 / 16.0)) < 0.5);
+    QCOMPARE(p.peakTable()->item(1, 6)->text(), QStringLiteral("G (carbon)"));
+    QVERIFY(std::abs(p.peakTable()->item(1, 5)->text().toDouble() + 8) < 1);       // q
+    // exports: the carbon results and the peak table
+    QTemporaryDir tmp;
+    const QString cpath = tmp.filePath("carbon.csv");
+    QVERIFY(p.exportCarbon(cpath));
+    QFile f(cpath);
+    QVERIFY(f.open(QIODevice::ReadOnly));
+    const QString csv = QString::fromUtf8(f.readAll());
+    QVERIFY(csv.startsWith(QStringLiteral("spectrum,quantity,value,error,unit\nhard carbon,model,")));
+    QVERIFY(csv.contains(QStringLiteral("I_D/I_G (area)")));
+    QVERIFY(p.exportPeaks(tmp.filePath("peaks.csv")));
+    QFile pf(tmp.filePath("peaks.csv"));
+    QVERIFY(pf.open(QIODevice::ReadOnly));
+    QVERIFY(QString::fromUtf8(pf.readAll()).contains(QStringLiteral("carbon lorentz-bwf")));
+    // the window: results table, model switch, Copy
+    p.carbonDialog();
+    QVERIFY(p.carbonWindow() && p.carbonWindow()->isVisible());
+    QVERIFY(p.carbonTable()->rowCount() > 10);
+    QCOMPARE(p.carbonTable()->item(0, 1)->text(), lr::carbon::modelName(lr::carbon::Model::LorentzBwf));
+    auto* model = p.carbonWindow()->findChild<QComboBox*>();
+    QVERIFY(model);
+    model->setCurrentIndex(1);                                          // Sadezky: reanalyses
+    QCOMPARE(p.carbonResult()->model, lr::carbon::Model::Sadezky);
+    QCOMPARE(p.carbonTable()->item(0, 1)->text(), lr::carbon::modelName(lr::carbon::Model::Sadezky));
+    for (QPushButton* b : p.carbonWindow()->findChildren<QPushButton*>())
+        if (b->text() == QStringLiteral("Copy")) b->click();
+    QVERIFY(QApplication::clipboard()->text().startsWith(QStringLiteral("hard carbon\nquantity\tvalue")));
+    p.carbonWindow()->close();
+    // a normal fit replaces it; clearing removes it
+    QVERIFY(p.fitRange(1300, 1400));
+    QVERIFY(!p.carbonResult());
+    QVERIFY(p.carbonAnalysis());
+    p.clearFit();
+    QVERIFY(!p.carbonResult() && !p.hasFit());
+    // a spectrum without the D/G region: the reason in the note line
+    p.addSpectrum(synth("low", {{{1000, 1500, 10}}}, 0, 5, 150, 1200));
+    p.setCurrentRow(p.count() - 1);
+    QVERIFY(!p.carbonAnalysis(lr::carbon::Model::LorentzBwf, &err));
+    QVERIFY2(err.contains(QStringLiteral("1300–1620")), qPrintable(err));
+    QCOMPARE(p.note(), err);
 }
 
 void GuiTestDataPage::peakPicking() {

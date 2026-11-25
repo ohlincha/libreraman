@@ -88,6 +88,17 @@ double profileGrad(int kind, double x, const double* p, double* g) {
         }
         return eta * l + (1 - eta) * gs;
     }
+    case 4: {                                                 // bwf: a (1 + s u)² / (1 + u²), s = 1/q
+        const double a = p[0], w = p[2], s = p[3], u = 2 * (x - p[1]) / w, n = 1 + s * u, d = 1 + u * u;
+        if (g) {
+            const double dfdu = 2 * a * n * (s - u) / (d * d);
+            g[0] = n * n / d;
+            g[1] = dfdu * (-2 / w);
+            g[2] = dfdu * (-u / w);
+            g[3] = 2 * a * n * u / d;
+        }
+        return a * n * n / d;
+    }
     default: {                                                // voigt: a * Re w(z) / Re w(z0)
         const double a = p[0], wg = std::max(p[2], 1e-9), wl = std::max(p[3], 1e-9);
         const double sg = wg / (2 * std::sqrt(2 * kLn2)), gl = wl / 2, s = sg * std::sqrt(2.0);
@@ -134,14 +145,14 @@ struct Model {
     const Vec& x;
     const Vec& y;
     double xc;
-    int kind, npar, npk;
+    std::vector<int> kinds, offsets;                          // per component: profile, first parameter
 
     double value(const Eigen::VectorXd& p, double xx, double* grad) const {
         double v = p(0) + p(1) * (xx - xc);
         if (grad) { grad[0] = 1.0; grad[1] = xx - xc; }
-        for (int k = 0; k < npk; ++k) {
-            const int o = 2 + k * npar;
-            v += profileGrad(kind, xx, p.data() + o, grad ? grad + o : nullptr);
+        for (size_t k = 0; k < kinds.size(); ++k) {
+            const int o = offsets[k];
+            v += profileGrad(kinds[k], xx, p.data() + o, grad ? grad + o : nullptr);
         }
         return v;
     }
@@ -369,9 +380,13 @@ double voigt(double x, double a, double x0, double wg, double wl) {
     const double p[4] = {a, x0, wg, wl};
     return profileGrad(3, x, p, nullptr);
 }
+double bwf(double x, double i0, double x0, double w, double q) {
+    const double p[4] = {i0, x0, w, std::isfinite(q) ? 1.0 / q : 0.0};
+    return profileGrad(4, x, p, nullptr);
+}
 
 const QStringList& profiles() {
-    static const QStringList p = {"lorentz", "gauss", "pvoigt", "voigt"};
+    static const QStringList p = {"lorentz", "gauss", "pvoigt", "voigt", "bwf"};
     return p;
 }
 
@@ -385,6 +400,7 @@ std::optional<double> area(const QString& shape, const double* p) {
     case 0: return M_PI * p[0] * p[2] / 2;
     case 1: return g;
     case 2: return p[3] * M_PI * p[0] * p[2] / 2 + (1 - p[3]) * g;
+    case 4: return M_PI * p[0] * p[2] * (1 - p[3] * p[3]) / 2;          // above the asymptote I0/q²
     default: return std::nullopt;
     }
 }
@@ -403,45 +419,51 @@ QString FitResult::table() const {
 
 namespace {
 
-FitResult fitImpl(const Vec& x, const Vec& y, std::pair<double, double> region, const Vec& pos,
-                  const std::vector<std::optional<double>>& fwhm, const QString& shape, bool fixPositions) {
-    if (pos.empty()) throw Error("no peaks to fit in this region");
-    const int kind = kindOf(shape), npar = profileParams(shape), npk = int(pos.size());
-    Vec xr, yr;
+struct Region {                                               // the data inside a fit region
+    Vec x, y;
+    double xc = 0, step = 0, ymin = 0;
+};
+
+Region regionData(const Vec& x, const Vec& y, std::pair<double, double> region) {
+    Region r;
     for (size_t i = 0; i < x.size(); ++i)
-        if (x[i] >= region.first && x[i] <= region.second) { xr.push_back(x[i]); yr.push_back(y[i]); }
-    if (xr.empty()) throw Error("no data in this region");
-    double xc = 0.0;
-    for (double v : xr) xc += v;
-    xc /= double(xr.size());
-    const double step = medianStep(xr);
-    const double ymin = *std::min_element(yr.begin(), yr.end());
-    const double inf = std::numeric_limits<double>::infinity();
-    std::vector<double> p0 = {ymin, 0.0}, lo = {-inf, -inf}, hi = {inf, inf};
-    for (int k = 0; k < npk; ++k) {
-        const double x0 = pos[size_t(k)];
-        size_t i = 0;
-        for (size_t j = 1; j < xr.size(); ++j)
-            if (std::abs(xr[j] - x0) < std::abs(xr[i] - x0)) i = j;
-        const double h = std::max(yr[i] - ymin, 1e-6);
-        const double w = std::max(fwhm[size_t(k)].value_or(10.0), 3 * step);
-        const double tol = fixPositions ? 1e-6 : std::max(3 * w, 10 * step);
-        if (kind < 2) {
-            p0.insert(p0.end(), {h, x0, w});
-            lo.insert(lo.end(), {0, x0 - tol, step});
-            hi.insert(hi.end(), {inf, x0 + tol, 20 * w + 50});
-        } else if (kind == 2) {
-            p0.insert(p0.end(), {h, x0, w, 0.5});
-            lo.insert(lo.end(), {0, x0 - tol, step, 0});
-            hi.insert(hi.end(), {inf, x0 + tol, 20 * w + 50, 1});
-        } else {
-            p0.insert(p0.end(), {h, x0, w / 2, w / 2});
-            lo.insert(lo.end(), {0, x0 - tol, 1e-3, 1e-3});
-            hi.insert(hi.end(), {inf, x0 + tol, 20 * w + 50, 20 * w + 50});
-        }
+        if (x[i] >= region.first && x[i] <= region.second) { r.x.push_back(x[i]); r.y.push_back(y[i]); }
+    if (r.x.empty()) throw Error("no data in this region");
+    for (double v : r.x) r.xc += v;
+    r.xc /= double(r.x.size());
+    r.step = medianStep(r.x);
+    r.ymin = *std::min_element(r.y.begin(), r.y.end());
+    return r;
+}
+
+double startHeight(const Region& r, double x0) {
+    size_t i = 0;
+    for (size_t j = 1; j < r.x.size(); ++j)
+        if (std::abs(r.x[j] - x0) < std::abs(r.x[i] - x0)) i = j;
+    return std::max(r.y[i] - r.ymin, 1e-6);
+}
+
+// Standard error of a function of one component's parameters with gradient g (cov block from offset o).
+double propagate(const Eigen::MatrixXd& cov, int o, const double* g, int n) {
+    double v = 0;
+    for (int a = 0; a < n; ++a)
+        for (int b = 0; b < n; ++b) v += g[a] * g[b] * cov(o + a, o + b);
+    return std::sqrt(std::max(v, 0.0));
+}
+
+// Bounded least squares from p0 within [lo, hi] (baseline offset and slope first, then the components).
+FitResult solve(const Region& rg, const std::vector<int>& kinds, const QStringList& shapes, std::vector<double> p0,
+                std::vector<double> lo, std::vector<double> hi, const QString& label) {
+    const Vec& xr = rg.x;
+    const Vec& yr = rg.y;
+    std::vector<int> offsets;
+    int o = 2;
+    for (int k : kinds) {
+        offsets.push_back(o);
+        o += k < 2 ? 3 : 4;
     }
     const Eigen::Index m = Eigen::Index(p0.size());
-    const Model model{xr, yr, xc, kind, npar, npk};
+    const Model model{xr, yr, rg.xc, kinds, offsets};
     const Eigen::VectorXd p = boundedLeastSquares(model, Eigen::Map<Eigen::VectorXd>(p0.data(), m),
                                                   Eigen::Map<Eigen::VectorXd>(lo.data(), m),
                                                   Eigen::Map<Eigen::VectorXd>(hi.data(), m));
@@ -462,18 +484,19 @@ FitResult fitImpl(const Vec& x, const Vec& y, std::pair<double, double> region, 
     for (Eigen::Index k = 0; k < m; ++k) err(k) = std::sqrt(std::max(cov(k, k), 0.0));
 
     FitResult res;
-    res.shape = shape;
+    res.shape = label;
     res.baseline = {p(0), p(1)};
     res.x = xr;
     res.y = yr;
-    for (int k = 0; k < npk; ++k) {
-        const int o = 2 + k * npar;
-        const double* q = p.data() + o;
-        const double* e = err.data() + o;
+    for (size_t k = 0; k < kinds.size(); ++k) {
+        const int kind = kinds[k], off = offsets[k];
+        const double* q = p.data() + off;
+        const double* e = err.data() + off;
         Vec comp(xr.size());
         for (size_t i = 0; i < xr.size(); ++i) comp[i] = profileGrad(kind, xr[i], q, nullptr);
         res.components.push_back(comp);
         FitPeak fp;
+        fp.shape = shapes[int(k)];
         fp.position = q[1];
         fp.positionErr = e[1];
         fp.height = q[0];
@@ -490,10 +513,27 @@ FitResult fitImpl(const Vec& x, const Vec& y, std::pair<double, double> region, 
                 prev = cur;
             }
             fp.area = a;
+        } else if (kind == 4) {                               // bwf: report the maximum (see peaks.h)
+            const double a = q[0], w = q[2], s = q[3];
+            fp.position = q[1] + w * s / 2;
+            const double gp[4] = {0, 1, s / 2, w / 2};
+            fp.positionErr = propagate(cov, off, gp, 4);
+            fp.height = a * (1 + s * s);
+            const double gh[4] = {1 + s * s, 0, 0, 2 * a * s};
+            fp.heightErr = propagate(cov, off, gh, 4);
+            fp.fwhm = w * (1 + s * s) / (1 - s * s);
+            const double dfs = w * 4 * s / ((1 - s * s) * (1 - s * s));
+            const double gw[4] = {0, 0, (1 + s * s) / (1 - s * s), dfs};
+            fp.fwhmErr = propagate(cov, off, gw, 4);
+            fp.area = *area(QStringLiteral("bwf"), q);
+            fp.center = q[1];
+            fp.centerErr = e[1];
+            fp.q = s != 0 ? 1 / s : -std::numeric_limits<double>::infinity();
+            fp.qErr = s != 0 ? e[3] / (s * s) : std::numeric_limits<double>::infinity();
         } else {
             fp.fwhm = q[2];
             fp.fwhmErr = e[2];
-            fp.area = *area(shape, q);
+            fp.area = *area(fp.shape, q);
         }
         if (kind == 2) fp.eta = q[3];
         res.peaks.push_back(fp);
@@ -513,7 +553,84 @@ FitResult fitImpl(const Vec& x, const Vec& y, std::pair<double, double> region, 
     return res;
 }
 
+FitResult fitImpl(const Vec& x, const Vec& y, std::pair<double, double> region, const Vec& pos,
+                  const std::vector<std::optional<double>>& fwhm, const QString& shape, bool fixPositions) {
+    if (pos.empty()) throw Error("no peaks to fit in this region");
+    const int kind = kindOf(shape), npk = int(pos.size());
+    const Region rg = regionData(x, y, region);
+    const double step = rg.step, ymin = rg.ymin;
+    const double inf = std::numeric_limits<double>::infinity();
+    std::vector<double> p0 = {ymin, 0.0}, lo = {-inf, -inf}, hi = {inf, inf};
+    for (int k = 0; k < npk; ++k) {
+        const double x0 = pos[size_t(k)];
+        const double h = startHeight(rg, x0);
+        const double w = std::max(fwhm[size_t(k)].value_or(10.0), 3 * step);
+        const double tol = fixPositions ? 1e-6 : std::max(3 * w, 10 * step);
+        if (kind < 2) {
+            p0.insert(p0.end(), {h, x0, w});
+            lo.insert(lo.end(), {0, x0 - tol, step});
+            hi.insert(hi.end(), {inf, x0 + tol, 20 * w + 50});
+        } else if (kind == 2) {
+            p0.insert(p0.end(), {h, x0, w, 0.5});
+            lo.insert(lo.end(), {0, x0 - tol, step, 0});
+            hi.insert(hi.end(), {inf, x0 + tol, 20 * w + 50, 1});
+        } else if (kind == 4) {
+            p0.insert(p0.end(), {h, x0, w, -0.1});
+            lo.insert(lo.end(), {0, x0 - tol, step, -0.5});
+            hi.insert(hi.end(), {inf, x0 + tol, 20 * w + 50, 0.5});
+        } else {
+            p0.insert(p0.end(), {h, x0, w / 2, w / 2});
+            lo.insert(lo.end(), {0, x0 - tol, 1e-3, 1e-3});
+            hi.insert(hi.end(), {inf, x0 + tol, 20 * w + 50, 20 * w + 50});
+        }
+    }
+    QStringList shapes;
+    for (int k = 0; k < npk; ++k) shapes << shape;
+    return solve(rg, std::vector<int>(size_t(npk), kind), shapes, p0, lo, hi, shape);
+}
+
 }  // namespace
+
+FitResult fitComponents(const Vec& x, const Vec& y, std::pair<double, double> region,
+                        const std::vector<Component>& components) {
+    if (components.empty()) throw Error("no peaks to fit in this region");
+    const Region rg = regionData(x, y, region);
+    const double inf = std::numeric_limits<double>::infinity();
+    std::vector<double> p0 = {rg.ymin, 0.0}, lo = {-inf, -inf}, hi = {inf, inf};
+    std::vector<int> kinds;
+    QStringList shapes;
+    auto orElse = [](double v, double d) { return std::isnan(v) ? d : v; };
+    for (const Component& c : components) {
+        const int kind = kindOf(c.shape);
+        kinds.push_back(kind);
+        shapes << c.shape;
+        const double w = std::max(c.fwhm, 3 * rg.step);
+        const double tol = std::max(3 * w, 10 * rg.step);
+        const double plo = orElse(c.posLo, c.position - tol), phi = orElse(c.posHi, c.position + tol);
+        const double wlo = orElse(c.fwhmLo, rg.step), whi = orElse(c.fwhmHi, 20 * w + 50);
+        const double h = std::isnan(c.height) ? startHeight(rg, c.position) : c.height;
+        const double x0 = std::clamp(c.position, plo, phi);
+        if (kind == 3) {
+            p0.insert(p0.end(), {h, x0, w / 2, w / 2});
+            lo.insert(lo.end(), {0, plo, std::max(1e-3, wlo / 2), std::max(1e-3, wlo / 2)});
+            hi.insert(hi.end(), {inf, phi, whi, whi});
+            continue;
+        }
+        p0.insert(p0.end(), {h, x0, std::clamp(w, wlo, whi)});
+        lo.insert(lo.end(), {0, plo, wlo});
+        hi.insert(hi.end(), {inf, phi, whi});
+        if (kind == 2) {
+            p0.push_back(0.5);
+            lo.push_back(0);
+            hi.push_back(1);
+        } else if (kind == 4) {
+            p0.push_back(std::clamp(c.invQ, -0.5, 0.5));
+            lo.push_back(-0.5);
+            hi.push_back(0.5);
+        }
+    }
+    return solve(rg, kinds, shapes, p0, lo, hi, shapes.join('+'));
+}
 
 FitResult fit(const Vec& x, const Vec& y, std::pair<double, double> region,
               const std::optional<std::vector<Peak>>& guesses, const QString& shape, bool fixPositions) {

@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "carbon.h"
+
 namespace lr::bandtrend {
 
 namespace {
@@ -32,20 +34,28 @@ const QStringList& quantityNames() {
     static const QStringList n{QStringLiteral("Height"),         QStringLiteral("Area"),
                                QStringLiteral("Centroid"),       QStringLiteral("FWHM"),
                                QStringLiteral("Fitted area"),    QStringLiteral("Fitted height"),
-                               QStringLiteral("Fitted position"), QStringLiteral("Fitted FWHM")};
+                               QStringLiteral("Fitted position"), QStringLiteral("Fitted FWHM"),
+                               QStringLiteral("Carbon I_D/I_G (area)"), QStringLiteral("Carbon I_D/I_G (height)"),
+                               QStringLiteral("Carbon L_a"),     QStringLiteral("Carbon G position")};
     return n;
 }
 
 QString quantityKey(Quantity q) {
-    static const char* k[] = {"height", "area", "centroid", "fwhm", "fit_area", "fit_height", "fit_position", "fit_fwhm"};
+    static const char* k[] = {"height", "area", "centroid", "fwhm", "fit_area", "fit_height", "fit_position", "fit_fwhm",
+                             "carbon_id_ig_area", "carbon_id_ig_height", "carbon_la", "carbon_g_position"};
     return QString::fromLatin1(k[int(q)]);
 }
 
 bool needsFit(Quantity q) { return int(q) >= int(Quantity::FitArea); }
 
-bool isPosition(Quantity q) { return q == Quantity::Centroid || q == Quantity::FitPosition; }
+bool isPosition(Quantity q) {
+    return q == Quantity::Centroid || q == Quantity::FitPosition || q == Quantity::CarbonGPosition;
+}
+
+bool isCarbon(Quantity q) { return int(q) >= int(Quantity::CarbonIdIgArea); }
 
 QString quantityUnit(Quantity q) {
+    if (q == Quantity::CarbonLa) return QStringLiteral("nm");
     return isPosition(q) || q == Quantity::Fwhm || q == Quantity::FitFwhm ? QStringLiteral("cm⁻¹") : QString();
 }
 
@@ -59,6 +69,10 @@ double Measure::value(Quantity q) const {
     case Quantity::FitHeight: return fitHeight;
     case Quantity::FitPosition: return fitPosition;
     case Quantity::FitFwhm: return fitFwhm;
+    case Quantity::CarbonIdIgArea: return idigArea;
+    case Quantity::CarbonIdIgHeight: return idigHeight;
+    case Quantity::CarbonLa: return la;
+    case Quantity::CarbonGPosition: return gPosition;
     }
     return kNaN;
 }
@@ -69,6 +83,10 @@ double Measure::error(Quantity q) const {
     case Quantity::FitHeight: return fitHeightErr;
     case Quantity::FitPosition: return fitPositionErr;
     case Quantity::FitFwhm: return fitFwhmErr;
+    case Quantity::CarbonIdIgArea: return idigAreaErr;
+    case Quantity::CarbonIdIgHeight: return idigHeightErr;
+    case Quantity::CarbonLa: return laErr;
+    case Quantity::CarbonGPosition: return gPositionErr;
     default: return kNaN;
     }
 }
@@ -151,6 +169,28 @@ Measure measure(const Vec& x, const Vec& y, const Band& band, bool fit) {
                 if (finite(left) && finite(right)) m.fwhm = right - left;
             }
         }
+    }
+    if (fit && isCarbon(band.quantity)) {
+        m.fitted = true;
+        try {
+            carbon::Options o;
+            const double lo = std::min(band.lo, band.hi), hi = std::max(band.lo, band.hi);
+            if (lo <= 1300 && hi >= 1620) o.lo = lo, o.hi = hi;
+            o.secondOrder = false;
+            const Vec xs(x.begin(), x.begin() + std::ptrdiff_t(np)), ys(y.begin(), y.begin() + std::ptrdiff_t(np));
+            const carbon::Result c = carbon::analyse(xs, ys, o);
+            m.idigArea = c.idigArea;
+            m.idigAreaErr = c.idigAreaErr;
+            m.idigHeight = c.idigHeight;
+            m.idigHeightErr = c.idigHeightErr;
+            m.la = c.la;
+            m.laErr = c.laErr;
+            m.gPosition = c.value(QStringLiteral("g_position"));
+            m.gPositionErr = c.error(QStringLiteral("g_position"));
+            m.fitR2 = c.fit.r2;
+        } catch (const std::exception&) {              // D/G not covered, fit failed: NaN
+        }
+        return m;
     }
     if (fit && n >= 5) {
         m.fitted = true;

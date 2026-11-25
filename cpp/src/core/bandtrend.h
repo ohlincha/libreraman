@@ -53,13 +53,20 @@ enum class Quantity {
     FitHeight,       // fitted height of the main peak (with error)
     FitPosition,     // fitted position of the main peak (with error)
     FitFwhm,         // fitted FWHM of the main peak (with error)
+    // carbon D/G analysis (carbon.h, D Lorentzian + G BWF) of the spectrum, with errors; the fit region is the
+    // band's region if it holds 1300-1620 cm⁻¹, else 950-1800 cm⁻¹
+    CarbonIdIgArea,  // I_D/I_G by area
+    CarbonIdIgHeight,  // I_D/I_G by height
+    CarbonLa,        // crystallite size L_a (nm, Cançado, from the area ratio)
+    CarbonGPosition, // G position (BWF maximum)
 };
 // Display names ("Height", "Area", ..., "Fitted area", ...) in enum order, and short keys for files/APIs.
 const QStringList& quantityNames();
 QString quantityKey(Quantity q);                       // "height", "area", "centroid", "fwhm", "fit_area", ...
 bool needsFit(Quantity q);
 bool isPosition(Quantity q);                           // Centroid, FitPosition (unit cm⁻¹, not ratio-able)
-QString quantityUnit(Quantity q);                      // "cm⁻¹" for positions and widths, "" otherwise
+QString quantityUnit(Quantity q);                      // "cm⁻¹" for positions and widths, "nm" for L_a, "" otherwise
+bool isCarbon(Quantity q);                             // a carbon D/G quantity (not of the band's main peak)
 
 struct Band {
     QString name;                  // e.g. "1052 cm⁻¹"
@@ -77,11 +84,14 @@ struct Measure {
     bool fitted = false;                               // fit attempted
     double fitArea = kNaN, fitAreaErr = kNaN, fitHeight = kNaN, fitHeightErr = kNaN;
     double fitPosition = kNaN, fitPositionErr = kNaN, fitFwhm = kNaN, fitFwhmErr = kNaN, fitR2 = kNaN;
+    double idigArea = kNaN, idigAreaErr = kNaN, idigHeight = kNaN, idigHeightErr = kNaN;   // carbon (fit)
+    double la = kNaN, laErr = kNaN, gPosition = kNaN, gPositionErr = kNaN;
     double value(Quantity q) const;
     double error(Quantity q) const;                    // NaN for the quantities without an error estimate
 };
 
-// One band in one spectrum (x ascending). fit: also the fitted quantities (slower).
+// One band in one spectrum (x ascending). fit: also the fitted quantities (slower); for a carbon quantity the
+// carbon D/G analysis instead of the band's profile fit.
 Measure measure(const Vec& x, const Vec& y, const Band& band, bool fit);
 
 // Start values for fitting `band` in every spectrum: peaks picked on `y` (normally the mean spectrum) in the
