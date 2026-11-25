@@ -1,6 +1,6 @@
 # LibreRamen — quick start
 
-For students and technicians measuring on the Anton Paar Cora 5000 with LibreRamen (version 0.3.7). It covers
+For students and technicians measuring on the Anton Paar Cora 5000 with LibreRamen (version 0.3.8). It covers
 the everyday steps; everything else is in the [full manual](MANUAL.md). In the program both are under **Help**.
 
 ## 1. Install
