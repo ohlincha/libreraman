@@ -45,6 +45,10 @@ struct SimData {
 const SimData& simulatorData();               // loaded once from the Qt resource; throws Error
 // Samples whose spectra change with time (in addition to the recorded ones in simulatorData()).
 QStringList simulatorReactionNames();
+// Demo sample that changes under the laser (issues #9, #10): ethanol whose bands move down (0.5 cm-1 per second
+// of laser light, at most 20 cm-1) and fade (e^(-t/30 s)) while a broad background grows (1 % of the strongest
+// band per second, at most 2x). t = laser time on this sample since it was (re)chosen.
+QString simulatorDamageName();
 
 class SimCora : public Instrument, public SimControls {
 public:
@@ -98,6 +102,7 @@ private:
     double reactionWall0_ = 0.0;              // monotonic seconds when the reaction sample was chosen
     double reactionSimT_ = 0.0;               // simulated seconds accumulated before the last speed change
     Vec sampleSpectrum(const QString& name) const;   // call with m_ held
+    Vec damagedSpectrum(double laserTime) const;     // simulatorDamageName() after this laser time (s)
     std::mt19937_64 rng_;
     std::recursive_mutex lock_;               // measurements
 };

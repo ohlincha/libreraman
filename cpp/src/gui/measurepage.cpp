@@ -1,4 +1,5 @@
 #include "measurepage.h"
+#include "acquiredialogs.h"
 
 #include "focuswindow.h"
 
@@ -6,6 +7,7 @@
 #include "statusstrip.h"
 #include "theme.h"
 
+#include "core/acqcheck.h"
 #include "core/peaks.h"
 #include "core/processing.h"
 #include "core/pyformat.h"
@@ -262,6 +264,13 @@ MeasurePage::MeasurePage(Controller* ctl, QWidget* parent) : Page(parent), m_ctl
     f->addRow(QStringLiteral("Dark level"), m_lblDark);
     f->addRow(QStringLiteral("Saturation"), m_lblSat);
     f->addRow(QStringLiteral("Fluorescence"), m_lblFluor);
+    // laser-damage check (#9): runs on every multi-scan spectrum; the row only appears when it fires
+    m_lblDamage = new QLabel;
+    m_lblDamage->setWordWrap(true);
+    m_lblDamage->setObjectName(QStringLiteral("damageNote"));
+    f->addRow(QStringLiteral("Laser"), m_lblDamage);
+    f->setRowVisible(m_lblDamage, false);
+    m_detForm = f;
     grid->addWidget(db, 2, 0);
     auto* lb = box(QStringLiteral("Last spectrum"));
     f = form(lb);
@@ -665,6 +674,32 @@ QWidget* MeasurePage::buildSettingsPanel() {
 }
 
 // ============================================================================================ settings
+bool MeasurePage::damageNoteVisible() const { return m_detForm->isRowVisible(m_lblDamage); }
+
+bool MeasurePage::prepareMeasurement() {
+    if (!confirmSampleName())
+        return false;
+    if (m_folderAuto)                                  // a new folder each day while the program runs
+        m_folder = defaultFolder(), showFolder();
+    return true;
+}
+
+void MeasurePage::openSnrDialog() {
+    if (!m_snrDialog)
+        m_snrDialog = new SnrDialog(m_ctl, this, this);
+    m_snrDialog->show();
+    m_snrDialog->raise();
+    m_snrDialog->activateWindow();
+}
+
+void MeasurePage::openRepeatDialog() {
+    if (!m_repeatDialog)
+        m_repeatDialog = new RepeatDialog(m_ctl, this, this);
+    m_repeatDialog->show();
+    m_repeatDialog->raise();
+    m_repeatDialog->activateWindow();
+}
+
 void MeasurePage::openFocus() {
     if (!m_focus)
         m_focus = new FocusWindow(m_ctl, [this] { return m_folder; }, [this] { return channel(); }, this);
@@ -955,6 +990,17 @@ void MeasurePage::addSpectrum(const lr::Spectrum& sp) {
                                                      "fades with longer laser exposure (photobleaching).</p>")
                                     : QString());
     }
+    {
+        const bool dmg = sp.metaValue(QStringLiteral("laser_damage")) == QLatin1String("suspected");
+        m_lblDamage->setText(dmg ? lr::acq::damageAdvice() : QString());
+        m_lblDamage->setToolTip(dmg ? QStringLiteral("<p>The first and the last scans of this spectrum differ: %1. "
+                                                     "The sample is probably heating or changing under the laser, so "
+                                                     "the averaged spectrum may not be the original sample. The file "
+                                                     "is marked (laser_damage: suspected).</p>")
+                                          .arg(sp.metaValue(QStringLiteral("laser_damage_check")).toHtmlEscaped())
+                                    : QString());
+        m_detForm->setRowVisible(m_lblDamage, dmg);
+    }
     m_lblTime->setText(sp.t.toString(QStringLiteral("HH:mm:ss")));
     m_lblSet->setText(QStringLiteral("%1 × %2 s · %3 nm").arg(sp.averages).arg(lr::py::g(sp.exposure_s)).arg(sp.channel));
     scheduleRedraw();
@@ -1089,6 +1135,7 @@ void MeasurePage::clearAll() {
     for (QLabel* l : {m_lblN, m_lblNext, m_lblElapsed, m_lblEnd, m_lblDark, m_lblSat, m_lblFluor, m_lblTime, m_lblSet,
                       m_lblPeaks, m_fillPct})
         l->setText(QStringLiteral("—"));
+    m_detForm->setRowVisible(m_lblDamage, false);
     m_bar->setValue(0);
     m_fill->setValue(0);
     m_plot->setXRange(150, 3500);

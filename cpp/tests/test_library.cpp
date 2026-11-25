@@ -812,7 +812,8 @@ private slots:
         QVERIFY(m.size() > 20);
         auto sim = simulator();
         for (const QString& sample : sim->sampleNames()) {
-            if (sample.startsWith(QStringLiteral("reaction:"))) continue;     // mixtures, not library entries
+            if (sample.startsWith(QStringLiteral("reaction:")) || sample.startsWith(QStringLiteral("demo:")))
+                continue;                                                    // mixtures, not library entries
             // the stored spectrum itself
             const auto [x, y] = simulatorSpectrum(sample);
             auto hits = m.search(x, y, 5);

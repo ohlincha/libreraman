@@ -26,6 +26,7 @@
 #include <thread>
 #include <vector>
 
+#include "core/acqcheck.h"
 #include "core/instrument.h"
 #include "core/series.h"
 #include "core/spectrum.h"
@@ -55,6 +56,7 @@ struct MeasureSettings {                      // Python MeasurePage.settings() f
     QString background = QStringLiteral("each");   // "each" | "none"
     double prebleach_s = 0.0;
     int channel = 0;                          // 532 / 1064; 0 = keep the current channel
+    lr::Meta meta;                            // extra metadata for the saved spectrum (e.g. repeat k/N, #11)
 };
 
 class Controller : public QObject {
@@ -95,7 +97,16 @@ public slots:
     // shutdown: the instrument switches off, Instrument > Shut down instrument). Refused while busy.
     void disconnectInstrument(bool powerDown = false);
     // origin: who asked ("GUI", "API (cli)", ...); logged with the settings (spec: every action with origin).
+    // The saved spectrum carries the laser-damage check of its frames (core/acqcheck.h, #9: meta "laser_damage",
+    // "laser_damage_check"; with 2 or more scans) and its S/N (meta "snr").
     bool measureOnce(const lr::gui::MeasureSettings& s, const QString& origin = QStringLiteral("GUI"));
+    // Acquire until a target S/N (#10): background once (laser off, up to 8 frames), then frames of
+    // s.exposure_s with the laser on, accumulated until the target S/N, the time limit, or (stopOnDamage) the
+    // damage check fires; s.averages is ignored. Progress: snrProgress() (at most every 200 ms and when
+    // finished). The mean is saved and delivered like a single spectrum (meta "mode", "snr", "snr_target",
+    // "stop_reason", "laser_damage"); also when Stop ends it early (with the frames so far).
+    bool measureUntilSnr(const lr::gui::MeasureSettings& s, const lr::acq::SnrTarget& target,
+                         const QString& origin = QStringLiteral("GUI"));
     // One spectrum for the Calibration page: like measureOnce (channel, ARM check -> error(), Stop) but not
     // saved and not passed to the pages; delivered by acquired(sp, tag) instead of spectrum().
     bool acquire(const lr::gui::MeasureSettings& s, const QString& tag);
@@ -130,6 +141,7 @@ signals:
     void spectrum(const lr::Spectrum& sp);
     void acquired(const lr::Spectrum& sp, const QString& tag);   // result of acquire()
     void seriesProgress(const lr::SeriesProgress& p);
+    void snrProgress(const lr::acq::SnrProgress& p);
     void busyChanged(bool busy);
     void error(const QString& msg);           // user-readable
 
@@ -142,6 +154,7 @@ private:
     void ping(bool laserOn);
     void selectChannel(int ch);               // worker thread
     InstrumentInfo makeInfo(const QString& serial) const;
+    void saveAndDeliver(lr::Spectrum& sp, const MeasureSettings& s);   // worker thread
     // worker thread: queue a series result for the GUI thread (see the top of this file)
     void postSpectrum(const lr::Spectrum& sp);
     void postProgress(const lr::SeriesProgress& p);
@@ -177,6 +190,7 @@ private:
 
 Q_DECLARE_METATYPE(lr::Spectrum)
 Q_DECLARE_METATYPE(lr::SeriesProgress)
+Q_DECLARE_METATYPE(lr::acq::SnrProgress)
 Q_DECLARE_METATYPE(lr::SeriesSettings)
 Q_DECLARE_METATYPE(lr::gui::InstrumentInfo)
 Q_DECLARE_METATYPE(lr::gui::MeasureSettings)

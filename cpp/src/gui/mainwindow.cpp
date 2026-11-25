@@ -250,6 +250,7 @@ QWidget* MainWindow::buildSimulatorBar() {
     for (const QString& n : names)
         if (!ordered.contains(n))
             ordered << n;
+    ordered << lr::simulatorDamageName();          // changes under the laser: damage check, until S/N (#9, #10)
     ordered << lr::simulatorReactionNames();       // spectra change with time: for trying time series
     m_simSample->addItems(ordered);
     connect(m_simSample, &QComboBox::currentTextChanged, m_ctl, &Controller::simSetSample);
@@ -291,6 +292,16 @@ void MainWindow::buildMenus() {
         });
         m->insertSeparator(a);
     }
+
+    // niche acquisition modes in their own windows (the Measure page stays as it is)
+    m = menuBar()->addMenu(QStringLiteral("&Measure"));
+    QAction* snr = m->addAction(QStringLiteral("Acquire until S/N…"), m_measure, &MeasurePage::openSnrDialog);
+    snr->setObjectName(QStringLiteral("acquireUntilSnr"));
+    snr->setToolTip(QStringLiteral("Add up short frames until a band reaches a target signal-to-noise ratio"));
+    QAction* rep = m->addAction(QStringLiteral("Repeated measurements…"), m_measure, &MeasurePage::openRepeatDialog);
+    rep->setObjectName(QStringLiteral("repeatedMeasurements"));
+    rep->setToolTip(QStringLiteral("Several spectra of one vial, shaken or rotated in between: mean ± sd"));
+    m->setToolTipsVisible(true);
 
     m = menuBar()->addMenu(QStringLiteral("&Instrument"));
     m->addAction(QStringLiteral("Use simulator"), this, [this] { connectInstrument(true); });
