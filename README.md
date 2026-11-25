@@ -20,7 +20,11 @@ unit). See [PROTOCOL.md](PROTOCOL.md).
 
 ![Peak trends: fitted band areas vs time with kinetic fits](docs/screenshot-trends.png)
 
-See the **[quick manual](docs/MANUAL.md)** for how to measure, analyse and calibrate.
+**Documentation:** the **[quick start](docs/QUICKSTART.md)** for lab users (install, connect, laser safety, measure,
+focus, export, calibration check, troubleshooting; printable:
+[LibreRamen-QuickStart.pdf](docs/LibreRamen-QuickStart.pdf)) and the **[manual](docs/MANUAL.md)** for how to
+measure, analyse and calibrate in detail ([LibreRamen-Manual.pdf](docs/LibreRamen-Manual.pdf)). Both are also in the
+program under **Help**. `tools/manual_pdf.sh` remakes the PDFs (pandoc and Chrome).
 
 ## Install
 

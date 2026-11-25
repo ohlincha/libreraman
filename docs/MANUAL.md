@@ -1,6 +1,7 @@
-# LibreRamen — quick manual
+# LibreRamen — manual
 
-This covers the desktop application (version 0.3.7). For installation see the [README](../README.md).
+This covers the desktop application (version 0.3.7). For the everyday steps see the [quick start](QUICKSTART.md);
+for installation, the [README](../README.md). In the program both documents are under **Help**.
 
 ## The window
 
@@ -24,7 +25,7 @@ extension.
 
 **Areas (left).** Measure, Data, Library, Analysis and Calibration. The log at the bottom shows what the
 program and the instrument did; the **Instrument** menu has *Reconnect*, *Use simulator*, *Shut down instrument…* and what to do with the
-instrument when LibreRamen closes.
+instrument when LibreRamen closes; **Help** has *Quick start* (F1) and this *Manual*.
 
 > **Laser safety.** The laser only switches on when the instrument is armed and the compartment is closed —
 > except in *Focus* mode, which also runs with the compartment open when the lid-open accessory is attached (a red

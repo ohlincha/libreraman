@@ -1,0 +1,12 @@
+<!-- Help > Quick start / Manual (helpwindow.h): the documents in docs/ and their pictures -->
+<RCC>
+  <qresource prefix="/help">
+    <file alias="QUICKSTART.md">../../docs/QUICKSTART.md</file>
+    <file alias="MANUAL.md">../../docs/MANUAL.md</file>
+    <file alias="quickstart-measure.png">../../docs/quickstart-measure.png</file>
+    <file alias="quickstart-focus.png">../../docs/quickstart-focus.png</file>
+    <file alias="quickstart-data.png">../../docs/quickstart-data.png</file>
+    <file alias="manual-measure.png">../../docs/manual-measure.png</file>
+    <file alias="manual-calibration-offset.png">../../docs/manual-calibration-offset.png</file>
+  </qresource>
+</RCC>

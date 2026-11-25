@@ -3,6 +3,7 @@
 
 #include "apiserver.h"
 #include "desktopentry.h"
+#include "helpwindow.h"
 
 #include "measurepage.h"
 #include "page.h"
@@ -339,6 +340,20 @@ void MainWindow::buildMenus() {
     m->addSeparator();
     m->addAction(QStringLiteral("Repair USB drivers…"), this, &MainWindow::repairDrivers);
 #endif
+
+    m = menuBar()->addMenu(QStringLiteral("&Help"));
+    QAction* qs = m->addAction(QStringLiteral("Quick start"), this, [this] { showHelp(HelpWindow::Doc::QuickStart); });
+    qs->setShortcut(QKeySequence::HelpContents);
+    m->addAction(QStringLiteral("Manual"), this, [this] { showHelp(HelpWindow::Doc::Manual); });
+}
+
+void MainWindow::showHelp(HelpWindow::Doc d) {
+    if (!m_help)
+        m_help = new HelpWindow(this);
+    m_help->showDoc(d);
+    m_help->show();
+    m_help->raise();
+    m_help->activateWindow();
 }
 
 void MainWindow::fitToScreen() {

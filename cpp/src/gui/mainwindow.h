@@ -1,7 +1,7 @@
 #pragma once
 // Main window (Python gui/app.py MainWindow): status strip with STOP, simulator bar, side bar with the
 // areas (Measure, Data, Library, Analysis, Calibration; see page.h for plugging in pages), log view at the
-// bottom, File and Instrument menus.
+// bottom, File, Instrument and Help menus (Help: quick start and manual, helpwindow.h).
 //
 // Closing: asks whether to stop a running measurement, and (real instrument) whether to shut the instrument
 // down or leave it on, with "Remember my choice" (QSettings "instrument/onClose": ask | shutdown | leave;
@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "controller.h"
+#include "helpwindow.h"
 
 class QAction;
 class QComboBox;
@@ -48,6 +49,7 @@ public:
     int currentArea() const;
     InstrumentInfo instrumentInfo() const { return m_info; }
 
+    HelpWindow* helpWindow() const { return m_help; }  // nullptr until Help was used
     ApiServer* apiServer() const { return m_api; }
     QAction* apiAction() const { return m_apiAction; }
     QAction* remoteControlAction() const { return m_remoteAction; }
@@ -79,6 +81,7 @@ public slots:
     // vendor power-down (real instrument) or a plain disconnect (simulator). Logs "Instrument shut down".
     void shutDownInstrument();
     void raiseWindow();                               // brought to the front (a second instance was started)
+    void showHelp(lr::gui::HelpWindow::Doc d);         // Help > Quick start / Manual (one help window)
 
 private slots:
     void onStatus(const lr::gui::StatusView& st);
@@ -115,6 +118,7 @@ private:
     QAction* m_remoteAction = nullptr;
     QAction* m_shutDownAction = nullptr;
     QString m_apiError;
+    HelpWindow* m_help = nullptr;
     void finishShutDown();
 };
 

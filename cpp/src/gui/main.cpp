@@ -1,11 +1,12 @@
 // LibreRamen graphical program (Python: gui/app.py main, selftest.py, the gui/selftest/watchdog parts of
 // __main__.py).
-//   LibreRamen [--sim] [--dark | --light] [--screenshot FILE [--demo single|series|focus]]
+//   LibreRamen [--sim] [--dark | --light] [--screenshot FILE [--demo single|series|focus] [--area NAME]]
 //              [--api-port N] [--no-api]   local API (default: settings, port 8765; see apiserver.h)
 //   LibreRamen --selftest        GUI + simulator self-test (offscreen unless QT_QPA_PLATFORM is set); exit 0 = OK
 //   LibreRamen --watchdog --port P --parent PID     laser watchdog process (started by the program itself)
 // --screenshot saves the window after 15 s and quits (with --sim a spectrum of CCl4 is measured first and
-// saved in <temp>/libreramen-screenshot; --demo series: a series instead; --window-size WxH: window size).
+// saved in <temp>/libreramen-screenshot; --demo series: a series instead; --window-size WxH: window size;
+// --area Data|Library|Analysis|Calibration: that area is shown when the picture is taken).
 //
 // Single instance: a second LibreRamen of the same user asks the running one to come to the front and exits
 // (per-user QLocalServer "libreramen-gui-<user>"). Not for --sim, --screenshot and --selftest, which may run
@@ -249,6 +250,10 @@ int main(int argc, char** argv) {
         QTimer::singleShot(15000, &win, [&] {
             if (!win.isVisible())
                 win.show();
+            if (const int area = int(pageAreas().indexOf(argValue(args, QStringLiteral("--area")))); area >= 0) {
+                win.showArea(area);
+                QApplication::processEvents();
+            }
             QWidget* target = &win;
             if (auto* f = win.findChild<FocusWindow*>(); f && f->isVisible()) target = f;
             target->grab().save(shot);
