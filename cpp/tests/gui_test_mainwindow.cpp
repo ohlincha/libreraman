@@ -1,6 +1,7 @@
 // Widget test of the main window with the simulator at high speed (offscreen): window and pages, connect,
 // ARM, measure once (spectrum shown and saved), a series of 3 spectra, pause/resume, Stop (laser off at
 // once), closing without dialogs.
+#include "gui/acquiredialogs.h"
 #include "gui/calibrationpage.h"
 #include "gui/controller.h"
 #include "core/fileio.h"
@@ -16,6 +17,8 @@
 #include "core/simulator.h"
 
 #include <QApplication>
+#include <QMenuBar>
+#include <QTableWidget>
 #include <QTabWidget>
 #include <QComboBox>
 #include <QLabel>
@@ -85,6 +88,9 @@ private slots:
     void connectSimulator();
     void measureOnce();
     void busyRefusesSecondJob();
+    void damageNote();
+    void acquireUntilSnr();
+    void repeatedMeasurements();
     void series();
     void pauseAndResume();
     void stopSwitchesLaserOff();
@@ -254,6 +260,127 @@ void GuiTestMainWindow::busyRefusesSecondJob() {
     QVERIFY(spectra.wait(10000));
     QTRY_VERIFY(!m_ctl->isBusy());
     QCOMPARE(spectra.size(), 1);
+}
+
+QAction* menuAction(QMainWindow* w, const QString& name) {
+    for (QAction* a : w->menuBar()->findChildren<QAction*>())
+        if (a->objectName() == name) return a;
+    return nullptr;
+}
+
+// #9: the damage check runs on every multi-scan spectrum; the note appears only when it fires.
+void GuiTestMainWindow::damageNote() {
+    MeasurePage* m = m_win->measurePage();
+    QVERIFY(!m->damageNoteVisible());
+    m->exposureBox()->setValue(1.0);
+    m->averagesBox()->setValue(12);
+    QSignalSpy spectra(m_ctl, &Controller::spectrum);
+    m_win->simulatorSample()->setCurrentText(lr::simulatorDamageName());
+    QVERIFY(m_ctl->measureOnce(m->measureSettings()));
+    QVERIFY(spectra.wait(20000));
+    QTRY_VERIFY(!m_ctl->isBusy());
+    auto sp = spectra.last().at(0).value<lr::Spectrum>();
+    QCOMPARE(sp.metaValue(QStringLiteral("laser_damage")), QStringLiteral("suspected"));
+    QVERIFY(!sp.metaValue(QStringLiteral("snr")).isEmpty());
+    QVERIFY(m->damageNoteVisible());
+    QVERIFY(m->damageLabel()->text().contains(QStringLiteral("shorten the exposure")));
+    QVERIFY(log().contains(QStringLiteral("Laser-damage check")));
+    QFile f(sp.metaValue(QStringLiteral("file")));
+    QVERIFY(f.open(QIODevice::ReadOnly | QIODevice::Text));
+    QVERIFY(QString::fromUtf8(f.readAll()).contains(QStringLiteral("# laser_damage: suspected")));
+    // a stable sample: no note
+    m_win->simulatorSample()->setCurrentText(QStringLiteral("carbon tetrachloride"));
+    QVERIFY(m_ctl->measureOnce(m->measureSettings()));
+    QVERIFY(spectra.wait(20000));
+    QTRY_VERIFY(!m_ctl->isBusy());
+    sp = spectra.last().at(0).value<lr::Spectrum>();
+    QCOMPARE(sp.metaValue(QStringLiteral("laser_damage")), QStringLiteral("none detected"));
+    QVERIFY(!m->damageNoteVisible());
+    m->averagesBox()->setValue(1);
+}
+
+// #10: Measure > Acquire until S/N… : stops at the target, or early when the sample changes.
+void GuiTestMainWindow::acquireUntilSnr() {
+    MeasurePage* m = m_win->measurePage();
+    QAction* a = menuAction(m_win, QStringLiteral("acquireUntilSnr"));
+    QVERIFY(a);
+    QVERIFY(!m->snrDialog());
+    a->trigger();
+    SnrDialog* d = m->snrDialog();
+    QVERIFY(d && d->isVisible());
+    d->targetBox()->setValue(60);
+    d->exposureBox()->setValue(0.1);
+    d->minutesBox()->setValue(2);
+    QSignalSpy spectra(m_ctl, &Controller::spectrum);
+    QSignalSpy progress(m_ctl, &Controller::snrProgress);
+    d->startButton()->click();
+    QVERIFY(d->running());
+    QVERIFY(spectra.wait(30000));
+    QTRY_VERIFY(!m_ctl->isBusy());
+    auto sp = spectra.last().at(0).value<lr::Spectrum>();
+    QCOMPARE(sp.metaValue(QStringLiteral("mode")), QStringLiteral("until S/N"));
+    QCOMPARE(sp.metaValue(QStringLiteral("stop_reason")), QStringLiteral("target S/N reached"));
+    QVERIFY(sp.averages >= 3);
+    QVERIFY(QFileInfo::exists(sp.metaValue(QStringLiteral("file"))));
+    QVERIFY(!progress.isEmpty());
+    QVERIFY(progress.last().at(0).value<lr::acq::SnrProgress>().finished);
+    QVERIFY(d->resultLabel()->text().contains(QStringLiteral("target S/N reached")));
+    QCOMPARE(m->history().back().metaValue(QStringLiteral("mode")), QStringLiteral("until S/N"));   // shown
+    // a sample changing under the laser: stopped early by the damage check
+    m_win->simulatorSample()->setCurrentText(lr::simulatorDamageName());
+    d->targetBox()->setValue(100000);
+    d->exposureBox()->setValue(1.0);
+    d->startButton()->click();
+    QVERIFY(spectra.wait(30000));
+    QTRY_VERIFY(!m_ctl->isBusy());
+    sp = spectra.last().at(0).value<lr::Spectrum>();
+    QCOMPARE(sp.metaValue(QStringLiteral("stop_reason")), QStringLiteral("sample changing under the laser"));
+    QCOMPARE(sp.metaValue(QStringLiteral("laser_damage")), QStringLiteral("suspected"));
+    QVERIFY(m->damageNoteVisible());
+    QVERIFY(d->resultLabel()->text().contains(QStringLiteral("shorten the exposure")));
+    d->close();
+    m_win->simulatorSample()->setCurrentText(QStringLiteral("carbon tetrachloride"));
+}
+
+// #11: Measure > Repeated measurements… : prompt between measurements, mean ± sd, exclusion re-saves.
+void GuiTestMainWindow::repeatedMeasurements() {
+    MeasurePage* m = m_win->measurePage();
+    m->exposureBox()->setValue(0.2);
+    m->averagesBox()->setValue(2);
+    QAction* a = menuAction(m_win, QStringLiteral("repeatedMeasurements"));
+    QVERIFY(a);
+    a->trigger();
+    RepeatDialog* d = m->repeatDialog();
+    QVERIFY(d && d->isVisible());
+    d->countBox()->setValue(3);
+    d->startButton()->click();
+    QVERIFY(d->running());
+    for (int k = 1; k < 3; ++k) {
+        QTRY_VERIFY_WITH_TIMEOUT(d->waitingForVial(), 20000);
+        QCOMPARE(int(d->spectra().size()), k);
+        QVERIFY(d->continueButton()->isVisible());
+        QVERIFY(!m_ctl->isBusy());
+        d->continueButton()->click();
+    }
+    QTRY_VERIFY_WITH_TIMEOUT(!d->running(), 20000);
+    QCOMPARE(int(d->spectra().size()), 3);
+    QCOMPARE(d->spectra()[1].metaValue(QStringLiteral("repeat")), QStringLiteral("2/3"));
+    QCOMPARE(d->result().nIncluded, 3);
+    QVERIFY(!d->result().bands.empty());
+    QVERIFY(std::abs(d->result().bands[size_t(d->result().reference)].position.mean - 459) < 3);   // CCl4
+    QVERIFY(d->bandsTable()->rowCount() > 0);
+    QVERIFY(d->bandsTable()->item(0, 0)->text().contains(QStringLiteral("±")));
+    QVERIFY(QFileInfo::exists(d->meanPath()));
+    QVERIFY(QFileInfo::exists(d->summaryPath()));
+    QVERIFY(QFileInfo(d->meanPath()).fileName().startsWith(QStringLiteral("CCl4_test_mean_")));
+    // exclude the first spectrum: re-analysed and saved again
+    d->spectraTable()->item(0, RepeatDialog::kUse)->setCheckState(Qt::Unchecked);
+    QCOMPARE(d->result().nIncluded, 2);
+    QFile f(d->meanPath());
+    QVERIFY(f.open(QIODevice::ReadOnly | QIODevice::Text));
+    QVERIFY(QString::fromUtf8(f.readAll()).contains(QStringLiteral("# repeats: 2 of 3 (excluded: 1)")));
+    d->close();
+    m->averagesBox()->setValue(1);
 }
 
 void GuiTestMainWindow::series() {

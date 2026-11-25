@@ -22,6 +22,7 @@ class QCheckBox;
 class QComboBox;
 class QHBoxLayout;
 class QDoubleSpinBox;
+class QFormLayout;
 class QLabel;
 class QLineEdit;
 class QMenu;
@@ -39,6 +40,8 @@ namespace lr::gui {
 
 class Curve;
 class ElidedLabel;
+class RepeatDialog;
+class SnrDialog;
 class FocusWindow;
 class PeakLabels;
 class PlotWidget;
@@ -101,6 +104,16 @@ public:
     const std::vector<std::pair<double, double>>& trend() const { return m_trend; }
     const lr::Vec& lastPeaks() const { return m_lastPeaks; }
     QString seriesText() const;                       // "Spectrum" row of the Series box
+    // Laser-damage note (#9) of the newest spectrum: a row of the Detector box shown only when the check fired.
+    QLabel* damageLabel() const { return m_lblDamage; }
+    bool damageNoteVisible() const;
+    // Measure > Acquire until S/N… (#10) and Measure > Repeated measurements… (#11): own windows, made when first
+    // opened (nullptr before). They take sample, folder and spectrum settings from this page.
+    SnrDialog* snrDialog() const { return m_snrDialog; }
+    RepeatDialog* repeatDialog() const { return m_repeatDialog; }
+    // Before a measurement started elsewhere (the dialogs): asks for a sample name if needed and moves to today's
+    // folder; false = cancelled.
+    bool prepareMeasurement();
 
     void addSpectrum(const lr::Spectrum& sp) override;   // Python add_spectrum
 
@@ -126,6 +139,8 @@ public slots:
     // touched). The next spectrum opens the default view again.
     void clearAll();
     void addLastToLibrary();                          // emits addToLibraryRequested(newest spectrum)
+    void openSnrDialog();
+    void openRepeatDialog();
     int redrawCount() const { return m_redraws; }     // tests: plot updates so far
 
 private:
@@ -193,6 +208,10 @@ private:
     QWidget* m_procBody;
     QScrollArea* m_settingsScroll;
     QLabel *m_lblDark, *m_lblSat, *m_lblFluor, *m_lblTime, *m_lblSet, *m_lblPeaks;
+    QLabel* m_lblDamage = nullptr;
+    QFormLayout* m_detForm = nullptr;
+    SnrDialog* m_snrDialog = nullptr;
+    RepeatDialog* m_repeatDialog = nullptr;
 
     QPushButton *m_btnOnce, *m_btnSeries, *m_btnStop, *m_btnPause;
     QPushButton* m_btnClear = nullptr;          // clears plot, trend and panels (files are kept)

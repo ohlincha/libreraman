@@ -113,6 +113,12 @@ const QString kConsecutive = QStringLiteral("reaction: A → B → C (ethanol �
 QStringList simulatorReactionNames() { return {kEvaporation, kConsecutive}; }
 
 namespace {
+const QString kDamage = QStringLiteral("demo: sample changing under the laser (ethanol)");
+}  // namespace
+
+QString simulatorDamageName() { return kDamage; }
+
+namespace {
 
 double monoNow() {
     static QElapsedTimer t = [] {
@@ -134,11 +140,12 @@ void SimCora::setSpeed(double s) {
 }
 
 void SimCora::setSample(const QString& name) {
-    bool known = name == kEvaporation || name == kConsecutive;
+    bool known = name == kEvaporation || name == kConsecutive || name == kDamage;
     for (const auto& s : data_.samples)
         if (s.first == name) known = true;
     if (!known) throw Error(("unknown sample: " + name).toStdString());
     std::lock_guard<std::mutex> l(m_);
+    if (name == kDamage) laserTime_[name] = 0.0;           // (re)choosing it: a fresh sample
     if (name != sample_ || name.startsWith(QStringLiteral("reaction:"))) {   // (re)choosing a reaction restarts it
         reactionWall0_ = monoNow();
         reactionSimT_ = 0.0;
@@ -174,6 +181,33 @@ Vec SimCora::sampleSpectrum(const QString& name) const {
     return out;
 }
 
+Vec SimCora::damagedSpectrum(double lt) const {
+    const Vec* base = nullptr;
+    for (const auto& kv : data_.samples)
+        if (kv.first == QLatin1String("ethanol")) base = &kv.second;
+    Vec out(data_.darkOffset.size(), 0.0);
+    if (!base || base->size() < 2) return out;
+    const Vec& s = *base;
+    const int n = int(std::min(out.size(), s.size()));
+    // bands move to lower Raman shift: shift of 0.5 cm-1/s, converted to pixels with the local dispersion
+    const double s0 = shiftOf(532, 0), s1 = shiftOf(532, n - 1);
+    const double disp = std::abs(s1 - s0) / double(n - 1);
+    const double dir = s1 > s0 ? 1.0 : -1.0;
+    const double dpx = dir * std::min(20.0, 0.5 * lt) / (disp > 0 ? disp : 2.4);
+    const double fade = std::exp(-lt / 30.0);
+    const double smax = *std::max_element(s.begin(), s.begin() + n);
+    const double bg = std::min(2.0, 0.01 * lt) * smax;
+    for (int i = 0; i < n; ++i) {
+        const double p = i + dpx;                         // content now at i came from pixel p
+        const int k = int(std::floor(p));
+        double v = 0.0;
+        if (k >= 0 && k + 1 < n) v = s[k] + (p - k) * (s[k + 1] - s[k]);
+        const double frac = dir > 0 ? double(i) / (n - 1) : 1.0 - double(i) / (n - 1);   // toward high shift
+        out[i] = v * fade + bg * (0.5 + 0.5 * frac);
+    }
+    return out;
+}
+
 QString SimCora::sample() const {
     std::lock_guard<std::mutex> l(m_);
     return sample_;
@@ -182,7 +216,7 @@ QString SimCora::sample() const {
 QStringList SimCora::sampleNames() const {
     QStringList l;
     for (const auto& s : data_.samples) l << s.first;
-    l << simulatorReactionNames();
+    l << kDamage << simulatorReactionNames();
     return l;
 }
 
@@ -274,8 +308,8 @@ std::vector<Vec> SimCora::frames(double exposure_s, int n, const std::atomic<boo
             std::lock_guard<std::mutex> l(m_);
             for (size_t i = 0; i < y.size(); ++i) y[i] = data_.darkOffset[i] + data_.darkRate[i] * exposure_s;
             if (laserOn_) {
-                const Vec s = sampleSpectrum(sample_);
                 const double lt = laserTime_.count(sample_) ? laserTime_[sample_] : 0.0;
+                const Vec s = sample_ == kDamage ? damagedSpectrum(lt) : sampleSpectrum(sample_);
                 const double bleach = sample_ == "zinc sulfide" ? 0.6 + 0.4 * std::exp(-lt / 180.0) : 1.0;
                 for (size_t i = 0; i < y.size() && i < s.size(); ++i) y[i] += s[i] * exposure_s * bleach;
                 laserTime_[sample_] = lt + exposure_s;
@@ -321,7 +355,9 @@ Spectrum SimCora::acquire(const AcquireOptions& o) {
             log("Pre-bleaching for " + py::g(o.prebleach_s) + " s");
             bleach(o.prebleach_s, o.stop);
         }
-        sig = meanFrames(frames(o.exposure_s, o.averages, o.stop));
+        std::vector<Vec> f = frames(o.exposure_s, o.averages, o.stop);
+        sig = meanFrames(f);
+        if (o.frames) *o.frames = std::move(f);
     }
     const Vec bg = o.background ? meanFrames(frames(o.exposure_s, o.averages, o.stop)) : Vec(sig.size(), 0.0);
     Spectrum sp = makeSpectrum(ch, o.exposure_s, o.averages, pixelNumbers(ch), sig, bg, o.power_mw);

@@ -39,7 +39,8 @@ instrument when LibreRamen closes; **Help** has *Quick start* (F1) and this *Man
    spectra at a fixed interval (or *as fast as possible*, laser stays on). **❚❚ Pause** / **■ Stop** control
    the series.
 4. To try a series without the instrument: **Instrument → Use simulator**, choose a *reaction:* sample in the
-   simulator bar (its spectra change with time), press *Press ARM* and *Close compartment*.
+   simulator bar (its spectra change with time), press *Press ARM* and *Close compartment*. The sample
+   *demo: sample changing under the laser* fades and shifts while the laser is on (to try the damage check).
 5. During a series the *Trend* plot follows one peak; right-click a peak and choose *Use peak … for the trend*.
 
 The sample name (box *Sample*) goes into the file names and the files. If it is empty, LibreRamen asks for one
@@ -54,6 +55,41 @@ column.
 
 The dashboard's *Fluorescence* line mentions a dominant fluorescence background (background at least as
 high as the strongest band, e.g. ZnS); hover it for advice. The default *arPLS* baseline handles such samples.
+
+**Laser-damage check.** Dark samples (carbon, LiFePO₄, layered oxides) can heat and change under the laser while
+they are measured; the averaged spectrum then looks clean but is wrong. Whenever a spectrum has 2 or more scans,
+LibreRamen compares the first third of the scans with the last third: did the strongest bands move (more than
+2.5 cm⁻¹), lose height (more than 15 %), or did the background rise (more than 20 % of the strongest band or of
+the background)? Nothing is shown while all is well. If the check fires, a *Laser* line appears in the dashboard:
+*sample changing under the laser: shorten the exposure or defocus slightly (distance knob)* (hover it for the
+numbers), and the file gets `# laser_damage: suspected` with the details in `# laser_damage_check`. The Cora's
+laser power cannot be changed, so shorter exposures, more scans and a slightly defocused beam are the remedies.
+Every saved spectrum also records its signal-to-noise ratio (`# snr`, strongest band). The thresholds are first
+guesses, not yet checked on the real instrument.
+
+### Acquire until S/N
+
+**Measure → Acquire until S/N…** keeps adding short frames until a band reaches a target signal-to-noise ratio:
+for weak or heat-sensitive samples, instead of guessing exposure × scans. Set the *Target S/N* (100 by default;
+S/N grows with the square root of the number of frames), the *Band* (the strongest, or one at a given shift),
+the *Frame exposure* and a *Time limit*. A background (laser off) is taken first; then the window shows the running
+S/N, the frames so far, the time and about how many frames are still needed. It stops when the target is reached,
+at the time limit, with **■ Stop**, or — with *stop if the sample changes under the laser* — when the damage check
+fires. The mean is saved and shown like a normal spectrum (`# mode: until S/N`, `# stop_reason`, `# snr`). Sample
+name, folder, background and laser come from the Measure page.
+
+### Repeated measurements of one vial
+
+A powder is not the same everywhere and the laser sees one spot. **Measure → Repeated measurements…** measures the
+vial N times (5 by default) with the Measure page's settings. After each spectrum it asks you to *shake or rotate
+the vial, put it back and close the lid* (press ARM again after opening), then **Continue** (or **Finish now**).
+At the end it shows all spectra and their mean, a table of the spectra and the strongest bands of the mean as
+**mean ± sd**: position, height (with its relative spread) and the ratio to the strongest band (independent of how
+the powder is packed). A spectrum whose shape differs much from the others (e.g. a burnt spot; shape distance
+above 0.10 and far outside the spread of the rest) is flagged; untick *Use* to leave a spectrum out, and the
+results and files are updated. Every spectrum is saved as usual (`# repeat: 2/5`); in addition
+`<sample>_mean_<time>.csv` (the mean, with the band results in its header) and `<sample>_repeats_<time>.csv`
+(mean, sd and every spectrum as columns, band results, which were excluded).
 
 Spectra are saved automatically (*Saved in* shows the folder); a series is saved as a folder with one CSV per spectrum plus `series.csv`.
 **Add to library…** in the *Last spectrum* box stores the newest spectrum in the library; the **⋯** menu

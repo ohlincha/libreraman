@@ -4,6 +4,7 @@
 #include <QElapsedTimer>
 #include <QFileInfo>
 #include <QStringList>
+#include <algorithm>
 
 #include "core/calibration.h"
 #include "core/errors.h"
@@ -19,6 +20,7 @@ QString what(const std::exception& e) { return QString::fromUtf8(e.what()); }
 Controller::Controller(QObject* parent) : QObject(parent) {
     qRegisterMetaType<lr::Spectrum>();
     qRegisterMetaType<lr::SeriesProgress>();
+    qRegisterMetaType<lr::acq::SnrProgress>();
     qRegisterMetaType<lr::SeriesSettings>();
     qRegisterMetaType<lr::gui::InstrumentInfo>();
     qRegisterMetaType<lr::gui::MeasureSettings>();
@@ -298,15 +300,116 @@ bool Controller::measureOnce(const MeasureSettings& s, const QString& origin) {
         o.background = s.background != QLatin1String("none");
         o.prebleach_s = s.prebleach_s;
         o.stop = &m_stop;
+        std::vector<lr::Vec> frames;
+        o.frames = &frames;
         lr::Spectrum sp = m_inst->acquire(o);
-        sp.setMeta(QStringLiteral("sample"), s.sample);
-        if (!QDir().mkpath(s.folder))
-            throw lr::Error(("Cannot create the folder " + s.folder).toStdString());
-        const QString path = savePath(s.folder, s.sample, sp.t);
-        sp.saveCsv(path);
-        sp.setMeta(QStringLiteral("file"), path);
-        emit log(QStringLiteral("Saved ") + QDir::toNativeSeparators(path));
-        emit spectrum(sp);
+        if (frames.size() >= 2) {
+            const lr::acq::DamageReport r =
+                lr::acq::checkFrames(sp.shift, lr::acq::alignFrames(sp, frames, m_inst->pixelNumbers(sp.channel)));
+            lr::acq::setDamageMeta(sp, r);
+        }
+        saveAndDeliver(sp, s);
+    });
+}
+
+void Controller::saveAndDeliver(lr::Spectrum& sp, const MeasureSettings& s) {
+    const lr::acq::Snr snr = lr::acq::estimateSnr(sp.shift, sp.intensity);
+    if (snr.valid())
+        sp.setMeta(QStringLiteral("snr"), QStringLiteral("%1 (band at %2 cm-1)").arg(snr.snr, 0, 'f', 0).arg(snr.band, 0, 'f', 0));
+    if (sp.metaValue(QStringLiteral("laser_damage")) == QLatin1String("suspected"))
+        emit log(QStringLiteral("Laser-damage check: ") + lr::acq::damageAdvice() + QStringLiteral(" (") +
+                 sp.metaValue(QStringLiteral("laser_damage_check")) + QStringLiteral(")"));
+    sp.setMeta(QStringLiteral("sample"), s.sample);
+    for (const auto& kv : s.meta) sp.setMeta(kv.first, kv.second);
+    if (!QDir().mkpath(s.folder))
+        throw lr::Error(("Cannot create the folder " + s.folder).toStdString());
+    const QString path = savePath(s.folder, s.sample, sp.t);
+    sp.saveCsv(path);
+    sp.setMeta(QStringLiteral("file"), path);
+    emit log(QStringLiteral("Saved ") + QDir::toNativeSeparators(path));
+    emit spectrum(sp);
+}
+
+bool Controller::measureUntilSnr(const MeasureSettings& s, const lr::acq::SnrTarget& target, const QString& origin) {
+    if (!m_inst || m_conn != Connection::Connected) {
+        emit error(QStringLiteral("No instrument connected."));
+        return false;
+    }
+    if (m_busy) {
+        emit error(QStringLiteral("Busy: stop the current measurement first."));
+        return false;
+    }
+    emit log(QStringLiteral("%1: measure \"%2\" until S/N %3 (%4): %5 s frames, at most %6 min%7")
+                 .arg(origin, s.sample, num(target.target),
+                      target.band ? QStringLiteral("band at %1 cm-1").arg(num(*target.band)) : QStringLiteral("strongest band"),
+                      num(s.exposure_s), num(target.maxSeconds / 60),
+                      target.stopOnDamage ? QStringLiteral(", stops if the sample changes") : QString()));
+    return run([this, s, target] {
+        selectChannel(s.channel);
+        const int ch = m_inst->channel();
+        // background once: up to 8 frames (its noise is in every frame), at most a quarter of the time limit
+        const int nbg = std::clamp(int(0.25 * target.maxSeconds / std::max(s.exposure_s, 1e-3)), 1, 8);
+        const lr::Vec bg = s.background == QLatin1String("none") ? lr::Vec(m_inst->pixelNumbers(ch).size(), 0.0)
+                                                                 : m_inst->dark(s.exposure_s, nbg);
+        lr::AcquireOptions o;
+        o.exposure_s = s.exposure_s;
+        o.averages = 1;
+        o.stop = &m_stop;
+        lr::acq::SnrRun run(target);
+        lr::Spectrum last;
+        lr::Vec sigSum;
+        bool done = false;
+        QElapsedTimer clock, sinceProgress;
+        clock.start();
+        sinceProgress.start();
+        auto progress = [&](bool finished, const QString& why) {
+            lr::acq::SnrProgress p;
+            p.frames = run.frames();
+            p.snr = run.snr().snr;
+            p.band = run.snr().band;
+            p.target = target.target;
+            p.elapsed = clock.elapsed() / 1000.0;
+            p.maxSeconds = target.maxSeconds;
+            p.framesNeeded = lr::acq::framesNeeded(p.snr, p.frames, target.target);
+            p.damage = run.damage().changing;
+            p.finished = finished;
+            p.stopText = why;
+            emit snrProgress(p);
+        };
+        m_inst->acquireLaserOn(
+            o, bg, [&done] { return !done; },
+            [&](lr::Spectrum& sp) {
+                if (sigSum.empty()) sigSum.assign(sp.signal.size(), 0.0);
+                for (size_t i = 0; i < sigSum.size() && i < sp.signal.size(); ++i) sigSum[i] += sp.signal[i];
+                const lr::acq::Stop st = run.add(sp.shift, sp.intensity, clock.elapsed() / 1000.0, s.exposure_s + 0.02);
+                last = std::move(sp);
+                done = st != lr::acq::Stop::Continue;
+                if (sinceProgress.elapsed() >= 200) {
+                    sinceProgress.restart();
+                    progress(false, {});
+                }
+            });
+        const int n = run.frames();
+        const QString why = m_stop ? QStringLiteral("stopped by the user") : lr::acq::stopText(run.stop());
+        progress(true, why);
+        if (n == 0) {
+            if (m_stop) throw lr::Stopped();
+            throw lr::Error("No frames were measured.");
+        }
+        lr::Spectrum sp = last;
+        sp.intensity = run.mean();
+        sp.signal = sigSum;
+        for (double& v : sp.signal) v /= n;
+        sp.averages = n;
+        sp.t = QDateTime::currentDateTime();
+        sp.setMeta(QStringLiteral("mode"), QStringLiteral("until S/N"));
+        sp.setMeta(QStringLiteral("snr_target"), QStringLiteral("%1 (%2)").arg(num(target.target),
+                   target.band ? QStringLiteral("band at %1 cm-1").arg(num(*target.band)) : QStringLiteral("strongest band")));
+        sp.setMeta(QStringLiteral("stop_reason"), why);
+        if (n >= 2) lr::acq::setDamageMeta(sp, lr::acq::checkFrames(sp.shift, run.store()));
+        emit log(QStringLiteral("Until S/N: %1 after %2 frames (%3 s), S/N %4").arg(why).arg(n)
+                     .arg(clock.elapsed() / 1000.0, 0, 'f', 1).arg(run.snr().snr, 0, 'f', 0));
+        saveAndDeliver(sp, s);
     });
 }
 

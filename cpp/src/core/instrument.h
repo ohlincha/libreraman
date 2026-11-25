@@ -55,6 +55,9 @@ struct AcquireOptions {
     // accessory that lets the laser run with the lid open (adjusting the sample distance). Still only when armed;
     // the instrument's own interlock decides whether light comes out.
     bool allowOpenCompartment = false;
+    // acquire() only: if set, receives the individual signal (laser-on) frames in data order, before averaging
+    // (laser-damage check, issue #9: core/acqcheck.h).
+    std::vector<Vec>* frames = nullptr;
 };
 
 class Instrument {

@@ -242,7 +242,7 @@ private slots:
         auto s = ready();
         SimControls* c = dynamic_cast<SimControls*>(static_cast<Instrument*>(s.get()));
         QVERIFY(c);
-        QCOMPARE(c->sampleNames().size(), 7);                 // 5 recorded + 2 reactions
+        QCOMPARE(c->sampleNames().size(), 8);                 // 5 recorded + damage demo + 2 reactions
         c->setSpeed(3.0);
         QCOMPARE(c->speed(), 3.0);
         auto inst = makeSimulator(defaultCalibration(), {}, 2.0);

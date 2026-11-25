@@ -417,7 +417,9 @@ Spectrum Cora::acquire(const AcquireOptions& o) {
             log("Pre-bleaching for " + py::g(o.prebleach_s) + " s");
             bleach(o.prebleach_s, o.stop);
         }
-        sig = meanFrames(frames(o.exposure_s, o.averages, o.stop));
+        std::vector<Vec> f = frames(o.exposure_s, o.averages, o.stop);
+        sig = meanFrames(f);
+        if (o.frames) *o.frames = std::move(f);
         laser.release();
     }
     const Vec bg = o.background ? meanFrames(frames(o.exposure_s, o.averages, o.stop)) : Vec(sig.size(), 0.0);

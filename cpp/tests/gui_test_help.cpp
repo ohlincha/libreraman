@@ -108,7 +108,7 @@ private slots:
             menus << a->text();
             if (a->text() == QLatin1String("&Help")) help = a->menu();
         }
-        QCOMPARE(menus, (QStringList{QStringLiteral("&File"), QStringLiteral("&Instrument"), QStringLiteral("&Help")}));
+        QCOMPARE(menus, (QStringList{QStringLiteral("&File"), QStringLiteral("&Measure"), QStringLiteral("&Instrument"), QStringLiteral("&Help")}));
         QVERIFY(help);
         QStringList items;
         for (QAction* a : help->actions()) items << a->text();
