@@ -75,7 +75,7 @@ QImage drawLogo(qreal dpr, const QString& version) {
     f.setBold(true);
     p.setFont(f);
     p.setPen(QColor("#ffffff"));
-    p.drawText(QRectF(255, 66, 300, 54), Qt::AlignLeft | Qt::AlignVCenter, QStringLiteral("LibreRamen"));
+    p.drawText(QRectF(255, 66, 300, 54), Qt::AlignLeft | Qt::AlignVCenter, QStringLiteral("LibreRaman"));
     f.setPixelSize(15);
     f.setBold(false);
     p.setFont(f);

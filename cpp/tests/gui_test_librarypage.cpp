@@ -1,6 +1,6 @@
 // Library page smoke test (offscreen): open/create a library, demo entries, browse/filter, entry display,
 // "Add to library", "Match last spectrum" with all three methods, read-only and error states.
-// With LIBRERAMEN_PREVIEW_DIR set, the page is rendered to library-*.png files there (light and dark).
+// With LIBRERAMAN_PREVIEW_DIR set, the page is rendered to library-*.png files there (light and dark).
 #include "gui/librarypage.h"
 #include "gui/plotwidget.h"
 #include "gui/theme.h"
@@ -33,7 +33,7 @@ Spectrum measure(SimCora& sim, const QString& sample, double exposure = 0.5) {
 }
 
 void savePreview(QWidget& w, const QString& name) {
-    const QString dir = qEnvironmentVariable("LIBRERAMEN_PREVIEW_DIR");
+    const QString dir = qEnvironmentVariable("LIBRERAMAN_PREVIEW_DIR");
     if (dir.isEmpty()) return;
     QDir().mkpath(dir);
     QApplication::processEvents();
@@ -93,7 +93,7 @@ private slots:
         QVERIFY(!page.plot()->items().empty());
         const auto labels = page.findChildren<QLabel*>();
         bool licenceShown = false;
-        for (QLabel* l : labels) licenceShown = licenceShown || l->text().contains("LibreRamen demo data (MIT)");
+        for (QLabel* l : labels) licenceShown = licenceShown || l->text().contains("LibreRaman demo data (MIT)");
         QVERIFY(licenceShown);
         savePreview(page, "library-browse.png");
         page.selectEntry(calcite);                    // band list: sticks
@@ -178,7 +178,7 @@ private slots:
     }
 
     void dark() {
-        if (qEnvironmentVariable("LIBRERAMEN_PREVIEW_DIR").isEmpty()) QSKIP("preview only");
+        if (qEnvironmentVariable("LIBRERAMAN_PREVIEW_DIR").isEmpty()) QSKIP("preview only");
         theme::apply(*qApp, theme::Mode::Dark);
         LibraryPage page;
         page.resize(1180, 760);

@@ -317,7 +317,7 @@ struct Run {
         if (!QDir().mkpath(folder)) throw Error(("cannot create " + folder).toStdString());
         if (!s.files.csv && !s.files.jdx && !s.files.spc) return;
         const QString started = iso(fromEpoch(start));
-        const QString header = "# LibreRamen time series, started " + started + "\n# sample: " + s.sample +
+        const QString header = "# LibreRaman time series, started " + started + "\n# sample: " + s.sample +
                                "\n# exposure_s: " + py::str(s.exposure_s) +
                                "\n# averages: " + QString::number(s.averages) + "\n# interval_s: " +
                                py::str(s.interval_s) + "\n# background: " + s.background + "\n";
@@ -328,7 +328,7 @@ struct Run {
         if (s.laserStaysOn) meta.emplace_back("mode", "as fast as possible, laser on, background once");
         else meta.emplace_back("interval_s", py::str(s.interval_s));
         meta.emplace_back("background", s.laserStaysOn ? QString("once") : s.background);
-        meta.emplace_back("software", "LibreRamen " LIBRERAMEN_VERSION);
+        meta.emplace_back("software", "LibreRaman " LIBRERAMAN_VERSION);
         writer = std::make_unique<SeriesFileWriter>(folder, s.files, header, s.sample + " time series", meta);
     }
     // Saves the spectrum, hands it to the series files, emits it.

@@ -151,7 +151,7 @@ class _MacHid:
         if not self.dev:
             raise HardwareError("MCP2200 HID device not found")
         if iokit.IOHIDDeviceOpen(self.dev, 0) != 0:
-            raise HardwareError("Cannot open the MCP2200 (macOS: allow LibreRamen under System Settings > "
+            raise HardwareError("Cannot open the MCP2200 (macOS: allow LibreRaman under System Settings > "
                                 "Privacy & Security > Input Monitoring)")
         self.q = queue.Queue()
         self.buf = (c_uint8 * 64)()

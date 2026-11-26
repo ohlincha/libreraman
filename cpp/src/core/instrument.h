@@ -3,7 +3,7 @@
 // implements the same interface). All methods may block (USB/serial I/O) and are called from a worker
 // thread; status() is also called from the GUI's poll timer, so implementations lock internally.
 //
-// Laser safety (see ../../../libreramen/instrument.py and PROTOCOL.md):
+// Laser safety (see ../../../libreraman/instrument.py and PROTOCOL.md):
 //  * acquire() refuses to switch a laser on when the instrument isn't armed or the compartment is open;
 //  * a laser is on only inside acquire() (RAII guard), and is switched off on every exit path;
 //  * close() switches both lasers off.

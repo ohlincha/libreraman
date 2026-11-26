@@ -69,7 +69,7 @@ public:
     double startDelay() const;                        // from the Start choice (s)
     QString folder() const { return m_folder; }
     void setFolder(const QString& path);              // fixed folder (no automatic per-day folder)
-    static QString defaultFolder(const QDate& day = QDate::currentDate());   // ~/Documents/LibreRamen/<date>
+    static QString defaultFolder(const QDate& day = QDate::currentDate());   // ~/Documents/LibreRaman/<date>
 
     // ---- widgets (tests, self-test, screenshots)
     QDoubleSpinBox* exposureBox() const { return m_exposure; }

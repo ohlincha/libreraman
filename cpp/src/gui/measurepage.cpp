@@ -709,7 +709,7 @@ void MeasurePage::openFocus() {
 }
 
 QString MeasurePage::defaultFolder(const QDate& day) {
-    return QDir(QDir::homePath()).filePath(QStringLiteral("Documents/LibreRamen/") +
+    return QDir(QDir::homePath()).filePath(QStringLiteral("Documents/LibreRaman/") +
                                            day.toString(QStringLiteral("yyyy-MM-dd")));
 }
 

@@ -108,7 +108,7 @@ private slots:
         QVERIFY(files[2].startsWith("0003_"));
         QCOMPARE(files[3], QString("series.csv"));
         const QStringList l = readLines(QDir(folder).filePath("series.csv"));
-        QVERIFY(l[0].startsWith("# LibreRamen time series, started "));
+        QVERIFY(l[0].startsWith("# LibreRaman time series, started "));
         QCOMPARE(l.mid(1, 5), QStringList({"# sample: water / test", "# exposure_s: 0.5", "# averages: 1",
                                            "# interval_s: 0.1", "# background: each"}));
         QCOMPARE(l[6].count(",t="), 3);

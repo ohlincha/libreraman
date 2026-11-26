@@ -1,5 +1,5 @@
 // Renders the computed-spectra panel (gui/computedpanel) to PNG files for visual checks (not built by
-// default: cmake -DLIBRERAMEN_GUI_PREVIEW=ON). Usage: QT_QPA_PLATFORM=offscreen computed_preview [output dir]
+// default: cmake -DLIBRERAMAN_GUI_PREVIEW=ON). Usage: QT_QPA_PLATFORM=offscreen computed_preview [output dir]
 // Computed spectra: the synthetic output excerpts in tests/golden/computed; experimental: the spectra the
 // simulator was built from (CCl4 and chloroform measured on a real Cora 5000 at 532 nm).
 #include "gui/computedpanel.h"

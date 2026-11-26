@@ -26,7 +26,7 @@ QString configDir() {
     // Python and C++ versions share the files.
     const QString xdg = qEnvironmentVariable("XDG_CONFIG_HOME");
     const QString base = xdg.isEmpty() ? QDir::homePath() + "/.config" : xdg;
-    return QDir::cleanPath(base + "/libreramen");
+    return QDir::cleanPath(base + "/libreraman");
 }
 
 std::optional<UserCalibration> load(int channel, const QString& serial, const QString& path) {

@@ -1,11 +1,11 @@
-# LibreRamen – Specification
+# LibreRaman – Specification
 
-Version 0.1 (draft), 2026-11-20. This document describes what LibreRamen should do. It is the
+Version 0.1 (draft), 2026-11-20. This document describes what LibreRaman should do. It is the
 reference for development and for anyone evaluating or contributing to the software.
 
 ## 1. Purpose and scope
 
-LibreRamen is open-source software for Raman spectrometers whose vendor software is no longer
+LibreRaman is open-source software for Raman spectrometers whose vendor software is no longer
 usable. The first supported instrument is the Anton Paar Cora 5000 (BaySpec hardware inside;
 532 nm and 1064 nm lasers). The vendor software runs only on an old, never-updated Windows and
 lacks features such as scheduled measurements.
@@ -21,7 +21,7 @@ Goals:
 Non-goals (for now): Raman mapping/imaging (the Cora has no stage), regulated (21 CFR Part 11)
 compliance, cloud services.
 
-*LibreRamen is independent and not affiliated with Anton Paar or BaySpec. Product names are used
+*LibreRaman is independent and not affiliated with Anton Paar or BaySpec. Product names are used
 only to describe compatibility.*
 
 ## 2. Architecture
@@ -29,12 +29,12 @@ only to describe compatibility.*
 ```
 GUI (Qt) ──┐
 CLI ───────┤
-Python ────┼──►  LibreRamen server  ──►  instrument driver  ──USB──►  instrument
+Python ────┼──►  LibreRaman server  ──►  instrument driver  ──USB──►  instrument
 local API ─┤        (owns the hardware,        (Cora 5000; simulator;
 AI (MCP) ──┘         enforces safety)           more drivers later)
 ```
 
-- **Engine** (`libreramen` package): drivers, acquisition, processing, calibration, library,
+- **Engine** (`libreraman` package): drivers, acquisition, processing, calibration, library,
   analysis. Pure Python with numpy/scipy.
 - **Server**: a background process that owns the instrument. All clients see the same state.
   Safety limits are enforced here, independent of the client.

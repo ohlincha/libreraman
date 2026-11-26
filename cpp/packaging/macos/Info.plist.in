@@ -5,17 +5,17 @@
   <key>CFBundleDevelopmentRegion</key>
   <string>en</string>
   <key>CFBundleExecutable</key>
-  <string>LibreRamen</string>
+  <string>LibreRaman</string>
   <key>CFBundleIconFile</key>
-  <string>LibreRamen.icns</string>
+  <string>LibreRaman.icns</string>
   <key>CFBundleIdentifier</key>
-  <string>io.github.ohlincha.libreramen</string>
+  <string>io.github.ohlincha.libreraman</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
-  <string>LibreRamen</string>
+  <string>LibreRaman</string>
   <key>CFBundleDisplayName</key>
-  <string>LibreRamen</string>
+  <string>LibreRaman</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
@@ -23,9 +23,9 @@
   <key>CFBundleVersion</key>
   <string>@PROJECT_VERSION@</string>
   <key>NSHumanReadableCopyright</key>
-  <string>@LIBRERAMEN_COPYRIGHT@</string>
+  <string>@LIBRERAMAN_COPYRIGHT@</string>
   <key>LSMinimumSystemVersion</key>
-  <string>@LIBRERAMEN_MACOS_MIN@</string>
+  <string>@LIBRERAMAN_MACOS_MIN@</string>
   <key>LSApplicationCategoryType</key>
   <string>public.app-category.education</string>
   <key>NSHighResolutionCapable</key>

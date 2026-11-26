@@ -7,7 +7,7 @@ changes and why the PL2303 I/O board is only bound when it is the instrument's (
 import os
 import sys
 
-HINT = ("Use Instrument > Repair USB drivers in LibreRamen (or Start menu > LibreRamen > Repair USB drivers) "
+HINT = ("Use Instrument > Repair USB drivers in LibreRaman (or Start menu > LibreRaman > Repair USB drivers) "
         "with the instrument connected and switched on.")
 
 
@@ -46,7 +46,7 @@ def repair(quiet=False):
         raise RuntimeError("USB drivers only need installing on Windows.")
     script = script_path()
     if not script:
-        raise RuntimeError("The driver installer was not found. Install LibreRamen with LibreRamen-Setup.exe "
+        raise RuntimeError("The driver installer was not found. Install LibreRaman with LibreRaman-Setup.exe "
                            "(the zip version has no driver installer).")
     import ctypes
     from ctypes import wintypes

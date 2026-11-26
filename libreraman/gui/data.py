@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QFileDia
 from .. import fileio, peaks as peakmod, processing
 
 COLORS = ["#1f4e79", "#b5543c", "#3c8d6e", "#c8892a", "#6a4c93", "#2a7f9e", "#9c3d5a", "#7a7a2a", "#555b63"]
-OPEN_FILTER = ("Spectra (*.csv *.txt *.spc *.jdx *.dx *.dat);;LibreRamen / vendor CSV (*.csv);;"
+OPEN_FILTER = ("Spectra (*.csv *.txt *.spc *.jdx *.dx *.dat);;LibreRaman / vendor CSV (*.csv);;"
                "Vendor text (*.txt);;Galactic SPC (*.spc);;JCAMP-DX (*.jdx *.dx);;All files (*)")
 
 

@@ -133,7 +133,7 @@ private slots:
             QVERIFY(lib.isOpen());
             QVERIFY(!lib.readOnly());
             QCOMPARE(lib.schemaVersion(), Library::kSchemaVersion);
-            QCOMPARE(lib.info("format"), QString("LibreRamen spectral library"));
+            QCOMPARE(lib.info("format"), QString("LibreRaman spectral library"));
             QVERIFY(lib.info("schema_history").startsWith("0->1"));
             QVERIFY(!lib.onNetwork());
             QCOMPARE(lib.journalMode(), QString("wal"));
@@ -165,7 +165,7 @@ private slots:
             lib.open(newer);
             QFAIL("opened a newer library");
         } catch (const Error& e) {
-            QVERIFY2(QString(e.what()).contains("newer LibreRamen"), e.what());
+            QVERIFY2(QString(e.what()).contains("newer LibreRaman"), e.what());
         }
         QVERIFY(!lib.isOpen());
         // another SQLite database and a text file
@@ -175,7 +175,7 @@ private slots:
             lib.open(other);
             QFAIL("opened a foreign database");
         } catch (const Error& e) {
-            QVERIFY2(QString(e.what()).contains("not a LibreRamen library"), e.what());
+            QVERIFY2(QString(e.what()).contains("not a LibreRaman library"), e.what());
         }
         writeText(file("text.sqlite"), "this is not a database, just some text that is long enough............\n");
         QVERIFY_THROWS_EXCEPTION(Error, lib.open(file("text.sqlite")));

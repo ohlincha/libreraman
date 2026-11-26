@@ -1,7 +1,7 @@
 """Entry point for the packaged app: no arguments = GUI, otherwise the command line (e.g. 'status')."""
 import sys
 
-from libreramen.__main__ import main
+from libreraman.__main__ import main
 
 if __name__ == "__main__":
     args = sys.argv[1:]
@@ -13,7 +13,7 @@ if __name__ == "__main__":
             sys.stdout = open("CONOUT$", "w")
             sys.stderr = open("CONOUT$", "w")
         else:                                     # no console (e.g. remote/redirected): write a log file
-            log = open(os.path.join(tempfile.gettempdir(), "libreramen-cli.log"), "w", buffering=1)
+            log = open(os.path.join(tempfile.gettempdir(), "libreraman-cli.log"), "w", buffering=1)
             sys.stdout = sys.stderr = log
     if args and args[0] not in ("gui", "watchdog"):
         import faulthandler                       # if a command hangs, show where (stack dump after 45 s)

@@ -49,7 +49,7 @@ QString muted(const QString& html) {
 // ============================================================================================ SnrDialog
 SnrDialog::SnrDialog(Controller* ctl, MeasurePage* page, QWidget* parent)
     : QWidget(parent, Qt::Window), m_ctl(ctl), m_page(page) {
-    setWindowTitle(QStringLiteral("Acquire until S/N – LibreRamen"));
+    setWindowTitle(QStringLiteral("Acquire until S/N – LibreRaman"));
     resize(520, 360);
     auto* v = new QVBoxLayout(this);
     auto* intro = new QLabel(QStringLiteral(
@@ -165,7 +165,7 @@ void SnrDialog::onBusy(bool busy) {
 // ============================================================================================ RepeatDialog
 RepeatDialog::RepeatDialog(Controller* ctl, MeasurePage* page, QWidget* parent)
     : QWidget(parent, Qt::Window), m_ctl(ctl), m_page(page) {
-    setWindowTitle(QStringLiteral("Repeated measurements – LibreRamen"));
+    setWindowTitle(QStringLiteral("Repeated measurements – LibreRaman"));
     resize(900, 680);
     auto* v = new QVBoxLayout(this);
     auto* intro = new QLabel(QStringLiteral(

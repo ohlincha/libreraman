@@ -1,50 +1,50 @@
-# LibreRamen
+# LibreRaman
 
 Open-source, cross-platform software for Raman spectrometers that deserve a second life.
 The first supported instrument is the **Anton Paar Cora 5000** (BaySpec hardware inside, 532 nm
-and 1064 nm lasers), whose vendor software needs an old, never-updated Windows. LibreRamen talks
+and 1064 nm lasers), whose vendor software needs an old, never-updated Windows. LibreRaman talks
 to the instrument directly over USB from Linux, Windows 10/11 and macOS and adds what the
 vendor software lacks: scheduled scans, time series and calibration against common standards.
 
-*LibreRamen is an independent project, not affiliated with or endorsed by Anton Paar or BaySpec.
+*LibreRaman is an independent project, not affiliated with or endorsed by Anton Paar or BaySpec.
 Product names are used only to describe compatibility.*
 
-**Status: 0.3.9.** The C++/Qt 6 application (`cpp/`) is the main program: measurement (single spectra and
+**Status: 0.4.0.** (Called LibreRamen up to 0.3.9.) The C++/Qt 6 application (`cpp/`) is the main program: measurement (single spectra and
 time series with a laser watchdog), Data (overlay, waterfall, heat map, peak fitting, export to CSV, JCAMP-DX,
 SPC), Library (SQLite, matching), Analysis (PCA, EFA, MCR-ALS, peak trends with kinetics, computed spectra
 from Gaussian/ORCA/xtb/...), Calibration (standards wizard), a local API and an MCP server. Verified on the
 real instrument at 532 nm (Windows 11, macOS 12 and Linux); 1064 nm is untested (faulty channel on the development
 unit). See [PROTOCOL.md](PROTOCOL.md).
 
-![LibreRamen measuring a time series (simulator)](docs/screenshot-measure.png)
+![LibreRaman measuring a time series (simulator)](docs/screenshot-measure.png)
 
 ![Peak trends: fitted band areas vs time with kinetic fits](docs/screenshot-trends.png)
 
 **Documentation:** the **[quick start](docs/QUICKSTART.md)** for lab users (install, connect, laser safety, measure,
 focus, export, calibration check, troubleshooting; printable:
-[LibreRamen-QuickStart.pdf](docs/LibreRamen-QuickStart.pdf)) and the **[manual](docs/MANUAL.md)** for how to
-measure, analyse and calibrate in detail ([LibreRamen-Manual.pdf](docs/LibreRamen-Manual.pdf)). Both are also in the
+[LibreRaman-QuickStart.pdf](docs/LibreRaman-QuickStart.pdf)) and the **[manual](docs/MANUAL.md)** for how to
+measure, analyse and calibrate in detail ([LibreRaman-Manual.pdf](docs/LibreRaman-Manual.pdf)). Both are also in the
 program under **Help**. `tools/manual_pdf.sh` remakes the PDFs (pandoc and Chrome).
 
 ## Install
 
 Installers are attached to each
-[release](https://github.com/ohlincha/libreramen/releases) (and to every CI run of *Build installers*):
+[release](https://github.com/ohlincha/libreraman/releases) (and to every CI run of *Build installers*):
 
 | System | File | Notes |
 |---|---|---|
-| Windows 10 (1809+)/11, x64 | `LibreRamen-<version>-Windows-x64-Setup.exe` | also installs the USB drivers, see below |
-| macOS 12+ (Apple Silicon and Intel) | `LibreRamen-<version>-macOS-universal.dmg` | drag LibreRamen to Applications |
-| Ubuntu 24.04+, Debian 13+ | `libreramen_<version>_amd64.deb` | `sudo apt install ./libreramen_<version>_amd64.deb` |
-| other Linux (Debian 12, Ubuntu 22.04, Fedora, …) | `LibreRamen-<version>-Linux-x86_64.AppImage` | `chmod +x` and run; udev rule see below |
+| Windows 10 (1809+)/11, x64 | `LibreRaman-<version>-Windows-x64-Setup.exe` | also installs the USB drivers, see below |
+| macOS 12+ (Apple Silicon and Intel) | `LibreRaman-<version>-macOS-universal.dmg` | drag LibreRaman to Applications |
+| Ubuntu 24.04+, Debian 13+ | `libreraman_<version>_amd64.deb` | `sudo apt install ./libreraman_<version>_amd64.deb` |
+| other Linux (Debian 12, Ubuntu 22.04, Fedora, …) | `LibreRaman-<version>-Linux-x86_64.AppImage` | `chmod +x` and run; udev rule see below |
 
-Every package contains the program `LibreRamen` and the command line `LibreRamenCLI`
-(Windows: both in the installation folder; macOS: `LibreRamen.app/Contents/MacOS/LibreRamenCLI`;
-Linux: `/usr/bin`). `LibreRamen --sim` starts with the simulator instead of the instrument.
+Every package contains the program `LibreRaman` and the command line `LibreRamanCLI`
+(Windows: both in the installation folder; macOS: `LibreRaman.app/Contents/MacOS/LibreRamanCLI`;
+Linux: `/usr/bin`). `LibreRaman --sim` starts with the simulator instead of the instrument.
 
 ### Windows
 
-Run `LibreRamen-<version>-Windows-x64-Setup.exe` and accept
+Run `LibreRaman-<version>-Windows-x64-Setup.exe` and accept
 the administrator prompt: it also installs the USB drivers. The instrument's USB devices need Microsoft's generic WinUSB
 driver; the installer binds it with [libwdi](https://github.com/pbatard/libwdi)'s `wdi-simple`
 (the library behind Zadig), so nothing has to be downloaded separately:
@@ -56,29 +56,29 @@ driver; the installer binds it with [libwdi](https://github.com/pbatard/libwdi)'
 - the MCP2200 (`04D8:00DF`, ARM button and compartment) uses Windows' own driver.
 
 If the instrument was not connected during installation, or Windows Update later puts Prolific's driver
-back, use **Instrument → Repair USB drivers…** (or *Start menu → LibreRamen → Repair USB drivers*).
-A log is kept in `%ProgramData%\LibreRamen\drivers.log`. After this, the vendor software no longer
+back, use **Instrument → Repair USB drivers…** (or *Start menu → LibreRaman → Repair USB drivers*).
+A log is kept in `%ProgramData%\LibreRaman\drivers.log`. After this, the vendor software no longer
 works on that PC.
 
 ### macOS
 
 The app is not notarised (no paid Apple developer account), so macOS refuses the first start: open
 *System Settings → Privacy & Security* and click **Open Anyway** (macOS 15), or right-click the app → **Open**
-(macOS 12–14). Alternatively: `xattr -dr com.apple.quarantine /Applications/LibreRamen.app`. LibreRamen uses macOS's own
+(macOS 12–14). Alternatively: `xattr -dr com.apple.quarantine /Applications/LibreRaman.app`. LibreRaman uses macOS's own
 USB and serial drivers; nothing else is installed.
 
 ### Linux
 
-The `.deb` installs a udev rule (`/usr/lib/udev/rules.d/70-libreramen.rules`) that gives the logged-in user
+The `.deb` installs a udev rule (`/usr/lib/udev/rules.d/70-libreraman.rules`) that gives the logged-in user
 access to the spectrometers and the ARM button; the I/O board's serial port needs membership in the `dialout`
 group (`sudo usermod -aG dialout $USER`, then log in again). With the AppImage, install the rule yourself:
 `sudo cp 70-cora.rules /etc/udev/rules.d/ && sudo udevadm control --reload && sudo udevadm trigger`.
-The AppImage's command line program is in the image: `./LibreRamen-*.AppImage --appimage-extract`, then
-`squashfs-root/usr/bin/LibreRamenCLI`.
+The AppImage's command line program is in the image: `./LibreRaman-*.AppImage --appimage-extract`, then
+`squashfs-root/usr/bin/LibreRamanCLI`.
 
 ### From source
 
-LibreRamen is built with CMake and Qt 6, see [cpp/README.md](cpp/README.md).
+LibreRaman is built with CMake and Qt 6, see [cpp/README.md](cpp/README.md).
 
 The full feature plan is in [docs/SPECIFICATION.md](docs/SPECIFICATION.md).
 
@@ -91,17 +91,17 @@ No vendor drivers are needed on Linux.
 
 ## Command line
 
-`LibreRamenCLI` drives the instrument without the window (add `--json` for machine-readable output,
+`LibreRamanCLI` drives the instrument without the window (add `--json` for machine-readable output,
 `--sim` for the simulator):
 
 ```
-LibreRamenCLI status                       # armed? compartment? spectrometers?
-LibreRamenCLI init                         # vendor-style start-up (no laser)
-LibreRamenCLI dark -e 1                    # dark frame, laser off
-LibreRamenCLI acquire -e 1 -n 3 -o s.csv   # 532 nm: 3 x 1 s, background-subtracted
-LibreRamenCLI series -e 1 -n 1 --interval 10 --count 60 --background once
-LibreRamenCLI shutdown                     # like the vendor's Shutdown
-LibreRamenCLI --remote ...                 # talk to the running application
+LibreRamanCLI status                       # armed? compartment? spectrometers?
+LibreRamanCLI init                         # vendor-style start-up (no laser)
+LibreRamanCLI dark -e 1                    # dark frame, laser off
+LibreRamanCLI acquire -e 1 -n 3 -o s.csv   # 532 nm: 3 x 1 s, background-subtracted
+LibreRamanCLI series -e 1 -n 1 --interval 10 --count 60 --background once
+LibreRamanCLI shutdown                     # like the vendor's Shutdown
+LibreRamanCLI --remote ...                 # talk to the running application
 ```
 
 `--ini BS_Device_Settings.ini` loads the factory calibration of your own instrument (copy the file
@@ -109,7 +109,7 @@ from the vendor software's `BS_System` folder); without it, the development unit
 
 ## Laser safety
 
-LibreRamen only switches the laser on when the instrument is **armed** (the ARM button on the
+LibreRaman only switches the laser on when the instrument is **armed** (the ARM button on the
 instrument). The instrument's own interlock cuts
 the laser when the sample compartment is open. *Focus* mode (laser on continuously while the sample distance is
 set) also runs with the compartment open when the lid-open accessory is attached, with a red warning: wear laser
@@ -121,10 +121,10 @@ The program ships with a library of **reference standards**: the ASTM E1840 set 
 naphthalene, polystyrene, sulfur, paracetamol, benzonitrile, toluene/acetonitrile, indene), common
 solvents (CCl₄, CHCl₃, CH₂Cl₂, toluene, benzene, acetonitrile, acetone, ethanol, methanol, isopropanol,
 DMSO, ethylene glycol) and solids (silicon, diamond, calcite, anatase, rutile, PTFE, BaSO₄).
-`LibreRamenCLI standards` lists them. Measure one or more of whatever your lab has and fit:
+`LibreRamanCLI standards` lists them. Measure one or more of whatever your lab has and fit:
 
 ```
-LibreRamenCLI calibrate --standard chloroform --standard ethanol     # guided, live
+LibreRamanCLI calibrate --standard chloroform --standard ethanol     # guided, live
 ```
 
 The program finds the peaks, matches them to the reference bands, fits a new pixel → Raman shift

@@ -23,14 +23,14 @@ private slots:
         qunsetenv("APPIMAGE");
     }
     void entryText() {
-        const QString t = desktop::entryText(QStringLiteral("/usr/bin/LibreRamen"), QStringLiteral("/x/icon.png"));
+        const QString t = desktop::entryText(QStringLiteral("/usr/bin/LibreRaman"), QStringLiteral("/x/icon.png"));
         QVERIFY(t.startsWith(QStringLiteral("[Desktop Entry]\n")));
-        QVERIFY(t.contains(QStringLiteral("\nExec=/usr/bin/LibreRamen\n")));
+        QVERIFY(t.contains(QStringLiteral("\nExec=/usr/bin/LibreRaman\n")));
         QVERIFY(t.contains(QStringLiteral("\nIcon=/x/icon.png\n")));
-        QVERIFY(t.contains(QStringLiteral("\nStartupWMClass=LibreRamen\n")));
+        QVERIFY(t.contains(QStringLiteral("\nStartupWMClass=LibreRaman\n")));
         // a path with a space is quoted (AppImage in "My Programs")
-        const QString q = desktop::entryText(QStringLiteral("/home/a/My Programs/LibreRamen.AppImage"), {});
-        QVERIFY(q.contains(QStringLiteral("\nExec=\"/home/a/My Programs/LibreRamen.AppImage\"\n")));
+        const QString q = desktop::entryText(QStringLiteral("/home/a/My Programs/LibreRaman.AppImage"), {});
+        QVERIFY(q.contains(QStringLiteral("\nExec=\"/home/a/My Programs/LibreRaman.AppImage\"\n")));
     }
     void createLauncher() {
         QDir(m_home.path()).mkpath(QStringLiteral("Desktop"));

@@ -1,21 +1,22 @@
-// Command line (Python: libreramen/__main__.py). Same commands, options and output lines:
-//   LibreRamenCLI status | init | dark [-e 1] [-n 1]
-//   LibreRamenCLI acquire [-e 1] [-n 1] [--channel 532|1064] [--power 50] [-o file.csv]
-//   LibreRamenCLI series  [-e 1] [-n 1] --interval 10 --count 12 [--background each|once] [-o file.csv]
-//   LibreRamenCLI shutdown                     (vendor Shutdown: USB, OFF)
-//   LibreRamenCLI drivers                      (Windows: repair the USB drivers, elevated)
-//   LibreRamenCLI gui [--sim]                  (starts the LibreRamen application)
-//   LibreRamenCLI watchdog --port P --parent PID   (also: --watchdog ..., as started by WatchdogClient)
-//   LibreRamenCLI calibrate --standard chloroform [--standard ethanol ...] [-e 1 -n 5] [--degree 3]
+// Command line (Python: libreraman/__main__.py). Same commands, options and output lines:
+//   LibreRamanCLI status | init | dark [-e 1] [-n 1]
+//   LibreRamanCLI acquire [-e 1] [-n 1] [--channel 532|1064] [--power 50] [-o file.csv]
+//   LibreRamanCLI series  [-e 1] [-n 1] --interval 10 --count 12 [--background each|once] [-o file.csv]
+//   LibreRamanCLI shutdown                     (vendor Shutdown: USB, OFF)
+//   LibreRamanCLI drivers                      (Windows: repair the USB drivers, elevated)
+//   LibreRamanCLI gui [--sim]                  (starts the LibreRaman application)
+//   LibreRamanCLI watchdog --port P --parent PID   (also: --watchdog ..., as started by WatchdogClient)
+//   LibreRamanCLI calibrate --standard chloroform [--standard ethanol ...] [-e 1 -n 5] [--degree 3]
 //         (measures each standard in turn, asking you to swap samples and press ARM)
-//   LibreRamenCLI calibrate --standard chloroform --from chcl3.csv ...   (offline, from saved spectra)
-//   LibreRamenCLI standards                    (list the reference standards)
+//   LibreRamanCLI calibrate --standard chloroform --from chcl3.csv ...   (offline, from saved spectra)
+//   LibreRamanCLI standards                    (list the reference standards)
 // Options: --ini BS_Device_Settings.ini (calibration; default: built-in values of the development unit);
 //          --sim: use the simulator (its ARM button is pressed for you), --speed: simulator time factor.
 //          --json: machine-readable result on stdout (status, dark, acquire, series, standards; messages go to
 //          stderr), exit code 0 ok, 1 error, 2 usage, 130 stopped.
-//   LibreRamenCLI --remote COMMAND ...         talks to the running application (remote.h; --remote -h)
+//   LibreRamanCLI --remote COMMAND ...         talks to the running application (remote.h; --remote -h)
 // selftest needs the GUI port and is not available yet.
+#include "core/legacyname.h"
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QDir>
@@ -95,16 +96,16 @@ const QStringList COMMANDS = {"gui",    "selftest",  "watchdog",  "status",   "i
                               "series", "calibrate", "standards", "shutdown", "drivers", "computed"};
 
 const char* USAGE =
-    "usage: libreramen [-h] [-e EXPOSURE] [-n AVERAGES] [--channel {532,1064}] [--power POWER]\n"
+    "usage: libreraman [-h] [-e EXPOSURE] [-n AVERAGES] [--channel {532,1064}] [--power POWER]\n"
     "                  [--interval INTERVAL] [--count COUNT] [--background {each,once}] [--ini INI]\n"
     "                  [-o OUTPUT] [--standard STANDARD] [--from FROM_FILES] [--degree DEGREE] [--sim]\n"
     "                  [--speed SPEED] [--screenshot SCREENSHOT] [--port PORT] [--parent PARENT] [--json]\n"
     "                  {gui,selftest,watchdog,status,init,dark,acquire,series,calibrate,standards,shutdown,drivers,computed}\n"
-    "       libreramen --remote COMMAND ...   (the running application; --remote -h for help)\n";
+    "       libreraman --remote COMMAND ...   (the running application; --remote -h for help)\n";
 
 [[noreturn]] void usageError(const QString& msg) {
     std::fputs(USAGE, stderr);
-    std::fputs(("libreramen: error: " + msg + "\n").toUtf8().constData(), stderr);
+    std::fputs(("libreraman: error: " + msg + "\n").toUtf8().constData(), stderr);
     std::exit(2);
 }
 
@@ -211,8 +212,8 @@ Args parse(const QStringList& argv) {
 
 QString guiExecutable() {
     const QString dir = QCoreApplication::applicationDirPath();
-    for (const QString& p : {dir + "/LibreRamen.exe", dir + "/../LibreRamen.exe", dir + "/LibreRamen",
-                             dir + "/LibreRamen.app/Contents/MacOS/LibreRamen"})
+    for (const QString& p : {dir + "/LibreRaman.exe", dir + "/../LibreRaman.exe", dir + "/LibreRaman",
+                             dir + "/LibreRaman.app/Contents/MacOS/LibreRaman"})
         if (QFileInfo(p).isFile() && QFileInfo(p).isExecutable()) return QDir::cleanPath(p);
     return {};
 }
@@ -520,6 +521,8 @@ int showComputed(const Args& a) {
 
 int main(int argc, char** argv) {
     QCoreApplication app(argc, argv);
+    lr::legacy::env();                                  // carried over from LibreRamen (<= 0.3.9)
+    lr::legacy::configDir();
     const QStringList args = app.arguments().mid(1);
     if (lr::watchdog::isWatchdogCall(args)) {           // started by WatchdogClient
         const int code = lr::watchdog::runFromArgs(args.mid(1));
@@ -557,7 +560,7 @@ int main(int argc, char** argv) {
             std::optional<int> code;
             while (!(code = proc->poll())) QThread::msleep(500);
             out("driver set-up finished (code " + QString::number(*code) +
-                "); details in %ProgramData%\\LibreRamen\\drivers.log");
+                "); details in %ProgramData%\\LibreRaman\\drivers.log");
             return *code;
         } catch (const lr::Error& e) {
             out(QString("error: ") + QString::fromUtf8(e.what()));
@@ -567,7 +570,7 @@ int main(int argc, char** argv) {
     if (a.cmd == "gui") {
         const QString exe = guiExecutable();
         if (exe.isEmpty()) {
-            out("error: the LibreRamen application was not found next to " + QCoreApplication::applicationFilePath());
+            out("error: the LibreRaman application was not found next to " + QCoreApplication::applicationFilePath());
             return 1;
         }
         QStringList extra;

@@ -36,8 +36,8 @@
 #include <windows.h>
 #endif
 
-#ifndef LIBRERAMEN_VERSION
-#define LIBRERAMEN_VERSION "dev"
+#ifndef LIBRERAMAN_VERSION
+#define LIBRERAMAN_VERSION "dev"
 #endif
 
 namespace lr::library {
@@ -322,14 +322,14 @@ struct Library::Impl {
             exec(q);
         };
         if (from == 0) {
-            put("format", "LibreRamen spectral library");
+            put("format", "LibreRaman spectral library");
             put("created", nowIso());
-            put("created_by", QStringLiteral("LibreRamen %1").arg(LIBRERAMEN_VERSION));
+            put("created_by", QStringLiteral("LibreRaman %1").arg(LIBRERAMAN_VERSION));
         }
         const QString hist = scalar("SELECT value FROM info WHERE key = 'schema_history'").toString();
         put("schema_history", (hist.isEmpty() ? QString() : hist + "; ") +
-                                  QStringLiteral("%1->%2 %3 (LibreRamen %4)").arg(from).arg(m.size()).arg(nowIso(),
-                                                                                                   LIBRERAMEN_VERSION));
+                                  QStringLiteral("%1->%2 %3 (LibreRaman %4)").arg(from).arg(m.size()).arg(nowIso(),
+                                                                                                   LIBRERAMAN_VERSION));
         tx.commit();
         version = int(m.size());
     }
@@ -566,7 +566,7 @@ void Library::open(const QString& path, OpenMode mode, bool create) {
 
     d->network = isNetworkPath(abs);
     d->readOnly = mode == OpenMode::ReadOnly;
-    d->conn = QStringLiteral("libreramen-library-%1").arg(++g_connections);
+    d->conn = QStringLiteral("libreraman-library-%1").arg(++g_connections);
     d->db = QSqlDatabase::addDatabase("QSQLITE", d->conn);
     d->db.setDatabaseName(abs);
     QString opts = QStringLiteral("QSQLITE_BUSY_TIMEOUT=%1").arg(d->network ? 15000 : 5000);
@@ -581,18 +581,18 @@ void Library::open(const QString& path, OpenMode mode, bool create) {
     try {
         QSqlQuery q(d->db);
         if (!q.exec("PRAGMA user_version") || !q.next())
-            fail(QStringLiteral("%1 is not a LibreRamen library (%2)")
+            fail(QStringLiteral("%1 is not a LibreRaman library (%2)")
                      .arg(QDir::toNativeSeparators(abs), q.lastError().text()));
         d->version = q.value(0).toInt();
         q.finish();                     // an active statement keeps a read transaction open
         if (d->version > kSchemaVersion)
-            fail(QStringLiteral("the library %1 was written by a newer LibreRamen (schema %2; this version reads up "
+            fail(QStringLiteral("the library %1 was written by a newer LibreRaman (schema %2; this version reads up "
                                 "to %3)").arg(QDir::toNativeSeparators(abs)).arg(d->version).arg(kSchemaVersion));
         if (d->version == 0) {          // new file, or some other SQLite database
             const int tables = d->scalar("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table'"
                                          " AND name NOT LIKE 'sqlite_%'").toInt();
             if (tables > 0)
-                fail(QStringLiteral("%1 is an SQLite file but not a LibreRamen library")
+                fail(QStringLiteral("%1 is an SQLite file but not a LibreRaman library")
                          .arg(QDir::toNativeSeparators(abs)));
         }
         d->exec("PRAGMA foreign_keys = ON");
@@ -847,7 +847,7 @@ qint64 Library::addSpectrum(const fileio::DataSpectrum& sp0, Entry meta) {
     if (!meta2.isEmpty() && !e.provenance.contains("metadata")) e.provenance.insert("metadata", meta2);
     if (!sp.source.isEmpty() && !e.provenance.contains("file")) e.provenance.insert("file", sp.source);
     if (!e.provenance.contains("added"))
-        e.provenance.insert("added", QStringLiteral("%1, LibreRamen %2").arg(nowIso(), LIBRERAMEN_VERSION));
+        e.provenance.insert("added", QStringLiteral("%1, LibreRaman %2").arg(nowIso(), LIBRERAMAN_VERSION));
     if (e.spectra.empty()) e.spectra.push_back({0, QStringLiteral("raw"), false, x, y});
     if (e.peaks.empty()) e.peaks = autoPeaks(x, y);
     return add(std::move(e));
@@ -1079,7 +1079,7 @@ Entry entryFromRruff(const RruffSpectrum& r) {
     if (!r.url.isEmpty()) e.provenance.insert("url", r.url);
     if (!r.owner.isEmpty()) e.provenance.insert("owner", r.owner);
     if (!r.sourceName.isEmpty()) e.provenance.insert("sample_source", r.sourceName);
-    e.provenance.insert("imported", QStringLiteral("%1, LibreRamen %2").arg(nowIso(), LIBRERAMEN_VERSION));
+    e.provenance.insert("imported", QStringLiteral("%1, LibreRaman %2").arg(nowIso(), LIBRERAMAN_VERSION));
     e.spectra.push_back({0, r.processed ? QStringLiteral("RRUFF processed") : QStringLiteral("RRUFF raw"),
                          r.processed, r.x, r.y});
     e.peaks = autoPeaks(r.x, r.y);
@@ -1194,7 +1194,7 @@ void writeBandList(const QString& path, const std::vector<BandListEntry>& entrie
     if (!f.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
         fail(QStringLiteral("cannot write %1").arg(QDir::toNativeSeparators(path)));
     QTextStream o(&f);
-    o << "# LibreRamen band list (name,band;band;... in cm-1; optional :relative strength)\n";
+    o << "# LibreRaman band list (name,band;band;... in cm-1; optional :relative strength)\n";
     QString cls, ref, lic;
     for (const auto& b : entries) {
         if (b.cls != cls) o << "# class: " << (cls = b.cls) << "\n";
@@ -1247,13 +1247,13 @@ void createDemo(Library& lib, bool withStandards) {
             }
         e.source = Source::Own;
         e.sourceId = QStringLiteral("simulator:%1").arg(s.first);
-        e.licence = QStringLiteral("LibreRamen demo data (MIT), recorded on the development Cora 5000");
+        e.licence = QStringLiteral("LibreRaman demo data (MIT), recorded on the development Cora 5000");
         e.laserNm = defaultCalibration().channels.at(532).laser_nm;
         e.conditions = QStringLiteral("532 nm, counts per second, dark subtracted");
-        e.op = QStringLiteral("LibreRamen");
+        e.op = QStringLiteral("LibreRaman");
         e.notes = QStringLiteral("Demo entry generated from the simulator recordings (resource simulator.bin).");
         e.tags = QStringList{"demo"};
-        e.provenance.insert("generator", QStringLiteral("library::createDemo, LibreRamen %1").arg(LIBRERAMEN_VERSION));
+        e.provenance.insert("generator", QStringLiteral("library::createDemo, LibreRaman %1").arg(LIBRERAMAN_VERSION));
         e.provenance.insert("calibration", QStringLiteral("factory (built-in), S/N %1").arg(defaultCalibration().serial));
         auto [x, y] = simulatorSpectrum(s.first);
         e.peaks = autoPeaks(x, y);
@@ -1271,7 +1271,7 @@ void createDemo(Library& lib, bool withStandards) {
         e.source = Source::Literature;
         e.sourceId = st.source == "ASTM" ? QStringLiteral("ASTM E1840 (as commonly quoted)")
                                          : QStringLiteral("literature values");
-        e.licence = QStringLiteral("LibreRamen standards table (MIT); band positions are factual reference values");
+        e.licence = QStringLiteral("LibreRaman standards table (MIT); band positions are factual reference values");
         e.notes = st.note;
         e.tags = st.aka;
         e.tags << "standard";
@@ -1314,7 +1314,7 @@ std::vector<Entry> referenceSet() {
                             (so["covers"].toString().isEmpty() ? QString() : QStringLiteral(" (") + so["covers"].toString() + ')');
             }
             if (!src.isEmpty()) e.sourceId = src.first().toObject()["doi_or_url"].toString();
-            e.licence = o["licence"].toString(QStringLiteral("Band positions from the cited literature (factual data); compiled for LibreRamen (MIT)"));
+            e.licence = o["licence"].toString(QStringLiteral("Band positions from the cited literature (factual data); compiled for LibreRaman (MIT)"));
             QString notes = o["notes"].toString();
             if (!o["rruff_id"].toString().isEmpty())
                 notes += QStringLiteral("\nRRUFF: %1 (import from rruff.info yourself; not redistributable)").arg(o["rruff_id"].toString());
@@ -1322,7 +1322,7 @@ std::vector<Entry> referenceSet() {
             e.notes = notes.trimmed();
             e.provenance.insert("reference_key", set + ':' + e.name);
             e.provenance.insert("reference_set", set);
-            e.provenance.insert("generator", QStringLiteral("LibreRamen reference library v%1").arg(kReferenceVersion));
+            e.provenance.insert("generator", QStringLiteral("LibreRaman reference library v%1").arg(kReferenceVersion));
             for (const QJsonValue& pv : o["peaks"].toArray()) {
                 const QJsonObject p = pv.toObject();
                 e.peaks.push_back({p["position"].toDouble(), p["intensity"].toDouble(), p["width"].toDouble(),

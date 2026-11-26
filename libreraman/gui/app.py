@@ -1,7 +1,7 @@
 """
-LibreRamen main window: status strip, side bar with the main areas, and the Measure dashboard.
+LibreRaman main window: status strip, side bar with the main areas, and the Measure dashboard.
 
-Run:  python3 -m libreramen gui [--sim]
+Run:  python3 -m libreraman gui [--sim]
 """
 
 import os
@@ -380,7 +380,7 @@ class MeasurePage(QWidget):
         g.setVerticalSpacing(4)
         self.sample = QLineEdit("sample")
         self.sample.setPlaceholderText("sample name (used in file names)")
-        self.folder = QLineEdit(os.path.join(os.path.expanduser("~"), "Documents", "LibreRamen",
+        self.folder = QLineEdit(os.path.join(os.path.expanduser("~"), "Documents", "LibreRaman",
                                              time.strftime("%Y-%m-%d")))
         self.folder.setVisible(False)                  # holds the full path
         self.folder_label = ElidedLabel()
@@ -802,7 +802,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.ctl = ctl
         self.info = {}
-        self.setWindowTitle(f"LibreRamen {__version__}")
+        self.setWindowTitle(f"LibreRaman {__version__}")
         self.setMinimumSize(1000, 640)
         self.fit_to_screen()
         central = QWidget()
@@ -842,7 +842,7 @@ class MainWindow(QMainWindow):
                  Placeholder("Library", "Spectral library (open databases, literature, your own spectra) and matching."),
                  Placeholder("Analysis", "PCA, EFA, OPA, SIMPLISMA, MCR-ALS, NNLS; comparison with computed spectra."),
                  Placeholder("Calibration", "Calibration against reference standards (wizard), quick checks, history. "
-                                            "Already available on the command line: python3 -m libreramen calibrate")]
+                                            "Already available on the command line: python3 -m libreraman calibrate")]
         side_css = ("QToolButton { border: none; border-left: 4px solid transparent; padding: 8px 6px; "
                     "text-align: left; color: #3a3f47; font-size: 11pt; } "
                     "QToolButton:hover { background: rgba(0,0,0,0.05); } "
@@ -930,7 +930,7 @@ class MainWindow(QMainWindow):
         """Windows: run the installer's driver script elevated, then reconnect."""
         from .. import windrivers
         if self.ctl.is_busy:
-            QMessageBox.information(self, "LibreRamen", "Stop the running measurement first.")
+            QMessageBox.information(self, "LibreRaman", "Stop the running measurement first.")
             return
         if self.ctl.inst is not None and not self.ctl.simulated:
             try:
@@ -942,7 +942,7 @@ class MainWindow(QMainWindow):
         try:
             proc = windrivers.repair()
         except RuntimeError as e:
-            QMessageBox.warning(self, "LibreRamen", str(e))
+            QMessageBox.warning(self, "LibreRaman", str(e))
             return
         self.add_log("Installing USB drivers…")
         timer = QTimer(self)
@@ -962,14 +962,14 @@ class MainWindow(QMainWindow):
 
     def on_error(self, msg):
         self.add_log("ERROR: " + msg.splitlines()[0])
-        QMessageBox.warning(self, "LibreRamen", msg.split("\nTraceback")[0])
+        QMessageBox.warning(self, "LibreRaman", msg.split("\nTraceback")[0])
 
     def on_status(self, st):
         self.strip.update_status(st, self.info)
         if st.get("connection") != "connected" and self.measure.ready:
             self.measure.set_ready(False)
         laser = st.get("laser_on")
-        self.setWindowTitle(("● LASER ON – " if laser else "") + f"LibreRamen {__version__}")
+        self.setWindowTitle(("● LASER ON – " if laser else "") + f"LibreRaman {__version__}")
         self.sim_bar.setVisible(bool(st.get("simulated")))
 
     def on_connected(self, info):
@@ -1005,7 +1005,7 @@ def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     pg.setConfigOptions(antialias=True)
     app = QApplication.instance() or QApplication([sys.argv[0]])
-    app.setApplicationName("LibreRamen")
+    app.setApplicationName("LibreRaman")
     app.setStyleSheet("QToolTip { max-width: 340px; padding: 4px; }")     # long tooltips wrap
     from .icon import app_icon
     app.setWindowIcon(app_icon())

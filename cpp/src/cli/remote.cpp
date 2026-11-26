@@ -14,8 +14,8 @@
 namespace lr::cli {
 
 const char* const REMOTE_USAGE =
-    "usage: LibreRamenCLI --remote COMMAND [options] [--json] [--api-file FILE]\n"
-    "Talks to the running LibreRamen application (local API on 127.0.0.1).\n"
+    "usage: LibreRamanCLI --remote COMMAND [options] [--json] [--api-file FILE]\n"
+    "Talks to the running LibreRaman application (local API on 127.0.0.1).\n"
     "commands:\n"
     "  status                    instrument state (connection, ARM, laser, busy, remote control)\n"
     "  info                      software, instrument and API information\n"
@@ -32,7 +32,7 @@ const char* const REMOTE_USAGE =
     "  peaks ID [--snr X]        peaks of a spectrum (with the GUI's processing settings)\n"
     "  standards                 reference standards\n"
     "  log [--since N]           log lines of the application\n"
-    "--json prints the API's JSON reply. Exit codes: 0 ok, 1 failed, 2 usage, 3 LibreRamen not running,\n"
+    "--json prints the API's JSON reply. Exit codes: 0 ok, 1 failed, 2 usage, 3 LibreRaman not running,\n"
     "4 not allowed (token / remote measurements off), 5 busy, 130 stopped.\n";
 
 namespace {
@@ -53,7 +53,7 @@ void printJson(const QJsonValue& v) {
 
 [[noreturn]] void usage(const QString& msg) {
     std::fputs(REMOTE_USAGE, stderr);
-    std::fputs(("LibreRamenCLI: error: " + msg + "\n").toUtf8().constData(), stderr);
+    std::fputs(("LibreRamanCLI: error: " + msg + "\n").toUtf8().constData(), stderr);
     std::exit(kUsage);
 }
 

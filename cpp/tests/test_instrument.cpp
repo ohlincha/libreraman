@@ -195,7 +195,7 @@ private slots:
         QTemporaryDir dir;
         QVERIFY(dir.isValid());
         qputenv("XDG_CONFIG_HOME", dir.path().toUtf8());
-        QCOMPARE(calib::configDir(), QDir::cleanPath(dir.path() + "/libreramen"));
+        QCOMPARE(calib::configDir(), QDir::cleanPath(dir.path() + "/libreraman"));
         QVERIFY(!calib::load(532, "99002169").has_value());       // no file
         QVERIFY(QDir().mkpath(calib::configDir()));
         QFile f(calib::configDir() + "/calibration_99002169_532.json");

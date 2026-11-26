@@ -1,4 +1,4 @@
-LibreRamen is MIT-licensed (see LICENSE). The installers and packages also contain or use:
+LibreRaman is MIT-licensed (see LICENSE). The installers and packages also contain or use:
 
 - Qt 6 (https://www.qt.io), (c) The Qt Company Ltd and other contributors, used under the GNU LGPL v3.
   Source: https://download.qt.io/official_releases/qt/ . The Qt libraries are shipped as separate,

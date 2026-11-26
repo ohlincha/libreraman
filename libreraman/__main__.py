@@ -1,16 +1,16 @@
 """
 Command line:
-  python3 -m libreramen gui [--sim]                      (graphical program)
-  python3 -m libreramen status
-  python3 -m libreramen init
-  python3 -m libreramen dark    [-e 1]                         (laser off)
-  python3 -m libreramen acquire [-e 1] [-n 1] [--channel 532|1064] [--power 50] [-o file.csv]
-  python3 -m libreramen series  [-e 1] [-n 1] --interval 10 --count 12 [-o file.csv]
-  python3 -m libreramen calibrate --standard chloroform [--standard ethanol ...] [-e 1 -n 5]
+  python3 -m libreraman gui [--sim]                      (graphical program)
+  python3 -m libreraman status
+  python3 -m libreraman init
+  python3 -m libreraman dark    [-e 1]                         (laser off)
+  python3 -m libreraman acquire [-e 1] [-n 1] [--channel 532|1064] [--power 50] [-o file.csv]
+  python3 -m libreraman series  [-e 1] [-n 1] --interval 10 --count 12 [-o file.csv]
+  python3 -m libreraman calibrate --standard chloroform [--standard ethanol ...] [-e 1 -n 5]
         (measures each standard in turn, asking you to swap samples and press ARM)
-  python3 -m libreramen calibrate --standard chloroform --from chcl3.csv ...   (offline, from saved spectra)
-  python3 -m libreramen standards                              (list the reference standards)
-  python3 -m libreramen shutdown                               (vendor Shutdown: USB, OFF)
+  python3 -m libreraman calibrate --standard chloroform --from chcl3.csv ...   (offline, from saved spectra)
+  python3 -m libreraman standards                              (list the reference standards)
+  python3 -m libreraman shutdown                               (vendor Shutdown: USB, OFF)
 Options: --ini BS_Device_Settings.ini (calibration; default: built-in values of the development unit)
 """
 
@@ -25,7 +25,7 @@ from .series import run_series
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog="libreramen")
+    ap = argparse.ArgumentParser(prog="libreraman")
     ap.add_argument("cmd", choices=["gui", "selftest", "watchdog", "status", "init", "dark", "acquire", "series", "calibrate", "standards", "shutdown", "drivers"])
     ap.add_argument("-e", "--exposure", type=float, default=1.0)
     ap.add_argument("-n", "--averages", type=int, default=1)
@@ -60,7 +60,7 @@ def main(argv=None):
             return 1
         while (code := proc.poll()) is None:
             time.sleep(0.5)
-        print(f"driver set-up finished (code {code}); details in %ProgramData%\\LibreRamen\\drivers.log")
+        print(f"driver set-up finished (code {code}); details in %ProgramData%\\LibreRaman\\drivers.log")
         return code
     if a.cmd == "gui":
         from .gui.app import main as gui_main

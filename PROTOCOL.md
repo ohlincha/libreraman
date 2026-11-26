@@ -1,4 +1,4 @@
-# LibreRamen – Cora 5000 USB protocol notes (from captures 2026-11-20)
+# LibreRaman – Cora 5000 USB protocol notes (from captures 2026-11-20)
 
 Captures are in `captures/`. They contain keyboard traffic, including the vendor-software logon at 09:40
 (vendor default password). Keep them out of the public repo anyway.
@@ -183,7 +183,7 @@ now uses the vendor timing (80 ms/char, VOL query, 0.4 s gap); to be verified.
 
 ## macOS (2026-11-20, Intel Mac, macOS 12.7.6)
 
-The packaged app (CI build, Qt 6.9, `LibreRamen-macOS-Intel.dmg`) works with the instrument: macOS's own drivers
+The packaged app (CI build, Qt 6.9, `LibreRaman-macOS-Intel.dmg`) works with the instrument: macOS's own drivers
 provide `/dev/cu.usbserial-*` (Prolific I/O board) and `/dev/cu.usbmodem*` (MCP2200 CDC); the MCP2200 HID
 side is accessed via IOKit (output reports with IOHIDDeviceSetReport, input reports via a CFRunLoop thread);
 the spectrometers via the bundled libusb (pip `libusb-package`). Status, initialisation, dark frames and a
@@ -193,7 +193,7 @@ the spectrometers via the bundled libusb (pip `libusb-package`). Status, initial
 
 - MCP2200: CDC COM port + HID, works with Windows' own drivers.
 - Prolific PL2303HXA: Prolific's current driver refuses the chip ("PL2303HXA PHASED OUT SINCE 2012"); writes to
-  the COM port block. LibreRamen drives the chip itself over libusb (`hardware.Pl2303Usb`) once WinUSB is bound
+  the COM port block. LibreRaman drives the chip itself over libusb (`hardware.Pl2303Usb`) once WinUSB is bound
   to it (Zadig), the same driver the spectrometers need.
 - BaySpec spectrometers: no driver ("Error") until WinUSB is installed (Zadig).
 - Bug found: `signal.SIGHUP` doesn't exist on Windows (every CLI command crashed; fixed).

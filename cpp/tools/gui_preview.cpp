@@ -1,5 +1,5 @@
 // Renders the GUI building blocks to PNG files for visual checks (not built by default:
-// cmake -DLIBRERAMEN_GUI_PREVIEW=ON). Usage: QT_QPA_PLATFORM=offscreen gui_preview [output dir]
+// cmake -DLIBRERAMAN_GUI_PREVIEW=ON). Usage: QT_QPA_PLATFORM=offscreen gui_preview [output dir]
 #include "gui/icon.h"
 #include "gui/plotwidget.h"
 #include "gui/splash.h"
@@ -258,7 +258,7 @@ int main(int argc, char** argv) {
         box.layout()->activate();
         save(box.grab().toImage(), dir, QStringLiteral("statusstrip.png"));
         ElidedLabel el;
-        el.setFullText(QStringLiteral("~/Documents/LibreRamen/2026-11-20/a/very/long/path/to/the/data/folder"));
+        el.setFullText(QStringLiteral("~/Documents/LibreRaman/2026-11-20/a/very/long/path/to/the/data/folder"));
         el.resize(220, 24);
         save(el.grab().toImage(), dir, QStringLiteral("elidedlabel.png"));
     }

@@ -147,7 +147,7 @@ private slots:
             QFile f(path);
             QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Text));
             QTextStream o(&f);
-            o << "# LibreRamen time series, started 2026-11-20T10:00:00+01:00\n# channel: 532 nm\n";
+            o << "# LibreRaman time series, started 2026-11-20T10:00:00+01:00\n# channel: 532 nm\n";
             o << "raman_shift_cm1,t=0.0s,t=10.2s,t=20.4s\n";
             for (int i = 0; i < 5; ++i) o << 100 + i << "," << i << "," << 2 * i << "," << 3 * i << "\n";
         }

@@ -108,7 +108,7 @@ private:
 
 void GuiTestSeriesPerf::initTestCase() {
     QVERIFY(m_tmp.isValid());
-    QCoreApplication::setOrganizationName(QStringLiteral("LibreRamenTest"));
+    QCoreApplication::setOrganizationName(QStringLiteral("LibreRamanTest"));
     QCoreApplication::setApplicationName(QStringLiteral("gui_test_seriesperf"));
     QSettings::setDefaultFormat(QSettings::IniFormat);
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, m_settingsDir.path());

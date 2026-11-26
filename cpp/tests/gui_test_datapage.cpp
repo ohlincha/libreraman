@@ -114,7 +114,7 @@ private slots:
 
 void GuiTestDataPage::initTestCase() {
     QStandardPaths::setTestModeEnabled(true);          // QSettings away from the user's configuration
-    QCoreApplication::setOrganizationName(QStringLiteral("LibreRamenTest"));   // Windows/macOS: QSettings
+    QCoreApplication::setOrganizationName(QStringLiteral("LibreRamanTest"));   // Windows/macOS: QSettings
     QCoreApplication::setApplicationName(QStringLiteral("gui_test_datapage")); // needs one to store anything
     theme::apply(*qApp, theme::Mode::Light);
     QVERIFY(QDir(FILES).exists());
@@ -737,13 +737,13 @@ void GuiTestDataPage::addToLibrary() {
     QVERIFY(!err.isEmpty());
 }
 
-// LIBRERAMEN_PREVIEW_DIR=dir: pictures of the peak/fit features (LIBRERAMEN_PREVIEW_SIZE=WxH, default 1300x780)
+// LIBRERAMAN_PREVIEW_DIR=dir: pictures of the peak/fit features (LIBRERAMAN_PREVIEW_SIZE=WxH, default 1300x780)
 void GuiTestDataPage::preview() {
-    const QString dir = qEnvironmentVariable("LIBRERAMEN_PREVIEW_DIR");
+    const QString dir = qEnvironmentVariable("LIBRERAMAN_PREVIEW_DIR");
     if (dir.isEmpty()) QSKIP("preview only");
     QDir().mkpath(dir);
-    const QStringList wh = qEnvironmentVariable("LIBRERAMEN_PREVIEW_SIZE", "1300x780").split('x');
-    const QString tag = qEnvironmentVariable("LIBRERAMEN_PREVIEW_TAG", "1440");
+    const QStringList wh = qEnvironmentVariable("LIBRERAMAN_PREVIEW_SIZE", "1300x780").split('x');
+    const QString tag = qEnvironmentVariable("LIBRERAMAN_PREVIEW_TAG", "1440");
     DataPage p;
     plain(p);
     p.resize(wh[0].toInt(), wh[1].toInt());

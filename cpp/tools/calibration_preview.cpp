@@ -1,5 +1,5 @@
 // Renders the Calibration area with the simulator to PNG files (visual checks; built with
-// -DLIBRERAMEN_GUI_PREVIEW=ON). Files go to a temporary XDG_CONFIG_HOME, never the user's own.
+// -DLIBRERAMAN_GUI_PREVIEW=ON). Files go to a temporary XDG_CONFIG_HOME, never the user's own.
 // Usage: QT_QPA_PLATFORM=offscreen calibration_preview [output dir] [--dark]
 #include "gui/calibrationpage.h"
 #include "gui/intensitypanel.h"
@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
     QTemporaryDir cfg;
     qputenv("XDG_CONFIG_HOME", cfg.path().toLocal8Bit());
     QApplication app(argc, argv);
-    QCoreApplication::setOrganizationName(QStringLiteral("LibreRamenPreview"));
+    QCoreApplication::setOrganizationName(QStringLiteral("LibreRamanPreview"));
     QSettings::setDefaultFormat(QSettings::IniFormat);
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, cfg.path());
     const QStringList args = app.arguments();

@@ -320,10 +320,10 @@ private slots:
             COMPARE_NUM((u->poly)(1000.0), r.poly(1000.0), 1e-9, 0, "loaded poly");
         }
         QVERIFY(!calib::load(532, "none", dir.filePath("missing.json")));
-        // default location: $XDG_CONFIG_HOME/libreramen/calibration_<serial>_<channel>.json
+        // default location: $XDG_CONFIG_HOME/libreraman/calibration_<serial>_<channel>.json
         const QByteArray old = qgetenv("XDG_CONFIG_HOME");
         qputenv("XDG_CONFIG_HOME", dir.path().toUtf8());
-        QCOMPARE(calib::configDir(), dir.path() + "/libreramen");
+        QCOMPARE(calib::configDir(), dir.path() + "/libreraman");
         const QString def = calib::save(r, 1064, "SN1");
         QCOMPARE(QFileInfo(def).fileName(), QString("calibration_SN1_1064.json"));
         QVERIFY(calib::load(1064, "SN1").has_value());

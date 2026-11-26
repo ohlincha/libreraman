@@ -68,7 +68,7 @@ constexpr char kFitMinKey[] = "data/baseline_fit_min";
 namespace {
 
 const char* OPEN_FILTER =
-    "Spectra (*.csv *.txt *.spc *.jdx *.dx *.dat);;LibreRamen / vendor CSV (*.csv);;"
+    "Spectra (*.csv *.txt *.spc *.jdx *.dx *.dat);;LibreRaman / vendor CSV (*.csv);;"
     "Vendor text (*.txt);;Galactic SPC (*.spc);;JCAMP-DX (*.jdx *.dx);;All files (*)";
 const QStringList FOLDER_SUFFIXES = {".csv", ".txt", ".spc", ".jdx", ".dx"};
 constexpr double NaN = std::numeric_limits<double>::quiet_NaN();

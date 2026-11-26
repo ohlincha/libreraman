@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Convert open reference spectra into LibreRamen reference JSON (spectra entries).
+"""Convert open reference spectra into LibreRaman reference JSON (spectra entries).
 
   make_spectra.py interphase Raman.xlsx            > ../interphase.json   (Dryad doi:10.5061/dryad.v15dv421w, CC0)
   make_spectra.py polymers Data2_processed.csv     > ../polymers.json     (OSF osf.io/7cqv4, CC BY 4.0)
   make_spectra.py rod <folder of .rod files>        > ../rod.json          (Raman Open Database, CC0)
 
 Needs openpyxl for the .xlsx. Output entries have the reference format of battery.json plus
-"spectrum": {"label", "processed", "x": [...], "y": [...]}; peak tables are picked by LibreRamen on import.
+"spectrum": {"label", "processed", "x": [...], "y": [...]}; peak tables are picked by LibreRaman on import.
 """
 import csv
 import json

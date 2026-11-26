@@ -17,6 +17,6 @@ correction* is ticked (issue #16).
   true curve and *not* this instrument's response); tungsten-halogen lamp as a blackbody (photon flux per unit
   wavenumber); a table file.
 - **Checks:** refuse saturated or S/N < 50 references; warn if F varies > 30× or covers < 1500 cm⁻¹.
-- **Files:** `~/.config/libreramen/response_<serial>_<ch>.json` (active) plus dated history copies; the
+- **Files:** `~/.config/libreraman/response_<serial>_<ch>.json` (active) plus dated history copies; the
   reference spectrum in `calibration-spectra/`. Spectra carry `# serial:` so files are matched to their instrument.
 - Unknown (2026-11-23): whether the lab has an SRM 2242 vial. Follow-up: anti-Stokes/Stokes temperature.

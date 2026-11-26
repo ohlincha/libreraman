@@ -1,4 +1,4 @@
-# LibreRamen: bind the WinUSB driver to the instrument's USB devices (run elevated).
+# LibreRaman: bind the WinUSB driver to the instrument's USB devices (run elevated).
 #
 #  - BaySpec spectrometers (BA8C:1688): always (the ID is unique to the instrument; also pre-installs
 #    the driver when the instrument is not connected).
@@ -15,10 +15,10 @@ $ErrorActionPreference = "Continue"
 $ProgressPreference = "SilentlyContinue"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $wdi = Join-Path $here "wdi-simple.exe"
-$logDir = Join-Path $env:ProgramData "LibreRamen"
+$logDir = Join-Path $env:ProgramData "LibreRaman"
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 $log = Join-Path $logDir "drivers.log"
-$work = Join-Path $env:TEMP "libreramen-drivers"
+$work = Join-Path $env:TEMP "libreraman-drivers"
 $messages = New-Object System.Collections.Generic.List[string]
 
 function Log($text) {
@@ -37,7 +37,7 @@ function Devices($vid, $prodId) {
 
 function Install($vid, $prodId, $name, $inf) {
     $dest = Join-Path $work $inf.Replace(".inf", "")
-    $wargs = @("-n", $name, "-m", "LibreRamen", "-v", "0x$vid", "-p", "0x$prodId", "-t", "0",
+    $wargs = @("-n", $name, "-m", "LibreRaman", "-v", "0x$vid", "-p", "0x$prodId", "-t", "0",
                "-f", $inf, "-d", $dest)
     Log "wdi-simple $($wargs -join ' ')"
     $out = & $wdi @wargs 2>&1 | Out-String
@@ -49,7 +49,7 @@ $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIden
     [Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $isAdmin) { Write-Output "Administrator rights are needed to install drivers."; exit 2 }
 if (-not (Test-Path $wdi)) { Write-Output "wdi-simple.exe is missing next to this script."; exit 3 }
-Log "---- driver set-up (LibreRamen)"
+Log "---- driver set-up (LibreRaman)"
 $rc = 0
 
 # Spectrometers
@@ -57,7 +57,7 @@ $bs = @(Devices "BA8C" "1688")
 if ($bs.Count -gt 0 -and -not ($bs | Where-Object { $_.Service -ne "WinUSB" })) {
     Say "Spectrometers: WinUSB already installed ($($bs.Count) device(s))."
 } else {
-    $r = Install "BA8C" "1688" "Raman spectrometer (LibreRamen)" "libreramen_spectrometer.inf"
+    $r = Install "BA8C" "1688" "Raman spectrometer (LibreRaman)" "libreraman_spectrometer.inf"
     if ($r -eq 0) {
         Say ("Spectrometers: WinUSB installed" + $(if ($bs.Count -eq 0) { " (ready for when the instrument is connected)." } else { "." }))
     } else { Say "Spectrometers: driver installation failed (code $r, see $log)."; $rc = 1 }
@@ -66,7 +66,7 @@ if ($bs.Count -gt 0 -and -not ($bs | Where-Object { $_.Service -ne "WinUSB" })) 
 # I/O board
 $pl = @(Devices "067B" "2303")
 if ($pl.Count -eq 0) {
-    Say "I/O board: not connected. Connect the instrument, switch it on, then use Instrument > Repair USB drivers in LibreRamen."
+    Say "I/O board: not connected. Connect the instrument, switch it on, then use Instrument > Repair USB drivers in LibreRaman."
 } elseif ($pl.Count -gt 1) {
     Say "I/O board: $($pl.Count) Prolific USB-serial devices are connected. Unplug the other USB-serial cables, then use Instrument > Repair USB drivers."
 } elseif ($pl[0].Service -eq "WinUSB") {
@@ -74,7 +74,7 @@ if ($pl.Count -eq 0) {
 } elseif ($pl[0].Status -eq "OK" -and $pl[0].Name -notmatch "PHASED OUT") {
     Say "I/O board: the connected Prolific device ($($pl[0].Name)) works with its own driver, so it is probably not the instrument's I/O board; left unchanged."
 } else {
-    $r = Install "067B" "2303" "Raman instrument I/O board (LibreRamen)" "libreramen_ioboard.inf"
+    $r = Install "067B" "2303" "Raman instrument I/O board (LibreRaman)" "libreraman_ioboard.inf"
     if ($r -eq 0) { Say "I/O board: WinUSB installed." }
     else { Say "I/O board: driver installation failed (code $r, see $log)."; $rc = 1 }
 }
@@ -83,6 +83,6 @@ $summary = $messages -join "`n"
 Write-Output $summary
 if (-not $Quiet) {
     Add-Type -AssemblyName System.Windows.Forms
-    [System.Windows.Forms.MessageBox]::Show($summary, "LibreRamen USB drivers") | Out-Null
+    [System.Windows.Forms.MessageBox]::Show($summary, "LibreRaman USB drivers") | Out-Null
 }
 exit $rc

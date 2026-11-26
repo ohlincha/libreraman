@@ -11,7 +11,7 @@
 //   peaks(id, entry_id -> entries ON DELETE CASCADE, position, intensity, width, label)
 //
 // Sources: own (measured by the user), rruff, literature (band lists), computed (clearly marked), vendor
-// (vendor factory libraries for the owner's own use; never redistributed). LibreRamen ships no third-party
+// (vendor factory libraries for the owner's own use; never redistributed). LibreRaman ships no third-party
 // spectra; the demo library (createDemo) is built from the simulator's own recordings.
 //
 // Files on a network drive: busy timeout, rollback journal instead of WAL (WAL needs shared memory that
@@ -129,7 +129,7 @@ public:
     std::vector<qint64> importBandList(const QString& path, const Entry& meta = {});
 
     // ---- export
-    // One entry to a file: .jdx/.dx JCAMP-DX, .txt/.csv LibreRamen CSV (spectrum + metadata incl. source and
+    // One entry to a file: .jdx/.dx JCAMP-DX, .txt/.csv LibreRaman CSV (spectrum + metadata incl. source and
     // licence); entries without spectra are written as a band list CSV.
     void exportEntry(qint64 id, const QString& path) const;
     // Copies entries into another library file (created if needed); returns the number copied.
@@ -171,7 +171,7 @@ void writeBandList(const QString& path, const std::vector<BandListEntry>& entrie
 // reference standards of standards.h as literature band lists. For tests and the demo.
 void createDemo(Library& lib, bool withStandards = true);
 
-// Reference entries shipped with LibreRamen (resources/reference/*.json): literature band positions with
+// Reference entries shipped with LibreRaman (resources/reference/*.json): literature band positions with
 // citations, as peak lists (source Literature, tag "reference", provenance "reference_key"). Adds the ones not
 // yet in `lib` and records info "reference_version"; returns how many were added. Throws lr::Error if `lib` is
 // read-only.

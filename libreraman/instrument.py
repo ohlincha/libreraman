@@ -143,7 +143,7 @@ class Cora:
             import sys
             if sys.platform == "win32":
                 from .windrivers import HINT
-                hint = (" On Windows the spectrometers need the WinUSB driver (installed by LibreRamen-Setup; "
+                hint = (" On Windows the spectrometers need the WinUSB driver (installed by LibreRaman-Setup; "
                         "the vendor software then can't use them on this PC). " + HINT)
             raise CoraError(f"spectrometer for {ch} nm did not appear on USB.{hint}")
         self.spec[ch] = s

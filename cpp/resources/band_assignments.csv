@@ -1,4 +1,4 @@
-# LibreRamen: Raman group frequencies and characteristic bands (functional groups and ion classes; specific compounds are identified with the Library)
+# LibreRaman: Raman group frequencies and characteristic bands (functional groups and ion classes; specific compounds are identified with the Library)
 # category: organic | inorganic | both ; lo/hi in cm-1 (lo = hi for a sharp characteristic band, shown as a line)
 # raman: typical Raman intensity vs = very strong, s = strong, m = medium, w = weak, var = variable
 # Ranges compiled from standard group-frequency tables (Socrates, "Infrared and Raman Characteristic Group

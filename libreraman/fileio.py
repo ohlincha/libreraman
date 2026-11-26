@@ -2,7 +2,7 @@
 Reading and writing spectra.
 
 read(path) -> list of DataSpectrum. Recognised:
-* LibreRamen CSV (single spectrum: raman_shift_cm1,intensity,signal,background; series: raman_shift_cm1,t=…)
+* LibreRaman CSV (single spectrum: raman_shift_cm1,intensity,signal,background; series: raman_shift_cm1,t=…)
 * Vendor (Cora/BaySpec) CSV and TXT ("Key:,value" header, then shift and intensity columns)
 * Galactic SPC (single or multi-file, evenly spaced or with an x array)
 * JCAMP-DX (XYDATA=(X++(Y..Y)) and XYPOINTS)
@@ -27,7 +27,7 @@ class DataSpectrum:
     y: np.ndarray                 # intensity (background-subtracted where known)
     meta: dict = field(default_factory=dict)
     source: str = ""
-    signal: np.ndarray = None     # raw laser frames (LibreRamen files)
+    signal: np.ndarray = None     # raw laser frames (LibreRaman files)
     background: np.ndarray = None
 
     def sorted(self):
@@ -215,7 +215,7 @@ def _read_jcamp(text, base, path):
 # ----------------------------------------------------------------------------- writing
 def write_csv(path, sp):
     with open(path, "w", newline="") as f:
-        f.write(f"# LibreRamen spectrum: {sp.name}\n")
+        f.write(f"# LibreRaman spectrum: {sp.name}\n")
         for k, v in sp.meta.items():
             f.write(f"# {k}: {v}\n")
         f.write("raman_shift_cm1,intensity\n")
@@ -226,7 +226,7 @@ def write_csv(path, sp):
 def write_jcamp(path, sp):
     """JCAMP-DX 5.01, XYPOINTS (works for unevenly spaced data, readable everywhere)."""
     with open(path, "w") as f:
-        f.write(f"##TITLE={sp.name}\n##JCAMP-DX=5.01\n##DATA TYPE=RAMAN SPECTRUM\n##ORIGIN=LibreRamen\n")
+        f.write(f"##TITLE={sp.name}\n##JCAMP-DX=5.01\n##DATA TYPE=RAMAN SPECTRUM\n##ORIGIN=LibreRaman\n")
         for k, v in sp.meta.items():
             f.write(f"##${k.upper().replace(' ', '_')}={v}\n")
         f.write(f"##XUNITS=1/CM\n##YUNITS=ARBITRARY UNITS\n##FIRSTX={sp.x[0]:.4f}\n##LASTX={sp.x[-1]:.4f}\n"

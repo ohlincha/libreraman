@@ -33,7 +33,7 @@ const char* kBannerOff = "Focus mode switches the laser on and keeps it on. Pres
 
 FocusWindow::FocusWindow(Controller* ctl, std::function<QString()> folder, std::function<int()> channel, QWidget* parent)
     : QWidget(parent, Qt::Window), m_ctl(ctl), m_folder(std::move(folder)), m_channel(std::move(channel)) {
-    setWindowTitle(QStringLiteral("Focus – LibreRamen"));
+    setWindowTitle(QStringLiteral("Focus – LibreRaman"));
     resize(1100, 760);
 
     m_banner = new QLabel(QString::fromUtf8(kBannerOff));

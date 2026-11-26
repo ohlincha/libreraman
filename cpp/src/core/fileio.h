@@ -2,7 +2,7 @@
 // Reading and writing spectra (Python: fileio.py).
 //
 // read(path) -> list of DataSpectrum. Recognised:
-// * LibreRamen CSV (single spectrum: raman_shift_cm1,intensity,signal,background; series: raman_shift_cm1,t=...)
+// * LibreRaman CSV (single spectrum: raman_shift_cm1,intensity,signal,background; series: raman_shift_cm1,t=...)
 // * Vendor (Cora/BaySpec) CSV and TXT ("Key:,value" header, then shift and intensity columns)
 // * Galactic SPC (single or multi-file, evenly spaced or with an x array)
 // * JCAMP-DX (XYDATA=(X++(Y..Y)) and XYPOINTS)
@@ -26,7 +26,7 @@
 //   sub-file, no directory: fnpts = 0), fexper 11 (Raman), fexp 0x80 (float32 y), fxtype 13 (Raman shift,
 //   cm-1), fytype 4 (counts; 0 = arbitrary for processed data), fztype 4 (seconds) with TORDRD when every
 //   spectrum has an elapsed time (meta "series_elapsed_s" or "time" = "t=..s"), else z = index (fztype 0,
-//   evenly spaced); fzinc = mean z step; fdate from the first spectrum; fcmnt "<title>, LibreRamen"; a log
+//   evenly spaced); fzinc = mean z step; fdate from the first spectrum; fcmnt "<title>, LibreRaman"; a log
 //   block (flogoff; 64-byte LOGSTC, then text) with the file metadata as "key=value" lines. Every sub-file:
 //   32-byte header (subexp 0x80, subindx, subtime = z, subnext = next z, subnpts for TXYXYS), then the x
 //   array (TXYXYS only) and y, float32.
@@ -48,7 +48,7 @@ struct DataSpectrum {
     Vec y;                        // intensity (background-subtracted where known)
     Meta meta;                    // ordered key/value pairs
     QString source;               // file it was read from
-    Vec signal;                   // raw laser frames (LibreRamen files); empty = not available
+    Vec signal;                   // raw laser frames (LibreRaman files); empty = not available
     Vec background;
 
     DataSpectrum& sorted();       // sort all arrays by x

@@ -2116,8 +2116,8 @@ QByteArray PlotWidget::toSvg(QSize sz, const QString& title) {
     gen.setSize(sz);
     gen.setViewBox(QRect(QPoint(0, 0), sz));
     gen.setResolution(logicalDpiX());
-    gen.setTitle(title.isEmpty() ? QStringLiteral("LibreRamen plot") : title);
-    gen.setDescription(QStringLiteral("Created by LibreRamen " LIBRERAMEN_VERSION));
+    gen.setTitle(title.isEmpty() ? QStringLiteral("LibreRaman plot") : title);
+    gen.setDescription(QStringLiteral("Created by LibreRaman " LIBRERAMAN_VERSION));
     QPainter p(&gen);
     render(p, QRectF(QPointF(0, 0), QSizeF(sz)));
     p.end();

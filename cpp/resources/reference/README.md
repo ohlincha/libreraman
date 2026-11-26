@@ -1,4 +1,4 @@
-# Reference library (shipped with LibreRamen)
+# Reference library (shipped with LibreRaman)
 
 Literature Raman band positions with citations and measured spectra from open data sets, added to the default library on first start (and to any library
 with *Library ▸ Add reference entries*). Entries are peak lists, not spectra: positions, relative intensities
@@ -21,6 +21,6 @@ Format: an array of `{name, formula, cas, cls, tags, laser_nm, peaks: [{position
 sources: [{ref, doi_or_url, covers}], rruff_id, notes, confidence}`. Bump `kReferenceVersion` in
 `src/core/library.cpp` when files change so existing default libraries receive new entries.
 
-Spectra entries carry `"spectrum": {label, processed, x, y}` and their own `"licence"`; LibreRamen picks their peak
+Spectra entries carry `"spectrum": {label, processed, x, y}` and their own `"licence"`; LibreRaman picks their peak
 tables on import. Attribution for CC BY data is kept in each entry's licence and sources. Regenerate with
 `tools/make_spectra.py` from the original downloads (not kept in the repository).

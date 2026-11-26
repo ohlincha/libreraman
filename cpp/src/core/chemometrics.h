@@ -48,7 +48,7 @@ Vec resample(const Vec& x, const Vec& y, const Vec& grid);
 // resampled (linear interpolation) onto an even grid over the range they all cover, with spacing `step`
 // (0: the median point spacing of the spectra). Throws lr::Error if the spectra have no common range.
 // Times are taken from the metadata (series column "t=12.5s", "series_elapsed_s", ISO time stamps of
-// LibreRamen spectrum files), relative to the earliest spectrum; without them, times are the indices.
+// LibreRaman spectrum files), relative to the earliest spectrum; without them, times are the indices.
 DataMatrix buildMatrix(const std::vector<fileio::DataSpectrum>& spectra, double step = 0.0);
 DataMatrix buildMatrix(const std::vector<Spectrum>& spectra, double step = 0.0);   // times from Spectrum::t
 // A time-series table as written by series.cpp / series.py ("raman_shift_cm1,t=0.0s,t=10.1s,..."), or any

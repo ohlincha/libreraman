@@ -47,7 +47,7 @@ const char* const kOnCloseKey = "instrument/onClose";
 const char* const kApiEnabledKey = "api/enabled";
 const char* const kApiPortKey = "api/port";
 const char* const kRemoteControlKey = "api/allowRemoteControl";
-const QString kTitle = QStringLiteral("LibreRamen " LIBRERAMEN_VERSION);
+const QString kTitle = QStringLiteral("LibreRaman " LIBRERAMAN_VERSION);
 }  // namespace
 
 MainWindow::MainWindow(Controller* ctl, QWidget* parent) : QMainWindow(parent), m_ctl(ctl) {
@@ -280,7 +280,7 @@ void MainWindow::buildMenus() {
     if (desktop::supported()) {
         auto* d = new QAction(QStringLiteral("Put an icon on the desktop"), m);
         m->insertAction(a, d);
-        d->setToolTip(QStringLiteral("A LibreRamen launcher in the desktop folder"));
+        d->setToolTip(QStringLiteral("A LibreRaman launcher in the desktop folder"));
         connect(d, &QAction::triggered, this, [this] {
             const QString err = desktop::createLauncher();
             if (err.isEmpty())
@@ -313,7 +313,7 @@ void MainWindow::buildMenus() {
     m_shutDownAction->setToolTip(QStringLiteral("Laser off, then switch the instrument off (vendor shutdown)"));
     m_shutDownAction->setEnabled(false);
     m->addSeparator();
-    QMenu* onClose = m->addMenu(QStringLiteral("When closing LibreRamen"));
+    QMenu* onClose = m->addMenu(QStringLiteral("When closing LibreRaman"));
     auto* grp = new QActionGroup(onClose);
     const std::pair<const char*, OnClose> choices[] = {{"Ask", OnClose::Ask},
                                                        {"Shut the instrument down", OnClose::ShutDown},
@@ -332,7 +332,7 @@ void MainWindow::buildMenus() {
     m_apiAction = m->addAction(QStringLiteral("Local API (command line, scripts, AI agents)"));
     m_apiAction->setCheckable(true);
     m_apiAction->setChecked(m_api->isRunning());
-    m_apiAction->setToolTip(QStringLiteral("HTTP/JSON API on 127.0.0.1 for LibreRamenCLI --remote, Python and LibreRamenMCP"));
+    m_apiAction->setToolTip(QStringLiteral("HTTP/JSON API on 127.0.0.1 for LibreRamanCLI --remote, Python and LibreRamanMCP"));
     connect(m_apiAction, &QAction::triggered, this, [this](bool on) {
         QSettings().setValue(QLatin1String(kApiEnabledKey), on);
         if (on)
@@ -440,7 +440,7 @@ void MainWindow::stopApi() {
 }
 
 void MainWindow::updateRemoteTile() {
-    if (!m_api->isRunning() && !m_apiError.isEmpty()) {     // e.g. another LibreRamen owns the port
+    if (!m_api->isRunning() && !m_apiError.isEmpty()) {     // e.g. another LibreRaman owns the port
         m_strip->setRemote(StatusStrip::Remote::Off, QStringLiteral("not started"));
         m_strip->remoteTile()->setToolTip(QStringLiteral("Local API not started: ") + m_apiError);
     } else if (!m_api->isRunning()) {
@@ -459,7 +459,7 @@ void MainWindow::updateRemoteTile() {
 void MainWindow::onError(const QString& msg) {
     addLog(QStringLiteral("ERROR: ") + msg.section(QLatin1Char('\n'), 0, 0));
     if (dialogsEnabled())
-        QMessageBox::warning(this, QStringLiteral("LibreRamen"), msg);
+        QMessageBox::warning(this, QStringLiteral("LibreRaman"), msg);
 }
 
 void MainWindow::updateTitle(bool laserOn) {
@@ -564,7 +564,7 @@ void MainWindow::loadFactoryCalibration() {
 void MainWindow::repairDrivers() {
     if (m_ctl->isBusy()) {
         if (dialogsEnabled())
-            QMessageBox::information(this, QStringLiteral("LibreRamen"), QStringLiteral("Stop the running measurement first."));
+            QMessageBox::information(this, QStringLiteral("LibreRaman"), QStringLiteral("Stop the running measurement first."));
         return;
     }
     if (m_ctl->instrument() && !m_ctl->simulated()) {
@@ -577,7 +577,7 @@ void MainWindow::repairDrivers() {
     } catch (const lr::Error& e) {
         addLog(QStringLiteral("Driver repair: ") + QString::fromUtf8(e.what()));
         if (dialogsEnabled())
-            QMessageBox::warning(this, QStringLiteral("LibreRamen"), QString::fromUtf8(e.what()));
+            QMessageBox::warning(this, QStringLiteral("LibreRaman"), QString::fromUtf8(e.what()));
         return;
     }
     addLog(QStringLiteral("Installing USB drivers…"));
@@ -640,7 +640,7 @@ void MainWindow::closeEvent(QCloseEvent* e) {
             QPushButton* leave = q.addButton(QStringLiteral("Leave on"), QMessageBox::RejectRole);
             q.addButton(QMessageBox::Cancel);
             q.setDefaultButton(leave);
-            auto* remember = new QCheckBox(QStringLiteral("Remember my choice (Instrument > When closing LibreRamen)"));
+            auto* remember = new QCheckBox(QStringLiteral("Remember my choice (Instrument > When closing LibreRaman)"));
             q.setCheckBox(remember);
             q.exec();
             if (q.clickedButton() != down && q.clickedButton() != leave) {

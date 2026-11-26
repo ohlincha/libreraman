@@ -364,7 +364,7 @@ QWidget* CalibrationPage::buildWizard() {
             measureStandard(m_samplesTable->item(row, 0)->data(Qt::UserRole).toString());
     });
     m_btnLoad = new QPushButton(QStringLiteral("Load file…"));
-    m_btnLoad->setToolTip(QStringLiteral("<p>Use a saved spectrum of the selected standard instead (LibreRamen CSV "
+    m_btnLoad->setToolTip(QStringLiteral("<p>Use a saved spectrum of the selected standard instead (LibreRaman CSV "
                                          "with one row per detector pixel).</p>"));
     connect(m_btnLoad, &QPushButton::clicked, this, [this] {
         const int row = m_samplesTable->currentRow();
@@ -850,7 +850,7 @@ QString CalibrationPage::reminderText() const {
         return {};
     const std::optional<UserCalibration> user = userCalibration();
     if (!user)
-        return QStringLiteral("The %1 nm channel has not been calibrated with LibreRamen yet.").arg(channel());
+        return QStringLiteral("The %1 nm channel has not been calibrated with LibreRaman yet.").arg(channel());
     const auto days = calstore::daysSince(user->date);
     if (days && *days > limit)
         return QStringLiteral("Last calibration of the %1 nm channel was %2 days ago (reminder after %3 days).")
@@ -1282,7 +1282,7 @@ std::optional<CalibrationPage::Sample> CalibrationPage::readSampleFile(const QSt
         const int n = pixelCount();
         if (int(d.y.size()) != n)
             throw lr::Error(QStringLiteral("%1 points, but the %2 nm detector has %3 pixels: calibration needs the "
-                                           "spectrum as measured (one row per pixel, e.g. a LibreRamen CSV).")
+                                           "spectrum as measured (one row per pixel, e.g. a LibreRaman CSV).")
                                 .arg(d.y.size()).arg(channel()).arg(n).toStdString());
         Sample s;
         s.standard = name;

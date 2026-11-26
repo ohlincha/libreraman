@@ -86,17 +86,17 @@ private slots:
         HelpBrowser* b = w.browser();
         b->setOpenExternally(false);
         QCOMPARE(b->externalUrl(QUrl(QStringLiteral("MANUAL.md"))), QUrl());
-        QCOMPARE(b->externalUrl(QUrl(QStringLiteral("https://github.com/ohlincha/libreramen/releases"))),
-                 QUrl(QStringLiteral("https://github.com/ohlincha/libreramen/releases")));
+        QCOMPARE(b->externalUrl(QUrl(QStringLiteral("https://github.com/ohlincha/libreraman/releases"))),
+                 QUrl(QStringLiteral("https://github.com/ohlincha/libreraman/releases")));
         QCOMPARE(b->externalUrl(QUrl(QStringLiteral("../README.md#install"))),
-                 QUrl(QStringLiteral("https://github.com/ohlincha/libreramen/blob/main/README.md#install")));
+                 QUrl(QStringLiteral("https://github.com/ohlincha/libreraman/blob/main/README.md#install")));
         emit b->anchorClicked(QUrl(QStringLiteral("MANUAL.md")));           // the manual, in the same window
         QCOMPARE(b->source(), HelpWindow::docUrl(HelpWindow::Doc::Manual));
         QVERIFY(b->document()->toPlainText().contains(QStringLiteral("Focus mode")));
         QVERIFY(b->isBackwardAvailable());
         emit b->anchorClicked(QUrl(QStringLiteral("../README.md")));         // not built in: the web browser
         QCOMPARE(b->source(), HelpWindow::docUrl(HelpWindow::Doc::Manual));
-        QCOMPARE(b->lastExternal(), QUrl(QStringLiteral("https://github.com/ohlincha/libreramen/blob/main/README.md")));
+        QCOMPARE(b->lastExternal(), QUrl(QStringLiteral("https://github.com/ohlincha/libreraman/blob/main/README.md")));
     }
 
     void helpMenu() {

@@ -1,6 +1,6 @@
-# LibreRamen – C++ implementation
+# LibreRaman – C++ implementation
 
-The C++/Qt 6 implementation of LibreRamen, and the only maintained one. The Python package in `../libreramen`
+The C++/Qt 6 implementation of LibreRaman, and the only maintained one. The Python package in `../libreraman`
 was the first version, developed against the real instrument; it is **frozen** (not maintained, not shipped).
 The golden files in `tests/golden/` were generated from it and are kept as they are; new or changed behaviour
 is tested in C++ only (issue #8).
@@ -20,8 +20,8 @@ cmake --build build && ctest --test-dir build --output-on-failure
 macOS: `brew install qt libusb hidapi eigen`. Windows: Qt from the online installer or aqtinstall,
 `vcpkg install libusb hidapi eigen3`.
 
-`LibreRamen --selftest` starts the GUI against the simulator (offscreen), takes and saves one spectrum and
-exits 0/1 (for checking packaged apps). Widget tests are `tests/gui_test_*.cpp` (linked with the `libreramen_gui` object library = `src/gui`
+`LibreRaman --selftest` starts the GUI against the simulator (offscreen), takes and saves one spectrum and
+exits 0/1 (for checking packaged apps). Widget tests are `tests/gui_test_*.cpp` (linked with the `libreraman_gui` object library = `src/gui`
 without `main.cpp`; run offscreen). `gui_test_seriesperf` runs a fast 150-spectrum series against the simulator
 with the Measure, Data and Analysis areas visible and fails if the event loop is blocked for 1 s or more (it
 prints the ping latencies; a Debug build on a desktop: ~100-300 ms, before the throttling ~130 s). Fast series
@@ -31,7 +31,7 @@ in place), the Data/Analysis areas get measured spectra in batches (`SpectrumBat
 while visible and at most 1/5 of the GUI thread's time, on activation when hidden), the Data area caches
 processed spectra and draws at most 24 curves in the overlay, and the Analysis area runs PCA/EFA of large data
 sets in a background thread and measures peak trends incrementally (only new spectra; peak fits of many
-spectra in a background thread). `-DLIBRERAMEN_GUI_PREVIEW=ON` builds `gui_preview`, which renders
+spectra in a background thread). `-DLIBRERAMAN_GUI_PREVIEW=ON` builds `gui_preview`, which renders
 plots, status strip, splash and icon to PNG files for visual checks:
 `QT_QPA_PLATFORM=offscreen ./gui_preview <dir>`; `datapage_preview <dir>` renders the Data area
 (overlay, stacked, difference, fit, heat map), `calibration_preview <dir> [--dark]` the Calibration area
@@ -39,10 +39,10 @@ with the simulator (temporary config dir), `computed_preview <dir>` the computed
 simulator's measured CCl4/chloroform. `tests/golden/computed/` holds synthetic, truncated output excerpts
 written after each program's layout (not real runs). `tests/test_cli.cpp` runs the command line program against
 `tests/golden/cli.json` (output of the Python CLI).
-The Analysis page renders itself to `analysis-*.png` when `LIBRERAMEN_PREVIEW_DIR=<dir>` is set for
+The Analysis page renders itself to `analysis-*.png` when `LIBRERAMAN_PREVIEW_DIR=<dir>` is set for
 `gui_test_analysispage`.
 
-Development machine without root: `source ~/opt/libreramen-env.sh` and add `$LR_CMAKE_ARGS` to the
+Development machine without root: `source ~/opt/libreraman-env.sh` and add `$LR_CMAKE_ARGS` to the
 cmake configure line (Qt from aqtinstall, -dev packages extracted with `dpkg -x`).
 
 ## Packaging
@@ -55,16 +55,16 @@ PNGs), so no generated icons are kept in the repository.
 
 | | install layout | CI job → artifact |
 |---|---|---|
-| Linux | `bin/LibreRamen`, `bin/LibreRamenCLI`, desktop entry `io.github.ohlincha.libreramen`, hicolor icons, AppStream metainfo, udev rule in `lib/udev/rules.d` | `cpp-linux-deb`: `cpack` → `libreramen_<v>_amd64.deb` (Ubuntu 24.04 build, Depends via dpkg-shlibdeps + Qt plugin packages, postinst reloads udev), tested by `apt install` in clean Ubuntu 24.04 and Debian 13 containers; `cpp-appimage`: linuxdeploy + Qt plugin on Ubuntu 22.04 → `LibreRamen-<v>-Linux-x86_64.AppImage`, tested in Debian 12 |
-| macOS | `LibreRamen.app` with `Info.plist` (`packaging/macos`), `LibreRamen.icns`, CLI in `Contents/MacOS` | `cpp-macos`: universal (arm64 + x86_64), deployment target 12.0, libusb/hidapi built from source for it, `macdeployqt`, ad-hoc signature, `packaging/macos/check-bundle.sh` (architectures, minimum macOS, no outside libraries), dmg with Applications link → `LibreRamen-<v>-macOS-universal.dmg`; `cpp-macos-intel` runs it on Intel |
-| Windows | `LibreRamen.exe`, `LibreRamenCLI.exe` (icon + version resource), `libusb-1.0.dll`, `hidapi.dll`, MSVC runtime DLLs (app-local) | `cpp-windows`: MSVC Release, `windeployqt` for both programs, Inno Setup (`installer/windows/libreramen.iss /DCpp`, with the WinUSB driver set-up from `wdi.yml`) → `LibreRamen-<v>-Windows-x64-Setup.exe`; installed silently and tested |
+| Linux | `bin/LibreRaman`, `bin/LibreRamanCLI`, desktop entry `io.github.ohlincha.libreraman`, hicolor icons, AppStream metainfo, udev rule in `lib/udev/rules.d` | `cpp-linux-deb`: `cpack` → `libreraman_<v>_amd64.deb` (Ubuntu 24.04 build, Depends via dpkg-shlibdeps + Qt plugin packages, postinst reloads udev), tested by `apt install` in clean Ubuntu 24.04 and Debian 13 containers; `cpp-appimage`: linuxdeploy + Qt plugin on Ubuntu 22.04 → `LibreRaman-<v>-Linux-x86_64.AppImage`, tested in Debian 12 |
+| macOS | `LibreRaman.app` with `Info.plist` (`packaging/macos`), `LibreRaman.icns`, CLI in `Contents/MacOS` | `cpp-macos`: universal (arm64 + x86_64), deployment target 12.0, libusb/hidapi built from source for it, `macdeployqt`, ad-hoc signature, `packaging/macos/check-bundle.sh` (architectures, minimum macOS, no outside libraries), dmg with Applications link → `LibreRaman-<v>-macOS-universal.dmg`; `cpp-macos-intel` runs it on Intel |
+| Windows | `LibreRaman.exe`, `LibreRamanCLI.exe` (icon + version resource), `libusb-1.0.dll`, `hidapi.dll`, MSVC runtime DLLs (app-local) | `cpp-windows`: MSVC Release, `windeployqt` for both programs, Inno Setup (`installer/windows/libreraman.iss /DCpp`, with the WinUSB driver set-up from `wdi.yml`) → `LibreRaman-<v>-Windows-x64-Setup.exe`; installed silently and tested |
 
-Each package is tested with `LibreRamenCLI standards` and `LibreRamen selftest` (GUI + simulator; offscreen,
+Each package is tested with `LibreRamanCLI standards` and `LibreRaman selftest` (GUI + simulator; offscreen,
 and xcb/cocoa where available) without the build machine's Qt in the environment. Only Qt's SQLite driver is
-shipped (the other SQL drivers are removed from the CI Qt before deploying). `LibreRamen` and `LibreRamenCLI`
+shipped (the other SQL drivers are removed from the CI Qt before deploying). `LibreRaman` and `LibreRamanCLI`
 both handle `--watchdog` (the program starts itself as its laser watchdog), so both must stay real executables
 of the package (no wrapper scripts). Local `.deb` with a Qt not from the distribution:
-`-DLIBRERAMEN_DEB_SHLIBDEPS=OFF` (fixed Depends list), then `cpack` in the build directory.
+`-DLIBRERAMAN_DEB_SHLIBDEPS=OFF` (fixed Depends list), then `cpack` in the build directory.
 
 ## Layout and module map
 
@@ -92,13 +92,13 @@ of the package (no wrapper scripts). Local `.deb` with a Qt not from the distrib
 | `src/cli/` | `__main__.py` | command line (`remote.*`: `--remote` client of the local API) |
 | `src/core/httpserver.*`, `apiclient.*` | – | small HTTP/1.1 server; API file, blocking API client |
 | `src/gui/apiserver.*` | – | local HTTP/JSON API of the running application (see below) |
-| `src/mcp/` | – | `LibreRamenMCP`, MCP server for AI agents (client of the local API) |
+| `src/mcp/` | – | `LibreRamanMCP`, MCP server for AI agents (client of the local API) |
 | `src/gui/controller.*` | `gui/controller.py` | instrument jobs in a worker thread, status poll, watchdog, saving |
 | `src/gui/mainwindow.*`, `measurepage.*` | `gui/app.py` | main window, Measure area |
 | `src/gui/page.h`, `pages.cpp` | – | `Page` interface and registry of the side-bar areas (Data, Library, …) |
 | `src/gui/datapage.*` | `gui/data.py` | Data area: open/compare/process/fit/export spectra |
 | `src/gui/calibrationpage.*`, `calibrationstore.*` | `calibrate.py` (CLI flow) | Calibration area: wizard, quick check, history, instrument log, reminder |
-| `src/gui/main.cpp` | `gui/app.py` main, `selftest.py` | `LibreRamen [--sim] [--screenshot F]`, `--selftest`, `--watchdog` |
+| `src/gui/main.cpp` | `gui/app.py` main, `selftest.py` | `LibreRaman [--sim] [--screenshot F]`, `--selftest`, `--watchdog` |
 | `src/gui/` (other) | `gui/` | plot widget, theme, status strip, splash, icon |
 | `src/gui/computedpanel.*` | – (new in C++) | computed spectra panel (for the Analysis page) |
 | `tests/` | – | QtTest; `tests/golden/` holds outputs of the Python reference |
@@ -109,11 +109,11 @@ The running application owns the instrument; scripts and AI agents talk to it th
 (`src/gui/apiserver.h`), so all clients share one state and one set of safety rules
 (docs/SPECIFICATION.md sections 2, 4, 8).
 
-- **Where**: `http://127.0.0.1:8765` (loopback only; port: QSettings `api/port` or `LibreRamen --api-port N`;
+- **Where**: `http://127.0.0.1:8765` (loopback only; port: QSettings `api/port` or `LibreRaman --api-port N`;
   off: Instrument > *Local API*, or `--no-api`). Every request needs `Authorization: Bearer <token>`; the token
   is new at every start and is written with the port to the **API file** (user-only permissions):
-  `~/.config/LibreRamen/api.json` (Linux), `~/Library/Preferences/LibreRamen/api.json` (macOS),
-  `%LOCALAPPDATA%\LibreRamen\api.json` (Windows), or `$LIBRERAMEN_API_FILE`. Clients read it.
+  `~/.config/LibreRaman/api.json` (Linux), `~/Library/Preferences/LibreRaman/api.json` (macOS),
+  `%LOCALAPPDATA%\LibreRaman\api.json` (Windows), or `$LIBRERAMAN_API_FILE`. Clients read it.
 - **Permissions**: remote clients are **read-only** until someone at the instrument checks Instrument >
   *Allow remote measurements* (remembered; the REMOTE tile of the status strip shows OFF / READ-ONLY / CONTROL).
   Without it `POST /measure` and `/series` answer 403. Even with it the laser needs ARM on the instrument
@@ -144,43 +144,43 @@ The running application owns the instrument; scripts and AI agents talk to it th
 Errors are `{"error":"…","status":N}` (401 token, 403 not allowed, 404, 405, 409 busy, 400 invalid).
 
 ```
-curl -H "Authorization: Bearer $(jq -r .token ~/.config/LibreRamen/api.json)" http://127.0.0.1:8765/status
+curl -H "Authorization: Bearer $(jq -r .token ~/.config/LibreRaman/api.json)" http://127.0.0.1:8765/status
 ```
 
-**Command line** (`LibreRamenCLI --remote -h`): `status`, `info`, `measure [-e S] [-n N] [--sample X]
+**Command line** (`LibreRamanCLI --remote -h`): `status`, `info`, `measure [-e S] [-n N] [--sample X]
 [--background each|none] [--prebleach S] [--channel 532|1064] [--no-wait]`, `series --interval S (--count N |
 --duration S) [--fast]`, `progress`, `job ID`, `stop`, `spectra`, `spectrum ID [-o file.csv]`, `peaks ID`,
 `standards`, `log [--since N]`; `--json` prints the API's JSON. Exit codes: 0 ok, 1 failed, 2 usage,
-3 LibreRamen not running, 4 not allowed (token / remote measurements off), 5 busy, 130 stopped. The local
+3 LibreRaman not running, 4 not allowed (token / remote measurements off), 5 busy, 130 stopped. The local
 commands (`status`, `dark`, `acquire`, `series`, `standards`) also take `--json` (result on stdout, messages
 on stderr).
 
-**Python** (standard library only): `libreramen/client.py`
+**Python** (standard library only): `libreraman/client.py`
 
 ```python
-from libreramen.client import Client
+from libreraman.client import Client
 c = Client()                                   # reads the API file
 job = c.measure(exposure_s=1, averages=3, sample="CCl4")
 print(c.peaks(job["spectra"][-1]))
 c.stop()
 ```
 
-**MCP server for AI agents**: `LibreRamenMCP` (stdio, JSON-RPC 2.0; protocol versions 2024-11-05 to
+**MCP server for AI agents**: `LibreRamanMCP` (stdio, JSON-RPC 2.0; protocol versions 2024-11-05 to
 2025-06-18) is a client of the same API (origin `API (mcp)`), so the permissions above apply. Tools: `status`,
 `acquire`, `run_series`, `series_progress`, `get_job`, `stop`, `list_spectra`, `get_spectrum` (`max_points`),
 `find_peaks`, `process`, `list_standards`, `get_log`. Register it with Claude Code:
 
 ```
-claude mcp add libreramen -- /path/to/LibreRamenMCP
+claude mcp add libreraman -- /path/to/LibreRamanMCP
 ```
 
 or in any MCP client's JSON configuration (Claude Desktop `claude_desktop_config.json`, etc.):
 
 ```json
-{ "mcpServers": { "libreramen": { "command": "/path/to/LibreRamenMCP" } } }
+{ "mcpServers": { "libreraman": { "command": "/path/to/LibreRamanMCP" } } }
 ```
 
-(`--api-file FILE` if the application uses a non-default API file.) LibreRamen must be running; without
+(`--api-file FILE` if the application uses a non-default API file.) LibreRaman must be running; without
 *Allow remote measurements* the agent can read status and spectra but not switch the laser on.
 
 ## Conventions

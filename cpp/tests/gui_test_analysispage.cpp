@@ -1,6 +1,6 @@
 // Widget test for the Analysis page: data in, every method run, results and plots exported. Runs offscreen.
 //
-// With LIBRERAMEN_PREVIEW_DIR set, preview() also renders the page to analysis-*.png in that folder, using a
+// With LIBRERAMAN_PREVIEW_DIR set, preview() also renders the page to analysis-*.png in that folder, using a
 // mixture time series made from the simulator's recorded spectra (for looking at the layout).
 #include "gui/analysispage.h"
 #include "gui/plotwidget.h"
@@ -117,7 +117,7 @@ private slots:
             QFile f(path);
             QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Text));
             QTextStream o(&f);
-            o << "# LibreRamen time series\nraman_shift_cm1,t=0.0s,t=5.0s,t=10.0s\n";
+            o << "# LibreRaman time series\nraman_shift_cm1,t=0.0s,t=5.0s,t=10.0s\n";
             for (int i = 0; i < 50; ++i) o << 100 + i << "," << i << "," << 2 * i << "," << i * i << "\n";
         }
         page.setPreprocess({});                           // the region 300-1900 would exclude this file
@@ -325,8 +325,8 @@ private slots:
     }
 
     void preview() {
-        const QString out = qEnvironmentVariable("LIBRERAMEN_PREVIEW_DIR");
-        if (out.isEmpty()) QSKIP("set LIBRERAMEN_PREVIEW_DIR to render analysis-*.png");
+        const QString out = qEnvironmentVariable("LIBRERAMAN_PREVIEW_DIR");
+        if (out.isEmpty()) QSKIP("set LIBRERAMAN_PREVIEW_DIR to render analysis-*.png");
         QDir().mkpath(out);
         // mixture time series from the simulator's recorded spectra: ethanol -> chloroform -> CCl4
         const SimData& sim = simulatorData();

@@ -3,7 +3,7 @@
 // instrument's distance knob) can be turned while watching the Raman signal: the strongest band's height and the
 // total Raman signal, each with the best value so far, a trend of the last minute and the live spectrum.
 // Nothing is saved unless "Keep this spectrum" is pressed. The lid-open accessory most likely makes the lid read
-// closed, so the lid may be open without LibreRamen knowing: a red warning stays on whenever the laser is on.
+// closed, so the lid may be open without LibreRaman knowing: a red warning stays on whenever the laser is on.
 // The laser goes off on Stop, Esc, closing the window, or after the set time.
 #include <QDateTime>
 #include <QElapsedTimer>

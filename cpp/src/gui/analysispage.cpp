@@ -2729,7 +2729,7 @@ bool AnalysisPage::exportPlot(const QString& name, const QString& path) {
 }
 
 bool AnalysisPage::exportCsv(const QString& kind, const QString& path) {
-    const QStringList common{QStringLiteral("LibreRamen analysis: %1").arg(kind),
+    const QStringList common{QStringLiteral("LibreRaman analysis: %1").arg(kind),
                              QStringLiteral("spectra: %1, points: %2").arg(m_data.rows()).arg(m_data.cols())};
     auto none = [this](const QString& what) {
         m_error = QStringLiteral("No %1 results to export").arg(what);

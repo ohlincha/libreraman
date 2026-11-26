@@ -14,7 +14,7 @@
 namespace lr::windrivers {
 
 const QString HINT = QStringLiteral(
-    "Use Instrument > Repair USB drivers in LibreRamen (or Start menu > LibreRamen > Repair USB drivers) "
+    "Use Instrument > Repair USB drivers in LibreRaman (or Start menu > LibreRaman > Repair USB drivers) "
     "with the instrument connected and switched on.");
 
 QString scriptPath() {
@@ -59,7 +59,7 @@ std::unique_ptr<ElevatedProcess> repair(bool quiet) {
 #if defined(Q_OS_WIN)
     const QString script = scriptPath();
     if (script.isEmpty())
-        throw Error("The driver installer was not found. Install LibreRamen with LibreRamen-Setup.exe "
+        throw Error("The driver installer was not found. Install LibreRaman with LibreRaman-Setup.exe "
                     "(the zip version has no driver installer).");
     const QString params = QString("-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%1\"").arg(script) +
                            (quiet ? QStringLiteral(" -Quiet") : QString());

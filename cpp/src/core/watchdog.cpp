@@ -34,7 +34,7 @@ namespace lr::watchdog {
 namespace {
 
 void appendLog(const QString& msg) {
-    QFile f(QDir::homePath() + "/.libreramen-watchdog.log");
+    QFile f(QDir::homePath() + "/.libreraman-watchdog.log");
     if (!f.open(QIODevice::Append | QIODevice::Text)) return;
     f.write((QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss ") + msg + "\n").toUtf8());
 }

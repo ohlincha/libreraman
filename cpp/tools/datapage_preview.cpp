@@ -1,6 +1,6 @@
 // Renders the Data area (DataPage) to PNG files for visual checks (not built by default:
-// cmake -DLIBRERAMEN_GUI_PREVIEW=ON). Usage: QT_QPA_PLATFORM=offscreen datapage_preview [output dir]
-// Writes synthetic spectra as LibreRamen CSV files into a temporary folder and opens them like a user.
+// cmake -DLIBRERAMAN_GUI_PREVIEW=ON). Usage: QT_QPA_PLATFORM=offscreen datapage_preview [output dir]
+// Writes synthetic spectra as LibreRaman CSV files into a temporary folder and opens them like a user.
 #include "gui/datapage.h"
 #include "gui/plotwidget.h"
 #include "gui/theme.h"

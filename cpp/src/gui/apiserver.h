@@ -1,7 +1,7 @@
 #pragma once
 // Local HTTP/JSON API of the running application (docs/SPECIFICATION.md sections 2, 4, 8). The GUI owns the
 // instrument (Controller); the API is one more client of the same Controller, so the GUI, the command line
-// (`LibreRamenCLI --remote`), Python (libreramen/client.py) and AI agents (LibreRamenMCP) all see the same
+// (`LibreRamanCLI --remote`), Python (libreraman/client.py) and AI agents (LibreRamanMCP) all see the same
 // state and the same safety rules.
 //
 // Security and laser safety:
@@ -13,7 +13,7 @@
 //    still needs ARM on the instrument and a closed compartment (Instrument::acquire());
 //  * POST /stop is always allowed (stop + laser off at once);
 //  * limits (exposure, scans, pre-bleach, series) are checked here for remote clients, as the GUI's fields do;
-//  * every remote action is logged with its origin "API (<client>)" (the X-LibreRamen-Client header; the
+//  * every remote action is logged with its origin "API (<client>)" (the X-LibreRaman-Client header; the
 //    command line sends "cli", the MCP server "mcp", Python "python").
 //
 // Endpoints (all JSON; errors: {"error": "...", "status": N}):
@@ -69,7 +69,7 @@ public:
     ~ApiServer() override;                    // stop()
 
     // Listens on 127.0.0.1:port (0 = any free port) and writes the API file. false and *error on failure
-    // (e.g. the port is used by another LibreRamen); the API file is then left alone.
+    // (e.g. the port is used by another LibreRaman); the API file is then left alone.
     bool start(quint16 port, const QString& apiFile, QString* error = nullptr);
     void stop();                              // stops listening and removes the API file
     bool isRunning() const;

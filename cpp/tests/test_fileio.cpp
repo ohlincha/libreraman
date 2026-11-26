@@ -147,7 +147,9 @@ private slots:
         fileio::writeJcamp(dir.filePath("written.jdx"), a);
         fileio::writeTable(dir.filePath("table.csv"), {a, b}, 7.5);
         for (const char* fn : {"written.csv", "written.jdx", "table.csv"}) {
-            const QByteArray mine = contents(dir.filePath(fn)), ref = contents(QDir(filesDir()).filePath(fn));
+            const QByteArray mine = contents(dir.filePath(fn));
+            QByteArray ref = contents(QDir(filesDir()).filePath(fn));
+            ref.replace("LibreRamen", "LibreRaman");        // golden files predate the rename (0.4.0)
             QVERIFY2(!ref.isEmpty(), qPrintable(fn));
             QCOMPARE(mine, ref);
         }
@@ -201,7 +203,7 @@ private slots:
         const QStringList lines = text.split('\n', Qt::SkipEmptyParts);
         // LINK block, then one block per spectrum, then the LINK block's END
         QCOMPARE(lines.mid(0, 6), QStringList({"##TITLE=CCl4 time series", "##JCAMP-DX=5.01", "##DATA TYPE=LINK",
-                                               "##BLOCKS=3", "##ORIGIN=LibreRamen", "##OWNER="}));
+                                               "##BLOCKS=3", "##ORIGIN=LibreRaman", "##OWNER="}));
         QCOMPARE(lines[6], QString("##LONGDATE=2026/11/20 18:21:00 +0100"));
         QCOMPARE(lines[7], QString("##$SAMPLE=CCl4"));
         QCOMPARE(lines[9], QString("##TITLE=CCl4 t=0 s"));
@@ -288,7 +290,7 @@ private slots:
         QCOMPARE(uchar(b[29]), uchar(4));                   // fytype: counts
         QCOMPARE(uchar(b[30]), uchar(4));                   // fztype: seconds
         QCOMPARE(u32(b, 32), quint32(2026u << 20 | 11u << 16 | 20u << 11 | 18u << 6 | 21u));   // fdate
-        QCOMPARE(b.mid(88, 30), QByteArray("CCl4 time series, LibreRamen") + QByteArray(2, '\0'));   // fcmnt
+        QCOMPARE(b.mid(88, 30), QByteArray("CCl4 time series, LibreRaman") + QByteArray(2, '\0'));   // fcmnt
         QCOMPARE(u32(b, 248), quint32(data));               // flogoff
         QCOMPARE(f32(b, 312), 2.5);                         // fzinc
         for (int i = 0; i < npts; ++i) QCOMPARE(f32(b, 512 + 4 * i), asFloat(in[0].x[size_t(i)]));

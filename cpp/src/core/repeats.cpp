@@ -305,7 +305,7 @@ void writeSummary(const QString& path, const std::vector<Spectrum>& spectra, con
     if (!f.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
         throw Error(("cannot write " + path).toStdString());
     QTextStream o(&f);
-    o << "# LibreRamen repeated measurements of one vial, "
+    o << "# LibreRaman repeated measurements of one vial, "
       << (spectra.empty() ? QString() : iso(spectra.back().t)) << "\n";
     o << "# sample: " << sample << "\n";
     o << "# repeats: " << repeatsText(r) << "\n";

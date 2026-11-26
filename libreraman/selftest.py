@@ -1,6 +1,6 @@
 """Self-test: start the GUI against the simulator, take one spectrum, quit. Exit code 0 = OK.
 
-Run: python3 -m libreramen selftest   (the build runs this on the packaged app)
+Run: python3 -m libreraman selftest   (the build runs this on the packaged app)
 """
 import os
 import sys
@@ -9,8 +9,8 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PySide6.QtCore import QTimer  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
-from libreramen.gui import app as A  # noqa: E402
-from libreramen.gui.controller import Controller  # noqa: E402
+from libreraman.gui import app as A  # noqa: E402
+from libreraman.gui.controller import Controller  # noqa: E402
 
 
 def main():
@@ -28,7 +28,7 @@ def main():
         ctl.sim("arm")
         win.measure.exposure.setValue(0.2)
         win.measure.averages.setValue(1)
-        win.measure.folder.setText(os.path.join(os.path.expanduser("~"), "libreramen-smoke"))
+        win.measure.folder.setText(os.path.join(os.path.expanduser("~"), "libreraman-smoke"))
         win.measure.measure_once()
 
 

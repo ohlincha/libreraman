@@ -77,9 +77,9 @@ private:
 
 void GuiTestCalibrationPage::initTestCase() {
     QVERIFY(m_cfg.isValid());
-    qputenv("XDG_CONFIG_HOME", m_cfg.path().toLocal8Bit());       // calib::configDir() -> <tmp>/libreramen
-    QCOMPARE(lr::calib::configDir(), QDir::cleanPath(m_cfg.path() + QStringLiteral("/libreramen")));
-    QCoreApplication::setOrganizationName(QStringLiteral("LibreRamenTest"));
+    qputenv("XDG_CONFIG_HOME", m_cfg.path().toLocal8Bit());       // calib::configDir() -> <tmp>/libreraman
+    QCOMPARE(lr::calib::configDir(), QDir::cleanPath(m_cfg.path() + QStringLiteral("/libreraman")));
+    QCoreApplication::setOrganizationName(QStringLiteral("LibreRamanTest"));
     QCoreApplication::setApplicationName(QStringLiteral("gui_test_calibrationpage"));
     QSettings::setDefaultFormat(QSettings::IniFormat);
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, m_settingsDir.path());

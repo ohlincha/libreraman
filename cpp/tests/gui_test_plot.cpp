@@ -654,7 +654,7 @@ void GuiTestPlot::statusStrip() {
 
 void GuiTestPlot::elidedLabel() {
     ElidedLabel l;
-    l.setFullText(QStringLiteral("/home/user/Documents/LibreRamen/2026-11-20/a/long/path"));
+    l.setFullText(QStringLiteral("/home/user/Documents/LibreRaman/2026-11-20/a/long/path"));
     l.resize(120, 20);
     l.show();                                           // hidden widgets get their resize event on show
     QVERIFY(l.text().startsWith(QChar(0x2026)));       // elided at the front

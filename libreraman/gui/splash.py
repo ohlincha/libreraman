@@ -56,7 +56,7 @@ def logo_pixmap(w=560, h=340):
     f.setPointSize(30)
     f.setBold(True)
     p.setFont(f)
-    p.drawText(QRectF(255, 70, 300, 50), Qt.AlignLeft, "LibreRamen")
+    p.drawText(QRectF(255, 70, 300, 50), Qt.AlignLeft, "LibreRaman")
     f.setPointSize(11)
     f.setBold(False)
     p.setFont(f)

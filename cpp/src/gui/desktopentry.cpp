@@ -16,7 +16,7 @@ namespace lr::gui::desktop {
 
 namespace {
 constexpr char kOfferedKey[] = "desktop/iconOffered";
-const QString kFileName = QStringLiteral("io.github.ohlincha.libreramen.desktop");
+const QString kFileName = QStringLiteral("io.github.ohlincha.libreraman.desktop");
 
 // Desktop Entry spec: an argument with reserved characters goes in double quotes, with " ` $ \ escaped;
 // then, as a string value, every backslash is doubled once more.
@@ -70,20 +70,20 @@ bool launcherExists() { return QFileInfo::exists(launcherPath()); }
 QString entryText(const QString& exec, const QString& iconPath) {
     return QStringLiteral("[Desktop Entry]\n"
                           "Type=Application\n"
-                          "Name=LibreRamen\n"
+                          "Name=LibreRaman\n"
                           "GenericName=Raman Spectrometer\n"
                           "Comment=Measure, calibrate and compare Raman spectra\n"
                           "Exec=%1\n"
                           "Icon=%2\n"
                           "Terminal=false\n"
                           "Categories=Science;Chemistry;Physics;\n"
-                          "StartupWMClass=LibreRamen\n")
+                          "StartupWMClass=LibreRaman\n")
         .arg(quoteExec(exec), iconPath);
 }
 
 QString createLauncher() {
     const QString dataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    const QString iconPath = QDir(dataDir).filePath(QStringLiteral("libreramen.png"));
+    const QString iconPath = QDir(dataDir).filePath(QStringLiteral("libreraman.png"));
     QDir().mkpath(dataDir);
     if (!drawIcon(256).save(iconPath, "PNG"))
         return QStringLiteral("cannot write %1").arg(QDir::toNativeSeparators(iconPath));
@@ -113,12 +113,21 @@ void offerOnce(QWidget* parent) {
         return;
     st.setValue(QLatin1String(kOfferedKey), true);
     const auto answer = QMessageBox::question(parent, QStringLiteral("Desktop icon"),
-                                              QStringLiteral("Put a LibreRamen icon on the desktop?\n\n"
+                                              QStringLiteral("Put a LibreRaman icon on the desktop?\n\n"
                                                              "You can also do this later with File > Put an icon "
                                                              "on the desktop."));
     if (answer != QMessageBox::Yes) return;
     if (const QString err = createLauncher(); !err.isEmpty())
         QMessageBox::warning(parent, QStringLiteral("Desktop icon"), QStringLiteral("No desktop icon: %1").arg(err));
+}
+
+void migrateOldLauncher() {
+    if (!supported()) return;
+    const QString name = QStringLiteral("io.github.ohlincha.libreramen.desktop");
+    const QString old = QDir(QStandardPaths::writableLocation(QStandardPaths::DesktopLocation)).filePath(name);
+    if (QFileInfo::exists(old) && (launcherExists() || createLauncher().isEmpty()))
+        QFile::remove(old);
+    QFile::remove(QDir(QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation)).filePath(name));
 }
 
 }  // namespace lr::gui::desktop

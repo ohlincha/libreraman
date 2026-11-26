@@ -9,7 +9,7 @@
 //  * no ping for hang_s while the laser was on: the main program is considered hung; the watchdog kills it
 //    and switches the laser off.
 // Executables dispatch to run() when started as `<exe> --watchdog --port P --parent PID` (isWatchdogCall /
-// runFromArgs). Log: ~/.libreramen-watchdog.log.
+// runFromArgs). Log: ~/.libreraman-watchdog.log.
 //
 // Thread safety: WatchdogClient belongs to the thread that created it (QProcess).
 #include <QString>

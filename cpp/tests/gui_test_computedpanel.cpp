@@ -81,7 +81,7 @@ private slots:
         QVERIFY(QTest::qWaitForWindowExposed(&p));
         QVERIFY(scroll->widget()->height() >= scroll->widget()->minimumSizeHint().height());
         QVERIFY(scroll->verticalScrollBar()->maximum() > 0);   // content taller than the window: scrolls
-        const QString dir = qEnvironmentVariable("LIBRERAMEN_PREVIEW_DIR");
+        const QString dir = qEnvironmentVariable("LIBRERAMAN_PREVIEW_DIR");
         if (!dir.isEmpty()) {
             QVERIFY(p.loadFile(DIR + "gaussian_ccl4.log"));
             QApplication::processEvents();

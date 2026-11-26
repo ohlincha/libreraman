@@ -4,7 +4,7 @@ name: Build installers
 #   C++:    cpp-windows (Setup.exe), cpp-macos (universal .dmg) + Intel test, cpp-linux-deb (.deb) + tests
 #           on Ubuntu 24.04 / Debian 13, cpp-appimage (AppImage) + test on Debian 12
 #   Python: windows (Setup.exe, zips), macos-intel (.dmg)
-# Both Windows installers use installer/windows/libreramen.iss and the wdi-simple driver tool from wdi.yml.
+# Both Windows installers use installer/windows/libreraman.iss and the wdi-simple driver tool from wdi.yml.
 on:
   push:
     branches: [main]
@@ -46,22 +46,22 @@ jobs:
             Where-Object { $_.Name -notlike "Qt6QSQLiteDriverPlugin*" } | Remove-Item -Verbose
       - name: Configure (Release, MSVC)
         run: >
-          cmake -S cpp -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIBRERAMEN_TESTS=OFF
+          cmake -S cpp -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIBRERAMAN_TESTS=OFF
           -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows
       - run: cmake --build build
       # programs, libusb/hidapi DLLs, MSVC runtime DLLs (app-local), licence files
-      - run: cmake --install build --prefix dist-cpp/LibreRamen
+      - run: cmake --install build --prefix dist-cpp/LibreRaman
       - name: Deploy Qt (windeployqt) and check the folder
         run: |
-          $d = "dist-cpp\LibreRamen"
-          foreach ($exe in "LibreRamen.exe", "LibreRamenCLI.exe") {
+          $d = "dist-cpp\LibreRaman"
+          foreach ($exe in "LibreRaman.exe", "LibreRamanCLI.exe") {
             windeployqt --release --no-compiler-runtime --no-translations --no-system-d3d-compiler --no-opengl-sw "$d\$exe"
             if ($LASTEXITCODE -ne 0) { throw "windeployqt $exe failed" }
           }
           # offscreen platform plugin: selftest and headless use
           Copy-Item "$env:QT_ROOT_DIR\plugins\platforms\qoffscreen.dll" "$d\platforms\"
-          Copy-Item build\libreramen.ico dist-cpp\
-          $need = "LibreRamen.exe", "LibreRamenCLI.exe", "Qt6Core.dll", "Qt6Gui.dll", "Qt6Widgets.dll", "Qt6Svg.dll",
+          Copy-Item build\libreraman.ico dist-cpp\
+          $need = "LibreRaman.exe", "LibreRamanCLI.exe", "Qt6Core.dll", "Qt6Gui.dll", "Qt6Widgets.dll", "Qt6Svg.dll",
                   "Qt6Sql.dll", "Qt6SerialPort.dll", "Qt6Network.dll", "platforms\qwindows.dll",
                   "platforms\qoffscreen.dll", "sqldrivers\qsqlite.dll", "libusb-1.0.dll", "hidapi.dll",
                   "vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll", "LICENSE.txt", "THIRD-PARTY-NOTICES.txt"
@@ -74,9 +74,9 @@ jobs:
         run: |
           $env:PATH = "$env:SystemRoot\System32;$env:SystemRoot;$env:SystemRoot\System32\WindowsPowerShell\v1.0"
           Remove-Item env:QT_PLUGIN_PATH, env:QML2_IMPORT_PATH -ErrorAction SilentlyContinue
-          dist-cpp\LibreRamen\LibreRamenCLI.exe standards
-          if ($LASTEXITCODE -ne 0) { throw "LibreRamenCLI standards failed ($LASTEXITCODE)" }
-          $p = Start-Process -FilePath dist-cpp\LibreRamen\LibreRamen.exe -ArgumentList selftest -Wait -PassThru `
+          dist-cpp\LibreRaman\LibreRamanCLI.exe standards
+          if ($LASTEXITCODE -ne 0) { throw "LibreRamanCLI standards failed ($LASTEXITCODE)" }
+          $p = Start-Process -FilePath dist-cpp\LibreRaman\LibreRaman.exe -ArgumentList selftest -Wait -PassThru `
                  -NoNewWindow -RedirectStandardOutput selftest.txt
           Get-Content selftest.txt
           if ($p.ExitCode -ne 0) { throw "selftest failed ($($p.ExitCode))" }
@@ -89,30 +89,30 @@ jobs:
             if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
             $env:PATH += ";${env:ProgramFiles(x86)}\Inno Setup 6"
           }
-          iscc /Qp "/DAppVersion=$env:LR_VERSION" /DCpp installer\windows\libreramen.iss
+          iscc /Qp "/DAppVersion=$env:LR_VERSION" /DCpp installer\windows\libreraman.iss
           if ($LASTEXITCODE -ne 0) { throw "iscc failed" }
-          Get-ChildItem dist\LibreRamen-*-Windows-x64-Setup.exe
+          Get-ChildItem dist\LibreRaman-*-Windows-x64-Setup.exe
       - name: Install silently (without drivers) and test the installed program
         env: { QT_QPA_PLATFORM: offscreen }
         run: |
-          $app = "C:\LibreRamen-test"
-          $p = Start-Process "dist\LibreRamen-$env:LR_VERSION-Windows-x64-Setup.exe" -Wait -PassThru -ArgumentList `
+          $app = "C:\LibreRaman-test"
+          $p = Start-Process "dist\LibreRaman-$env:LR_VERSION-Windows-x64-Setup.exe" -Wait -PassThru -ArgumentList `
                  "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/MERGETASKS=!drivers", "/DIR=$app", "/LOG=setup.log"
           if ($p.ExitCode -ne 0) { Get-Content setup.log; throw "setup failed ($($p.ExitCode))" }
-          foreach ($f in "LibreRamen.exe", "LibreRamenCLI.exe", "sqldrivers\qsqlite.dll", "drivers\wdi-simple.exe",
+          foreach ($f in "LibreRaman.exe", "LibreRamanCLI.exe", "sqldrivers\qsqlite.dll", "drivers\wdi-simple.exe",
                          "drivers\install-drivers.ps1", "drivers\LIBWDI-LICENSE.txt") {
             if (-not (Test-Path "$app\$f")) { throw "not installed: $f" }
           }
           $env:PATH = "$env:SystemRoot\System32;$env:SystemRoot;$env:SystemRoot\System32\WindowsPowerShell\v1.0"
           Remove-Item env:QT_PLUGIN_PATH, env:QML2_IMPORT_PATH -ErrorAction SilentlyContinue
-          & "$app\LibreRamenCLI.exe" standards
-          if ($LASTEXITCODE -ne 0) { throw "installed LibreRamenCLI standards failed ($LASTEXITCODE)" }
-          $p = Start-Process -FilePath "$app\LibreRamen.exe" -ArgumentList selftest -Wait -PassThru -NoNewWindow `
+          & "$app\LibreRamanCLI.exe" standards
+          if ($LASTEXITCODE -ne 0) { throw "installed LibreRamanCLI standards failed ($LASTEXITCODE)" }
+          $p = Start-Process -FilePath "$app\LibreRaman.exe" -ArgumentList selftest -Wait -PassThru -NoNewWindow `
                  -RedirectStandardOutput selftest-installed.txt
           Get-Content selftest-installed.txt
           if ($p.ExitCode -ne 0) { throw "installed selftest failed ($($p.ExitCode))" }
       - uses: actions/upload-artifact@v4
-        with: { name: cpp-windows-setup, path: dist/LibreRamen-*-Windows-x64-Setup.exe, if-no-files-found: error }
+        with: { name: cpp-windows-setup, path: dist/LibreRaman-*-Windows-x64-Setup.exe, if-no-files-found: error }
 
   # ------------------------------------------------------------------ C++: macOS (universal, macOS 12+)
   cpp-macos:
@@ -167,22 +167,22 @@ jobs:
       - name: Configure (universal, macOS 12)
         run: |
           PKG_CONFIG_PATH="$DEPS/lib/pkgconfig" cmake -S cpp -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
-            -DLIBRERAMEN_TESTS=OFF -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+            -DLIBRERAMAN_TESTS=OFF -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
             -DCMAKE_OSX_DEPLOYMENT_TARGET="$MACOSX_DEPLOYMENT_TARGET" -DCMAKE_PREFIX_PATH="$DEPS;$QT_ROOT_DIR" \
             -DLIBUSB_ROOT="$DEPS" -DHIDAPI_ROOT="$DEPS"
       - run: cmake --build build
       - run: cmake --install build --prefix dist-mac
       - name: Deploy Qt and libraries (macdeployqt), sign ad hoc, check
         run: |
-          APP=dist-mac/LibreRamen.app
-          macdeployqt "$APP" -executable="$APP/Contents/MacOS/LibreRamenCLI" \
-            -executable="$APP/Contents/MacOS/LibreRamenMCP" -libpath="$QT_ROOT_DIR/lib" \
+          APP=dist-mac/LibreRaman.app
+          macdeployqt "$APP" -executable="$APP/Contents/MacOS/LibreRamanCLI" \
+            -executable="$APP/Contents/MacOS/LibreRamanMCP" -libpath="$QT_ROOT_DIR/lib" \
             -libpath="$DEPS/lib" -verbose=1
           # offscreen platform plugin (selftest, headless use); finds the bundle's frameworks via @rpath
           cp "$QT_ROOT_DIR/plugins/platforms/libqoffscreen.dylib" "$APP/Contents/PlugIns/platforms/"
           install_name_tool -add_rpath @loader_path/../../Frameworks "$APP/Contents/PlugIns/platforms/libqoffscreen.dylib"
           test -f "$APP/Contents/PlugIns/sqldrivers/libqsqlite.dylib"
-          test -f "$APP/Contents/Resources/LibreRamen.icns"
+          test -f "$APP/Contents/Resources/LibreRaman.icns"
           plutil -p "$APP/Contents/Info.plist"
           codesign --force --deep --sign - "$APP"
           codesign --verify --deep --strict --verbose=2 "$APP"
@@ -190,29 +190,29 @@ jobs:
           du -sh "$APP"
       - name: Test the bundle (arm64; x86_64 under Rosetta if available)
         run: |
-          APP=dist-mac/LibreRamen.app
+          APP=dist-mac/LibreRaman.app
           run() { env -u QT_PLUGIN_PATH -u QML2_IMPORT_PATH -u DYLD_LIBRARY_PATH -u DYLD_FRAMEWORK_PATH "$@"; }
-          run "$APP/Contents/MacOS/LibreRamenCLI" standards > standards.txt; head -3 standards.txt
-          run QT_QPA_PLATFORM=offscreen "$APP/Contents/MacOS/LibreRamen" selftest
-          run QT_QPA_PLATFORM=cocoa "$APP/Contents/MacOS/LibreRamen" selftest
+          run "$APP/Contents/MacOS/LibreRamanCLI" standards > standards.txt; head -3 standards.txt
+          run QT_QPA_PLATFORM=offscreen "$APP/Contents/MacOS/LibreRaman" selftest
+          run QT_QPA_PLATFORM=cocoa "$APP/Contents/MacOS/LibreRaman" selftest
           if arch -x86_64 /usr/bin/true 2>/dev/null; then
-            run QT_QPA_PLATFORM=offscreen arch -x86_64 "$APP/Contents/MacOS/LibreRamen" selftest
+            run QT_QPA_PLATFORM=offscreen arch -x86_64 "$APP/Contents/MacOS/LibreRaman" selftest
           else
             echo "Rosetta not available: x86_64 is tested by cpp-macos-intel"
           fi
       - name: dmg
         run: |
           mkdir -p dmg dist
-          ditto dist-mac/LibreRamen.app dmg/LibreRamen.app
+          ditto dist-mac/LibreRaman.app dmg/LibreRaman.app
           ln -s /Applications dmg/Applications
-          out="dist/LibreRamen-$LR_VERSION-macOS-universal.dmg"
+          out="dist/LibreRaman-$LR_VERSION-macOS-universal.dmg"
           for i in 1 2 3; do   # (hdiutil is occasionally "busy" on CI)
-            hdiutil create -volname LibreRamen -srcfolder dmg -ov -format UDZO "$out" && break
+            hdiutil create -volname LibreRaman -srcfolder dmg -ov -format UDZO "$out" && break
             sleep 10
           done
           test -f "$out" && ls -l "$out"
       - uses: actions/upload-artifact@v4
-        with: { name: cpp-macos-dmg, path: dist/LibreRamen-*-macOS-universal.dmg, if-no-files-found: error }
+        with: { name: cpp-macos-dmg, path: dist/LibreRaman-*-macOS-universal.dmg, if-no-files-found: error }
 
   cpp-macos-intel:
     name: C++ macOS dmg test (Intel)
@@ -222,15 +222,15 @@ jobs:
       - uses: actions/download-artifact@v4
         with: { name: cpp-macos-dmg, path: dmg }
       - run: |
-          hdiutil attach dmg/*.dmg -nobrowse -mountpoint /Volumes/LibreRamen
-          ditto /Volumes/LibreRamen/LibreRamen.app "$RUNNER_TEMP/LibreRamen.app"
-          hdiutil detach /Volumes/LibreRamen
-          APP="$RUNNER_TEMP/LibreRamen.app"
+          hdiutil attach dmg/*.dmg -nobrowse -mountpoint /Volumes/LibreRaman
+          ditto /Volumes/LibreRaman/LibreRaman.app "$RUNNER_TEMP/LibreRaman.app"
+          hdiutil detach /Volumes/LibreRaman
+          APP="$RUNNER_TEMP/LibreRaman.app"
           codesign --verify --deep --strict "$APP"
-          lipo -archs "$APP/Contents/MacOS/LibreRamen"
-          "$APP/Contents/MacOS/LibreRamenCLI" standards > standards.txt; head -3 standards.txt
-          QT_QPA_PLATFORM=offscreen "$APP/Contents/MacOS/LibreRamen" selftest
-          QT_QPA_PLATFORM=cocoa "$APP/Contents/MacOS/LibreRamen" selftest
+          lipo -archs "$APP/Contents/MacOS/LibreRaman"
+          "$APP/Contents/MacOS/LibreRamanCLI" standards > standards.txt; head -3 standards.txt
+          QT_QPA_PLATFORM=offscreen "$APP/Contents/MacOS/LibreRaman" selftest
+          QT_QPA_PLATFORM=cocoa "$APP/Contents/MacOS/LibreRaman" selftest
 
   # ------------------------------------------------------------------ C++: Linux
   cpp-linux-deb:
@@ -257,13 +257,13 @@ jobs:
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           echo "LR_VERSION=$(cpp/packaging/version.sh)" >> "$GITHUB_ENV"
-      - run: cmake -S cpp -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIBRERAMEN_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr
+      - run: cmake -S cpp -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIBRERAMAN_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr
       - run: cmake --build build
       - name: Package (CPack, dpkg-shlibdeps for Depends)
         run: |
           (cd build && cpack)
           mkdir -p dist
-          for f in build/libreramen_*.deb; do mv "$f" "dist/$(basename "${f%.deb}")_${{ matrix.tag }}.deb"; done
+          for f in build/libreraman_*.deb; do mv "$f" "dist/$(basename "${f%.deb}")_${{ matrix.tag }}.deb"; done
           dpkg-deb -I dist/*.deb
           dpkg-deb -c dist/*.deb
       - uses: actions/upload-artifact@v4
@@ -287,18 +287,18 @@ jobs:
         run: |
           apt-get update -qq
           DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ./deb/*.deb xvfb xauth
-          dpkg -s libreramen | grep -E '^(Version|Depends|Recommends):'
-          for f in /usr/bin/LibreRamen /usr/bin/LibreRamenCLI /usr/bin/LibreRamenMCP \
-                   /usr/lib/udev/rules.d/70-libreramen.rules \
-                   /usr/share/applications/io.github.ohlincha.libreramen.desktop \
-                   /usr/share/icons/hicolor/256x256/apps/io.github.ohlincha.libreramen.png \
-                   /usr/share/doc/libreramen/copyright; do
+          dpkg -s libreraman | grep -E '^(Version|Depends|Recommends):'
+          for f in /usr/bin/LibreRaman /usr/bin/LibreRamanCLI /usr/bin/LibreRamanMCP \
+                   /usr/lib/udev/rules.d/70-libreraman.rules \
+                   /usr/share/applications/io.github.ohlincha.libreraman.desktop \
+                   /usr/share/icons/hicolor/256x256/apps/io.github.ohlincha.libreraman.png \
+                   /usr/share/doc/libreraman/copyright; do
             test -e "$f" || { echo "missing: $f"; exit 1; }
           done
-          LibreRamenCLI standards > standards.txt; head -3 standards.txt
-          QT_QPA_PLATFORM=offscreen LibreRamen selftest
-          xvfb-run -a env QT_QPA_PLATFORM=xcb LibreRamen selftest
-          apt-get remove -y -qq libreramen
+          LibreRamanCLI standards > standards.txt; head -3 standards.txt
+          QT_QPA_PLATFORM=offscreen LibreRaman selftest
+          xvfb-run -a env QT_QPA_PLATFORM=xcb LibreRaman selftest
+          apt-get remove -y -qq libreraman
 
   cpp-appimage:
     name: C++ Linux AppImage
@@ -323,7 +323,7 @@ jobs:
         run: |
           find "$QT_ROOT_DIR/plugins/sqldrivers" -type f ! -name 'libqsqlite*' -print -delete
           find "$QT_ROOT_DIR/lib/cmake/Qt6Sql" -name 'Qt6Q*DriverPlugin*.cmake' ! -name 'Qt6QSQLiteDriverPlugin*' -print -delete
-      - run: cmake -S cpp -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIBRERAMEN_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr
+      - run: cmake -S cpp -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIBRERAMAN_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr
       - run: cmake --build build
       - run: DESTDIR="$PWD/AppDir" cmake --install build
       - name: AppImage (linuxdeploy + Qt plugin)
@@ -339,11 +339,11 @@ jobs:
           chmod +x linuxdeploy*.AppImage
           mkdir -p dist
           export QMAKE="$QT_ROOT_DIR/bin/qmake" LD_LIBRARY_PATH="$QT_ROOT_DIR/lib:${LD_LIBRARY_PATH:-}"
-          export LDAI_OUTPUT="dist/LibreRamen-$LR_VERSION-Linux-x86_64.AppImage"
+          export LDAI_OUTPUT="dist/LibreRaman-$LR_VERSION-Linux-x86_64.AppImage"
           # libusb is on the AppImage excludelist (expected on the host) but missing on minimal systems: bundle it
           ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage \
             --library "$(ldconfig -p | awk '/libusb-1.0.so.0 .*x86-64/{print $NF; exit}')" \
-            --desktop-file AppDir/usr/share/applications/io.github.ohlincha.libreramen.desktop
+            --desktop-file AppDir/usr/share/applications/io.github.ohlincha.libreraman.desktop
           ls -l dist
           test -f AppDir/usr/plugins/sqldrivers/libqsqlite.so
       - uses: actions/upload-artifact@v4
@@ -368,7 +368,7 @@ jobs:
           "$app" selftest
           xvfb-run -a env QT_QPA_PLATFORM=xcb "$app" selftest
           (cd appimage && "../$app" --appimage-extract >/dev/null)
-          appimage/squashfs-root/usr/bin/LibreRamenCLI standards > standards.txt; head -3 standards.txt
+          appimage/squashfs-root/usr/bin/LibreRamanCLI standards > standards.txt; head -3 standards.txt
 
   # ------------------------------------------------------------------ Python (PyInstaller)
   windows:
@@ -381,27 +381,27 @@ jobs:
         with: { python-version: "3.12" }
       - run: pip install pyinstaller pillow PySide6 pyqtgraph numpy scipy pyserial pyusb libusb-package
       - run: >
-          pyinstaller --noconfirm --windowed --name LibreRamen --icon libreramen/data/icon.png
-          --add-data libreramen/data:libreramen/data --collect-all libusb_package --collect-submodules serial
-          --hidden-import usb.backend.libusb1 libreramen_app.py
-      - run: dist\LibreRamen\LibreRamen.exe standards
+          pyinstaller --noconfirm --windowed --name LibreRaman --icon libreraman/data/icon.png
+          --add-data libreraman/data:libreraman/data --collect-all libusb_package --collect-submodules serial
+          --hidden-import usb.backend.libusb1 libreraman_app.py
+      - run: dist\LibreRaman\LibreRaman.exe standards
       - name: Self-test of the packaged app (GUI + simulator)
         env: { QT_QPA_PLATFORM: offscreen }
         run: |
-          $p = Start-Process -FilePath dist\LibreRamen\LibreRamen.exe -ArgumentList selftest -Wait -PassThru -NoNewWindow
+          $p = Start-Process -FilePath dist\LibreRaman\LibreRaman.exe -ArgumentList selftest -Wait -PassThru -NoNewWindow
           if ($p.ExitCode -ne 0) { throw "selftest failed ($($p.ExitCode))" }
-      - run: Compress-Archive -Path dist\LibreRamen -DestinationPath dist\LibreRamen-Windows.zip
+      - run: Compress-Archive -Path dist\LibreRaman -DestinationPath dist\LibreRaman-Windows.zip
       - name: Console build (command line and remote diagnostics)
         run: >
-          pyinstaller --noconfirm --console --name LibreRamenCLI --icon libreramen/data/icon.png
-          --add-data libreramen/data:libreramen/data --collect-all libusb_package --collect-submodules serial
-          --hidden-import usb.backend.libusb1 --exclude-module PySide6 --exclude-module pyqtgraph libreramen_app.py
-      - run: dist\LibreRamenCLI\LibreRamenCLI.exe standards
-      - run: Compress-Archive -Path dist\LibreRamenCLI -DestinationPath dist\LibreRamenCLI-Windows.zip
+          pyinstaller --noconfirm --console --name LibreRamanCLI --icon libreraman/data/icon.png
+          --add-data libreraman/data:libreraman/data --collect-all libusb_package --collect-submodules serial
+          --hidden-import usb.backend.libusb1 --exclude-module PySide6 --exclude-module pyqtgraph libreraman_app.py
+      - run: dist\LibreRamanCLI\LibreRamanCLI.exe standards
+      - run: Compress-Archive -Path dist\LibreRamanCLI -DestinationPath dist\LibreRamanCLI-Windows.zip
       - uses: actions/download-artifact@v4
         with: { name: wdi-simple, path: dist/drivers }
       - name: Icon
-        run: python -c "from PIL import Image; Image.open('libreramen/data/icon.png').save('dist/libreramen.ico', sizes=[(16,16),(32,32),(48,48),(64,64),(128,128),(256,256)])"
+        run: python -c "from PIL import Image; Image.open('libreraman/data/icon.png').save('dist/libreraman.ico', sizes=[(16,16),(32,32),(48,48),(64,64),(128,128),(256,256)])"
       - name: Build the installer (Inno Setup)
         run: |
           if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) {
@@ -409,16 +409,16 @@ jobs:
             if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
             $env:PATH += ";${env:ProgramFiles(x86)}\Inno Setup 6"
           }
-          $ver = python -c "import libreramen; print(libreramen.__version__)"
-          iscc /Qp "/DAppVersion=$ver" installer\windows\libreramen.iss
+          $ver = python -c "import libreraman; print(libreraman.__version__)"
+          iscc /Qp "/DAppVersion=$ver" installer\windows\libreraman.iss
           if ($LASTEXITCODE -ne 0) { throw "iscc failed" }
-          Get-ChildItem dist\LibreRamen-Setup-*.exe
+          Get-ChildItem dist\LibreRaman-Setup-*.exe
       - uses: actions/upload-artifact@v4
-        with: { name: windows-setup, path: dist/LibreRamen-Setup-*.exe }
+        with: { name: windows-setup, path: dist/LibreRaman-Setup-*.exe }
       - uses: actions/upload-artifact@v4
-        with: { name: windows-cli-zip, path: dist/LibreRamenCLI-Windows.zip }
+        with: { name: windows-cli-zip, path: dist/LibreRamanCLI-Windows.zip }
       - uses: actions/upload-artifact@v4
-        with: { name: windows-zip, path: dist/LibreRamen-Windows.zip }
+        with: { name: windows-zip, path: dist/LibreRaman-Windows.zip }
 
   macos-intel:
     name: Python macOS dmg (Intel)
@@ -448,17 +448,17 @@ jobs:
               print(out)
           PY
       - run: |
-          pyinstaller --noconfirm --windowed --name LibreRamen \
-            --osx-bundle-identifier io.github.ohlincha.libreramen --icon libreramen/data/icon.png \
-            --add-data libreramen/data:libreramen/data --collect-all libusb_package --collect-submodules serial \
-            --hidden-import usb.backend.libusb1 libreramen_app.py
-          mkdir -p dmg && cp -R dist/LibreRamen.app dmg/ && ln -s /Applications dmg/Applications
-          hdiutil create -volname LibreRamen -srcfolder dmg -ov -format UDZO dist/LibreRamen-macOS-Intel.dmg
-      - run: dist/LibreRamen.app/Contents/MacOS/LibreRamen standards | head -3
+          pyinstaller --noconfirm --windowed --name LibreRaman \
+            --osx-bundle-identifier io.github.ohlincha.libreraman --icon libreraman/data/icon.png \
+            --add-data libreraman/data:libreraman/data --collect-all libusb_package --collect-submodules serial \
+            --hidden-import usb.backend.libusb1 libreraman_app.py
+          mkdir -p dmg && cp -R dist/LibreRaman.app dmg/ && ln -s /Applications dmg/Applications
+          hdiutil create -volname LibreRaman -srcfolder dmg -ov -format UDZO dist/LibreRaman-macOS-Intel.dmg
+      - run: dist/LibreRaman.app/Contents/MacOS/LibreRaman standards | head -3
       - name: Self-test of the packaged app (GUI + simulator)
-        run: QT_QPA_PLATFORM=offscreen dist/LibreRamen.app/Contents/MacOS/LibreRamen selftest
+        run: QT_QPA_PLATFORM=offscreen dist/LibreRaman.app/Contents/MacOS/LibreRaman selftest
       - uses: actions/upload-artifact@v4
-        with: { name: macos-intel-dmg, path: dist/LibreRamen-macOS-Intel.dmg }
+        with: { name: macos-intel-dmg, path: dist/LibreRaman-macOS-Intel.dmg }
 
   # ------------------------------------------------------------------ release
   release:
@@ -484,9 +484,9 @@ jobs:
           generate_release_notes: true
           body: |
             **Installers of the C++ version** (recommended):
-            - Windows 10/11: `LibreRamen-<version>-Windows-x64-Setup.exe` (also installs the USB drivers)
-            - macOS 12+ (Apple Silicon and Intel): `LibreRamen-<version>-macOS-universal.dmg`
-            - Ubuntu 24.04+: `libreramen_<version>_amd64_ubuntu24.04.deb`; Debian 13+: `libreramen_<version>_amd64_debian13.deb`; other Linux: `LibreRamen-<version>-Linux-x86_64.AppImage`
+            - Windows 10/11: `LibreRaman-<version>-Windows-x64-Setup.exe` (also installs the USB drivers)
+            - macOS 12+ (Apple Silicon and Intel): `LibreRaman-<version>-macOS-universal.dmg`
+            - Ubuntu 24.04+: `libreraman_<version>_amd64_ubuntu24.04.deb`; Debian 13+: `libreraman_<version>_amd64_debian13.deb`; other Linux: `LibreRaman-<version>-Linux-x86_64.AppImage`
 
-            Python version (previous implementation): `LibreRamen-Setup-<version>.exe`, `LibreRamen-Windows.zip`,
-            `LibreRamenCLI-Windows.zip`, `LibreRamen-macOS-Intel.dmg`.
+            Python version (previous implementation): `LibreRaman-Setup-<version>.exe`, `LibreRaman-Windows.zip`,
+            `LibreRamanCLI-Windows.zip`, `LibreRaman-macOS-Intel.dmg`.

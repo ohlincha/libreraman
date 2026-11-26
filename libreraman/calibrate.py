@@ -224,7 +224,7 @@ def report(result, before=None):
 # ----------------------------------------------------------------------------- storage
 def config_dir():
     base = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
-    return os.path.join(base, "libreramen")
+    return os.path.join(base, "libreraman")
 
 
 def save(result, channel, serial, path=None):

@@ -1,5 +1,5 @@
 #pragma once
-// `LibreRamenCLI --remote <command> ...`: talks to the running LibreRamen application through its local API
+// `LibreRamanCLI --remote <command> ...`: talks to the running LibreRaman application through its local API
 // (core/apiclient.h, gui/apiserver.h) instead of opening the instrument itself.
 #include <QStringList>
 

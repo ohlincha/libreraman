@@ -42,7 +42,7 @@ const PlaceholderText kPlaceholders[] = {
     {"Library", "Spectral library (open databases, literature, your own spectra) and matching."},
     {"Analysis", "PCA, EFA, OPA, SIMPLISMA, MCR-ALS, NNLS; comparison with computed spectra."},
     {"Calibration", "Calibration against reference standards (wizard), quick checks, history. "
-                    "Already available on the command line: python3 -m libreramen calibrate"},
+                    "Already available on the command line: python3 -m libreraman calibrate"},
 };
 
 }  // namespace

@@ -109,7 +109,7 @@ TimeOf timeOf(const fileio::DataSpectrum& d) {
     const QString el = d.metaValue(QStringLiteral("series_elapsed_s"));
     if (const auto v = parseElapsed(el); v && !el.isEmpty()) return {*v, false};
     for (const auto& kv : d.meta) {
-        // the first line of a LibreRamen/Cora spectrum file, "# Cora 5000 spectrum, 2026-11-20T18:21:07+01:00",
+        // the first line of a LibreRaman/Cora spectrum file, "# Cora 5000 spectrum, 2026-11-20T18:21:07+01:00",
         // is read as key "Cora 5000 spectrum, 2026-11-20T18" and value "21:07+01:00"
         const int c = int(kv.first.indexOf(QStringLiteral("spectrum, ")));
         if (c >= 0) {

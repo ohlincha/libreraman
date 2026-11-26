@@ -1,7 +1,7 @@
 #pragma once
 // Desktop icon on Linux. The Windows installer has its own tick box, and macOS has no desktop launchers.
 //
-// The first time the window is shown, LibreRamen asks once whether to put an icon on the desktop
+// The first time the window is shown, LibreRaman asks once whether to put an icon on the desktop
 // (QSettings "desktop/iconOffered"). File > Put an icon on the desktop does the same thing at any time.
 // The launcher is a .desktop file in the desktop folder (XDG_DESKTOP_DIR, usually ~/Desktop). It starts this
 // executable, or the AppImage file when running from an AppImage. For an AppImage it is also copied to
@@ -14,7 +14,7 @@ class QWidget;
 namespace lr::gui::desktop {
 
 bool supported();                       // Linux (and other XDG desktops)
-QString launcherPath();                 // <desktop folder>/io.github.ohlincha.libreramen.desktop
+QString launcherPath();                 // <desktop folder>/io.github.ohlincha.libreraman.desktop
 bool launcherExists();
 // The .desktop file's text; exec is quoted as needed.
 QString entryText(const QString& exec, const QString& iconPath);
@@ -22,5 +22,7 @@ QString entryText(const QString& exec, const QString& iconPath);
 QString createLauncher();
 // Asks once (dialogsEnabled() only) if supported, the desktop folder exists and there is no launcher yet.
 void offerOnce(QWidget* parent);
+// LibreRamen (<= 0.3.9) launcher on the desktop: replaced by a LibreRaman one (its program is gone after the upgrade).
+void migrateOldLauncher();
 
 }  // namespace lr::gui::desktop

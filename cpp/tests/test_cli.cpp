@@ -1,5 +1,5 @@
 // Command line (src/cli) against the Python reference: `standards` and offline `calibrate --from` must
-// print exactly what `python3 -m libreramen` prints (tests/golden/cli.json, made by make_golden.py
+// print exactly what `python3 -m libreraman` prints (tests/golden/cli.json, made by make_golden.py
 // gold_cli()); live `calibrate` is run against the simulator.
 #include "core/calibrate.h"
 #include "core/pyformat.h"

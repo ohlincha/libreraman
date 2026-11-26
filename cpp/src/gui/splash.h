@@ -10,12 +10,12 @@ namespace lr::gui {
 constexpr int kLogoWidth = 560, kLogoHeight = 340;
 
 // The splash artwork (logical size kLogoWidth × kLogoHeight, image size × dpr).
-QImage drawLogo(qreal dpr = 1.0, const QString& version = QStringLiteral(LIBRERAMEN_VERSION));
+QImage drawLogo(qreal dpr = 1.0, const QString& version = QStringLiteral(LIBRERAMAN_VERSION));
 
 class Splash : public QSplashScreen {
     Q_OBJECT
 public:
-    explicit Splash(const QString& version = QStringLiteral(LIBRERAMEN_VERSION));
+    explicit Splash(const QString& version = QStringLiteral(LIBRERAMAN_VERSION));
     void message(const QString& text);      // bottom-left status line (Python Splash.message)
     void setProgress(double fraction);      // 0..1 shows the bar; < 0 hides it (default)
     double progress() const { return m_progress; }

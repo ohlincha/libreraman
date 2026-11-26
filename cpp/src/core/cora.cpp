@@ -171,8 +171,8 @@ void Cora::connect() {
     }
     if (!board && !denied.isEmpty())
         throw Error(("The instrument's I/O board was found at " + denied + ", but this user may not open it. "
-                     "Reinstall LibreRamen (the package installs a udev rule granting access), or install "
-                     "70-libreramen.rules to /etc/udev/rules.d and replug the instrument.").toStdString());
+                     "Reinstall LibreRaman (the package installs a udev rule granting access), or install "
+                     "70-libreraman.rules to /etc/udev/rules.d and replug the instrument.").toStdString());
     if (!board) {
         QString hint;
 #if defined(Q_OS_WIN)
@@ -298,7 +298,7 @@ void Cora::waitSpec(int ch, double timeout_s) {
     if (!s) {
         QString hint;
 #if defined(Q_OS_WIN)
-        hint = " On Windows the spectrometers need the WinUSB driver (installed by LibreRamen-Setup; "
+        hint = " On Windows the spectrometers need the WinUSB driver (installed by LibreRaman-Setup; "
                "the vendor software then can't use them on this PC). " + windrivers::HINT;
 #endif
         throw Error(QString("spectrometer for %1 nm did not appear on USB.%2").arg(ch).arg(hint).toStdString());

@@ -51,7 +51,7 @@ bool sameToken(const QByteArray& a, const QByteArray& b) {     // constant time 
 }
 
 QString clientName(const Request& r) {
-    QString c = QString::fromUtf8(r.header("x-libreramen-client")).simplified();
+    QString c = QString::fromUtf8(r.header("x-libreraman-client")).simplified();
     QString out;
     for (const QChar ch : c)
         if (ch.isLetterOrNumber() || QStringLiteral(" -_.@/").contains(ch))
@@ -412,8 +412,8 @@ void ApiServer::getInfo(const Call&, const Reply& r) {
                              {QStringLiteral("duration_s"), QJsonArray{1, kLimits.durationMax}},
                              {QStringLiteral("start_delay_s"), QJsonArray{0, kLimits.startDelayMax}}};
     r(Response::json(200, QJsonObject{
-                              {QStringLiteral("name"), QStringLiteral("LibreRamen")},
-                              {QStringLiteral("version"), QStringLiteral(LIBRERAMEN_VERSION)},
+                              {QStringLiteral("name"), QStringLiteral("LibreRaman")},
+                              {QStringLiteral("version"), QStringLiteral(LIBRERAMAN_VERSION)},
                               {QStringLiteral("api_version"), lr::api::kApiVersion},
                               {QStringLiteral("instrument"),
                                QJsonObject{{QStringLiteral("model"), i.model},
@@ -464,7 +464,7 @@ bool ApiServer::mayControl(const Call& c, const Reply& reply) {
     if (!m_remoteControl) {
         log(c.origin, QStringLiteral("measurement refused (remote measurements are not allowed at the instrument)"));
         reply(Response::error(403, QStringLiteral("Remote measurements are not allowed. Switch on \"Allow remote "
-                                                  "measurements\" in the Instrument menu of LibreRamen at the instrument.")));
+                                                  "measurements\" in the Instrument menu of LibreRaman at the instrument.")));
         return false;
     }
     return true;
@@ -496,7 +496,7 @@ void ApiServer::postMeasure(const Call& c, const Reply& reply) {
         return reply(Response::error(503, QStringLiteral("No instrument connected.")));
     if (m_ctl->isBusy())
         return reply(Response::error(409, QStringLiteral("Busy: a measurement or series is running.")));
-    s.folder = m_folder ? m_folder() : QDir(QDir::homePath()).filePath(QStringLiteral("Documents/LibreRamen"));
+    s.folder = m_folder ? m_folder() : QDir(QDir::homePath()).filePath(QStringLiteral("Documents/LibreRaman"));
     if (!m_ctl->measureOnce(s, c.origin))
         return reply(Response::error(409, QStringLiteral("the measurement could not be started")));
     Job& j = newJob(QStringLiteral("measure"), c.origin);
@@ -542,7 +542,7 @@ void ApiServer::postSeries(const Call& c, const Reply& reply) {
         return reply(Response::error(503, QStringLiteral("No instrument connected.")));
     if (m_ctl->isBusy())
         return reply(Response::error(409, QStringLiteral("Busy: a measurement or series is running.")));
-    s.folder = m_folder ? m_folder() : QDir(QDir::homePath()).filePath(QStringLiteral("Documents/LibreRamen"));
+    s.folder = m_folder ? m_folder() : QDir(QDir::homePath()).filePath(QStringLiteral("Documents/LibreRaman"));
     m_haveProgress = false;
     m_progress = {};
     if (!m_ctl->startSeries(s, channel, c.origin))

@@ -1,4 +1,4 @@
-"""LibreRamen: open-source software for Raman spectrometers (first supported: Anton Paar Cora 5000)."""
+"""LibreRaman: open-source software for Raman spectrometers (first supported: Anton Paar Cora 5000)."""
 
 __version__ = "0.1.0"
 

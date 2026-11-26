@@ -151,7 +151,7 @@ QByteArray readAll(const QString& path) {
 
 QString baseName(const QString& path) { return QFileInfo(path).fileName(); }
 
-// ---- LibreRamen CSV (single spectrum or series table)
+// ---- LibreRaman CSV (single spectrum or series table)
 std::vector<DataSpectrum> readOwn(const QStringList& lines, const QString& base, const QString& path) {
     Meta meta;
     std::vector<QStringList> rows;
@@ -599,7 +599,7 @@ std::vector<DataSpectrum> read(const QString& path) {
 
 // ----------------------------------------------------------------------------- writing
 void writeCsv(const QString& path, const DataSpectrum& sp) {
-    QString t = "# LibreRamen spectrum: " + sp.name + "\n";
+    QString t = "# LibreRaman spectrum: " + sp.name + "\n";
     for (const auto& kv : sp.meta) t += "# " + kv.first + ": " + kv.second + "\n";
     t += "raman_shift_cm1,intensity\n";
     for (size_t i = 0; i < std::min(sp.x.size(), sp.y.size()); ++i) t += fixed(sp.x[i], 3) + "," + fixed(sp.y[i], 4) + "\n";
@@ -608,7 +608,7 @@ void writeCsv(const QString& path, const DataSpectrum& sp) {
 
 void writeJcamp(const QString& path, const DataSpectrum& sp) {
     if (sp.x.empty()) fail("no data to write");
-    QString t = "##TITLE=" + sp.name + "\n##JCAMP-DX=5.01\n##DATA TYPE=RAMAN SPECTRUM\n##ORIGIN=LibreRamen\n";
+    QString t = "##TITLE=" + sp.name + "\n##JCAMP-DX=5.01\n##DATA TYPE=RAMAN SPECTRUM\n##ORIGIN=LibreRaman\n";
     for (const auto& kv : sp.meta) t += "##$" + kv.first.toUpper().replace(' ', '_') + "=" + kv.second + "\n";
     t += "##XUNITS=1/CM\n##YUNITS=ARBITRARY UNITS\n##FIRSTX=" + fixed(sp.x.front(), 4) + "\n##LASTX=" +
          fixed(sp.x.back(), 4) + "\n##NPOINTS=" + QString::number(sp.x.size()) +
@@ -733,7 +733,7 @@ void MultiEncoder::add(const DataSpectrum& sp) {
         QString t;
         t.reserve(qsizetype(n) * 24 + 1024);
         t += "##TITLE=" + oneLine(sp.name) + "\n##JCAMP-DX=5.01\n##DATA TYPE=RAMAN SPECTRUM\n##BLOCK_ID=" +
-             QString::number(m_items.size() + 1) + "\n##ORIGIN=LibreRamen\n##OWNER=" +
+             QString::number(m_items.size() + 1) + "\n##ORIGIN=LibreRaman\n##OWNER=" +
              oneLine(sp.metaValue("operator")) + "\n";
         if (it.acquired.isValid()) t += "##LONGDATE=" + longDate(it.acquired) + "\n";
         for (const auto& kv : sp.meta) t += "##$" + labelKey(kv.first) + "=" + oneLine(kv.second) + "\n";
@@ -764,7 +764,7 @@ QByteArray MultiEncoder::bytes() const {
     const QDateTime t0 = m_items.front().acquired;
     if (m_format == Format::Jcamp) {
         QString h = "##TITLE=" + oneLine(m_title) + "\n##JCAMP-DX=5.01\n##DATA TYPE=LINK\n##BLOCKS=" +
-                    QString::number(m_items.size()) + "\n##ORIGIN=LibreRamen\n##OWNER=" +
+                    QString::number(m_items.size()) + "\n##ORIGIN=LibreRaman\n##OWNER=" +
                     oneLine(metaIn(m_meta, "operator", QString())) + "\n";
         if (t0.isValid()) h += "##LONGDATE=" + longDate(t0) + "\n";
         for (const auto& kv : m_meta) h += "##$" + labelKey(kv.first) + "=" + oneLine(kv.second) + "\n";
@@ -820,7 +820,7 @@ QByteArray MultiEncoder::bytes() const {
                                  h + 32);
     }
     std::memcpy(h + 45, "LibreRmn", 8);                               // fsource (9 bytes, NUL-terminated)
-    const QByteArray cmnt = (m_title.isEmpty() ? QString("LibreRamen") : oneLine(m_title) + ", LibreRamen").toLatin1().left(129);
+    const QByteArray cmnt = (m_title.isEmpty() ? QString("LibreRaman") : oneLine(m_title) + ", LibreRaman").toLatin1().left(129);
     std::memcpy(h + 88, cmnt.constData(), size_t(cmnt.size()));      // fcmnt (130 bytes)
     putF32(h + 312, n > 1 ? (zOf(n - 1) - zOf(0)) / double(n - 1) : 0.0);   // fzinc
     out.reserve(512 + m_size + 32 * n + log.size());

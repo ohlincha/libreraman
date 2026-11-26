@@ -1,6 +1,6 @@
-# LibreRamen — manual
+# LibreRaman — manual
 
-This covers the desktop application (version 0.3.9). For the everyday steps see the [quick start](QUICKSTART.md);
+This covers the desktop application (version 0.4.0). For the everyday steps see the [quick start](QUICKSTART.md);
 for installation, the [README](../README.md). In the program both documents are under **Help**.
 
 ## The window
@@ -18,14 +18,14 @@ for installation, the [README](../README.md). In the program both documents are 
 | REMOTE | State of the local API (used by scripts and the MCP server) |
 | **STOP** | Switches the laser off and stops any measurement immediately |
 
-**Desktop icon.** The Windows installer offers one (*Create a desktop shortcut*). On Linux, LibreRamen asks
+**Desktop icon.** The Windows installer offers one (*Create a desktop shortcut*). On Linux, LibreRaman asks
 the first time it starts; **File → Put an icon on the desktop** makes one at any time (from an AppImage it also
-adds LibreRamen to the applications menu). On GNOME the desktop shows icons only with the *Desktop Icons NG*
+adds LibreRaman to the applications menu). On GNOME the desktop shows icons only with the *Desktop Icons NG*
 extension.
 
 **Areas (left).** Measure, Data, Library, Analysis and Calibration. The log at the bottom shows what the
 program and the instrument did; the **Instrument** menu has *Reconnect*, *Use simulator*, *Shut down instrument…* and what to do with the
-instrument when LibreRamen closes; **Help** has *Quick start* (F1) and this *Manual*.
+instrument when LibreRaman closes; **Help** has *Quick start* (F1) and this *Manual*.
 
 > **Laser safety.** The laser only switches on when the instrument is armed and the compartment is closed —
 > except in *Focus* mode, which also runs with the compartment open when the lid-open accessory is attached (a red
@@ -43,7 +43,7 @@ instrument when LibreRamen closes; **Help** has *Quick start* (F1) and this *Man
    *demo: sample changing under the laser* fades and shifts while the laser is on (to try the damage check).
 5. During a series the *Trend* plot follows one peak; right-click a peak and choose *Use peak … for the trend*.
 
-The sample name (box *Sample*) goes into the file names and the files. If it is empty, LibreRamen asks for one
+The sample name (box *Sample*) goes into the file names and the files. If it is empty, LibreRaman asks for one
 when you press MEASURE or START SERIES; the last name is kept for the next start of the program, so change it
 when you change the sample.
 
@@ -58,7 +58,7 @@ high as the strongest band, e.g. ZnS); hover it for advice. The default *arPLS* 
 
 **Laser-damage check.** Dark samples (carbon, LiFePO₄, layered oxides) can heat and change under the laser while
 they are measured; the averaged spectrum then looks clean but is wrong. Whenever a spectrum has 2 or more scans,
-LibreRamen compares the first third of the scans with the last third: did the strongest bands move (more than
+LibreRaman compares the first third of the scans with the last third: did the strongest bands move (more than
 2.5 cm⁻¹), lose height (more than 15 %), or did the background rise (more than 20 % of the strongest band or of
 the background)? Nothing is shown while all is well. If the check fires, a *Laser* line appears in the dashboard:
 *sample changing under the laser: shorten the exposure or defocus slightly (distance knob)* (hover it for the
@@ -110,7 +110,7 @@ each with the **best so far** and a bar showing how close the current spectrum i
 Measure folder). The laser goes off with **STOP**, Esc, closing the window, or after *Laser off after* (5 min).
 
 With the **lid-open accessory** the laser can run with the lid open. The accessory most likely makes the lid read
-closed, so LibreRamen cannot tell: while Focus mode has the laser on, a red banner always warns that the lid may be
+closed, so LibreRaman cannot tell: while Focus mode has the laser on, a red banner always warns that the lid may be
 open — wear laser goggles. (If the compartment does read open, Focus mode still runs, normal measurements do not.)
 The instrument must be armed. Not yet tried with the real accessory; the simulator's *Lid-open accessory* box
 assumes that ARM works and stays on with the lid open.
@@ -192,7 +192,7 @@ nylon, PET, PMMA, polyimide, cellulose and more; Miller et al. 2022, CC BY 4.0),
 sapphire, calcite, gypsum, TiO₂, metal oxides and more; CC0, mostly 532 nm) and 7 battery-interphase compounds at
 488 nm (Li₂CO₃, LiPF₆, Li₂O, lithium acetate, MnF₂, NiF₂, PEO; Karapin-Springorum et al. 2025, CC0). The licence
 and citation are in each entry. New versions of
-LibreRamen add new reference entries to the default library; entries you edited are kept. **Library ▸ Add
+LibreRaman add new reference entries to the default library; entries you edited are kept. **Library ▸ Add
 reference entries** adds them to any other library. Peak tables picked automatically by an older version (0.3.1 or older) are
 re-picked the same way the first time the library is opened for writing; edited peak tables are kept.
 

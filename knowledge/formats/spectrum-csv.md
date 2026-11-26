@@ -1,6 +1,6 @@
 ---
 type: File format
-title: LibreRamen spectrum CSV
+title: LibreRaman spectrum CSV
 description: The files written for every measured spectrum.
 resource: cpp/src/core/spectrum.cpp
 tags: [format]
@@ -8,7 +8,7 @@ timestamp: 2026-11-23
 ---
 # Spectrum CSV
 
-Saved to `~/Documents/LibreRamen/<yyyy-mm-dd>/<sample>_<yyyymmdd_hhmmss>.csv`; a series is a folder with one CSV
+Saved to `~/Documents/LibreRaman/<yyyy-mm-dd>/<sample>_<yyyymmdd_hhmmss>.csv`; a series is a folder with one CSV
 per spectrum plus `series.csv`.
 
 Header lines `# key: value`, e.g. `channel: 532 nm`, `exposure_s`, `averages`, `laser_nm`, `calibration`,

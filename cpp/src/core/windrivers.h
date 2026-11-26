@@ -11,7 +11,7 @@
 
 namespace lr::windrivers {
 
-extern const QString HINT;    // "Use Instrument > Repair USB drivers in LibreRamen ..."
+extern const QString HINT;    // "Use Instrument > Repair USB drivers in LibreRaman ..."
 
 // <app>/drivers/install-drivers.ps1 (with wdi-simple.exe next to it), checking the executable's directory
 // and its parent (console build in <app>\cli); empty if not installed (running from a build or the zip).

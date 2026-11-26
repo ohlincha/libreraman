@@ -34,7 +34,7 @@ private slots:
         const Calibration c = importFactoryIni(writeIni(src.path(), "12345678", 532.25));
         QCOMPARE(c.serial, QString("12345678"));
         QVERIFY(hasStoredFactory("12345678"));
-        QVERIFY(factoryIniPath("12345678").endsWith("libreramen/factory_12345678.ini"));
+        QVERIFY(factoryIniPath("12345678").endsWith("libreraman/factory_12345678.ini"));
         QCOMPARE(c.source, factoryIniPath("12345678"));
         const Calibration back = loadIni(factoryIniPath("12345678"));   // the stored copy reads the same
         QVERIFY(!back.channels.empty());

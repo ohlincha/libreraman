@@ -291,7 +291,7 @@ def _safe(name):
 def _write_table(path, s, cols, shift, start):
     tmp = path + ".tmp"
     with open(tmp, "w") as f:
-        f.write(f"# LibreRamen time series, started {iso(start)}\n# sample: {s['sample']}\n"
+        f.write(f"# LibreRaman time series, started {iso(start)}\n# sample: {s['sample']}\n"
                 f"# exposure_s: {s['exposure']}\n# averages: {s['averages']}\n# interval_s: {s['interval']}\n"
                 f"# background: {s['background']}\n")
         f.write("raman_shift_cm1," + ",".join(f"t={e:.1f}s" for e, _ in cols) + "\n")

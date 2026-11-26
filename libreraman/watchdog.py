@@ -41,7 +41,7 @@ def _laser_off(io_port, driver_port, log):
 
 
 def run(io_port, driver_port=None, parent_pid=None, hang_s=20.0):
-    log_path = os.path.join(os.path.expanduser("~"), ".libreramen-watchdog.log")
+    log_path = os.path.join(os.path.expanduser("~"), ".libreraman-watchdog.log")
 
     def log(msg):
         try:
@@ -101,7 +101,7 @@ def start(io_port):
     if getattr(sys, "frozen", False):
         cmd = [sys.executable, "watchdog"]
     else:
-        cmd = [sys.executable, "-m", "libreramen", "watchdog"]
+        cmd = [sys.executable, "-m", "libreraman", "watchdog"]
     cmd += ["--port", io_port, "--parent", str(os.getpid())]
     kw = {}
     if sys.platform == "win32":

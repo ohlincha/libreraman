@@ -1,10 +1,10 @@
 ---
 type: Index
-title: LibreRamen knowledge bundle
-description: Facts, methods and decisions behind LibreRamen, in Open Knowledge Format (OKF v0.1).
+title: LibreRaman knowledge bundle
+description: Facts, methods and decisions behind LibreRaman, in Open Knowledge Format (OKF v0.1).
 timestamp: 2026-11-23
 ---
-# LibreRamen knowledge
+# LibreRaman knowledge
 
 Format: [OKF v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf): one concept per
 Markdown file, YAML frontmatter (`type` required), plain links between files. Add a file when a fact or decision

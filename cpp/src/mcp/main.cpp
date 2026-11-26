@@ -1,14 +1,15 @@
-// LibreRamenMCP: Model Context Protocol server (stdio, JSON-RPC 2.0, one message per line) for AI agents.
-// It is only a client of the running LibreRamen application's local API (core/apiclient.h,
+// LibreRamanMCP: Model Context Protocol server (stdio, JSON-RPC 2.0, one message per line) for AI agents.
+// It is only a client of the running LibreRaman application's local API (core/apiclient.h,
 // gui/apiserver.h), so the same rules apply as for every remote client: read-only unless "Allow remote
 // measurements" is switched on at the instrument, ARM still needed on the instrument, stop always allowed,
 // every action logged in the application as "API (mcp)".
 //
-//   LibreRamenMCP [--api-file FILE]          (Claude Code: claude mcp add libreramen -- /path/LibreRamenMCP)
+//   LibreRamanMCP [--api-file FILE]          (Claude Code: claude mcp add libreraman -- /path/LibreRamanMCP)
 //
 // Methods: initialize, notifications/initialized, ping, tools/list, tools/call. Tools: status, acquire,
 // run_series, series_progress, get_job, stop, list_spectra, get_spectrum, find_peaks, process,
 // list_standards, get_log.
+#include "core/legacyname.h"
 #include "core/apiclient.h"
 #include "core/errors.h"
 
@@ -129,7 +130,7 @@ QJsonArray tools() {
              schema(), true),
         tool("acquire", "Measure one spectrum",
              "Measure one Raman spectrum and wait for it (switches the laser on). Needs 'Allow remote "
-             "measurements' in the LibreRamen GUI and ARM pressed on the instrument; refused while another "
+             "measurements' in the LibreRaman GUI and ARM pressed on the instrument; refused while another "
              "measurement runs. Returns the job with the new spectrum id.",
              schema(measureProps), false),
         tool("run_series", "Start a time series",
@@ -155,7 +156,7 @@ QJsonArray tools() {
              schema(procProps, {"id"}), true),
         tool("list_standards", "Reference standards",
              "Raman shift reference standards (calibration) with their band positions.", schema(), true),
-        tool("get_log", "Application log", "Log lines of the LibreRamen application (with origin of each action).",
+        tool("get_log", "Application log", "Log lines of the LibreRaman application (with origin of each action).",
              schema({{"since", prop("integer", "Only lines after this sequence number")}}), true),
     };
 }
@@ -282,21 +283,23 @@ QJsonObject callTool(const QString& name, const QJsonObject& args) {
 
 int main(int argc, char** argv) {
     QCoreApplication app(argc, argv);
+    lr::legacy::env();                                  // carried over from LibreRamen (<= 0.3.9)
+    lr::legacy::configDir();
     const QStringList args = app.arguments().mid(1);
     for (int i = 0; i < args.size(); ++i) {
         if (args[i] == "--api-file" && i + 1 < args.size()) {
             g_apiFile = args[++i];
         } else if (args[i] == "-h" || args[i] == "--help") {
-            std::fputs("usage: LibreRamenMCP [--api-file FILE]\n"
-                       "MCP server (stdio) for AI agents; talks to the running LibreRamen application.\n"
-                       "Claude Code: claude mcp add libreramen -- LibreRamenMCP\n",
+            std::fputs("usage: LibreRamanMCP [--api-file FILE]\n"
+                       "MCP server (stdio) for AI agents; talks to the running LibreRaman application.\n"
+                       "Claude Code: claude mcp add libreraman -- LibreRamanMCP\n",
                        stdout);
             return 0;
         } else if (args[i] == "--version") {
-            std::fputs("LibreRamenMCP " LIBRERAMEN_VERSION "\n", stdout);
+            std::fputs("LibreRamanMCP " LIBRERAMAN_VERSION "\n", stdout);
             return 0;
         } else {
-            std::fprintf(stderr, "LibreRamenMCP: unknown argument %s\n", qPrintable(args[i]));
+            std::fprintf(stderr, "LibreRamanMCP: unknown argument %s\n", qPrintable(args[i]));
             return 2;
         }
     }
@@ -322,12 +325,12 @@ int main(int argc, char** argv) {
             const QString wanted = params.value("protocolVersion").toString();
             sendResult(id, {{"protocolVersion", kProtocols.contains(wanted) ? wanted : kProtocols.first()},
                             {"capabilities", QJsonObject{{"tools", QJsonObject{{"listChanged", false}}}}},
-                            {"serverInfo", QJsonObject{{"name", "libreramen"}, {"title", "LibreRamen"},
-                                                       {"version", LIBRERAMEN_VERSION}}},
+                            {"serverInfo", QJsonObject{{"name", "libreraman"}, {"title", "LibreRaman"},
+                                                       {"version", LIBRERAMAN_VERSION}}},
                             {"instructions",
-                             "Controls a Raman spectrometer through the running LibreRamen application. Call status "
+                             "Controls a Raman spectrometer through the running LibreRaman application. Call status "
                              "first. Measurements (acquire, run_series) switch a laser on: they only work when a "
-                             "person has allowed remote measurements in the LibreRamen GUI and pressed ARM on the "
+                             "person has allowed remote measurements in the LibreRaman GUI and pressed ARM on the "
                              "instrument; otherwise report this to the user instead of retrying. stop is always "
                              "allowed and switches the laser off."}});
         } else if (method == "ping") {

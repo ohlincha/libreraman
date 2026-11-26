@@ -1205,7 +1205,7 @@ qint64 LibraryPage::addSpectrum(const Spectrum& sp, bool ask) {
 void LibraryPage::newLibrary() {
     const QString start = m_lib->isOpen() ? QFileInfo(m_lib->path()).absolutePath() : QDir::homePath();
     QString path = QFileDialog::getSaveFileName(this, QStringLiteral("New library"), start + QStringLiteral("/library.sqlite"),
-                                                QStringLiteral("LibreRamen library (*.sqlite)"));
+                                                QStringLiteral("LibreRaman library (*.sqlite)"));
     if (path.isEmpty()) return;
     if (QFileInfo(path).suffix().isEmpty()) path += QStringLiteral(".sqlite");
     if (QFileInfo::exists(path) && !QFile::remove(path)) {
@@ -1219,7 +1219,7 @@ void LibraryPage::openLibrary(bool readOnly) {
     const QString start = m_lib->isOpen() ? QFileInfo(m_lib->path()).absolutePath() : QDir::homePath();
     const QString path = QFileDialog::getOpenFileName(this, readOnly ? QStringLiteral("Open library read-only")
                                                                      : QStringLiteral("Open library"),
-                                                      start, QStringLiteral("LibreRamen library (*.sqlite *.db);;All files (*)"));
+                                                      start, QStringLiteral("LibreRaman library (*.sqlite *.db);;All files (*)"));
     if (path.isEmpty()) return;
     if (!setLibraryPath(path, readOnly))
         QMessageBox::warning(this, QStringLiteral("Open library"), QStringLiteral("Could not open %1.").arg(path));
@@ -1274,7 +1274,7 @@ void LibraryPage::importRruff() {
     const auto ok = QMessageBox::information(
         this, QStringLiteral("Import RRUFF spectra"),
         QStringLiteral("Import RRUFF text files you have downloaded from rruff.info.\n\n"
-                       "RRUFF data are free for research and education; cite Lafuente et al. (2015). LibreRamen "
+                       "RRUFF data are free for research and education; cite Lafuente et al. (2015). LibreRaman "
                        "keeps the source and licence with every entry and never redistributes them. Check the "
                        "RRUFF terms before sharing a library that contains them."),
         QMessageBox::Ok | QMessageBox::Cancel);
@@ -1354,7 +1354,7 @@ void LibraryPage::exportToLibrary() {
         return;
     }
     const QString path = QFileDialog::getSaveFileName(this, QStringLiteral("Copy entries to library"), QDir::homePath(),
-                                                      QStringLiteral("LibreRamen library (*.sqlite)"), nullptr,
+                                                      QStringLiteral("LibreRaman library (*.sqlite)"), nullptr,
                                                       QFileDialog::DontConfirmOverwrite);
     if (path.isEmpty()) return;
     try {

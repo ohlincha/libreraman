@@ -1,16 +1,18 @@
-// LibreRamen graphical program (Python: gui/app.py main, selftest.py, the gui/selftest/watchdog parts of
+// LibreRaman graphical program (Python: gui/app.py main, selftest.py, the gui/selftest/watchdog parts of
 // __main__.py).
-//   LibreRamen [--sim] [--dark | --light] [--screenshot FILE [--demo single|series|focus] [--area NAME]]
+//   LibreRaman [--sim] [--dark | --light] [--screenshot FILE [--demo single|series|focus] [--area NAME]]
 //              [--api-port N] [--no-api]   local API (default: settings, port 8765; see apiserver.h)
-//   LibreRamen --selftest        GUI + simulator self-test (offscreen unless QT_QPA_PLATFORM is set); exit 0 = OK
-//   LibreRamen --watchdog --port P --parent PID     laser watchdog process (started by the program itself)
+//   LibreRaman --selftest        GUI + simulator self-test (offscreen unless QT_QPA_PLATFORM is set); exit 0 = OK
+//   LibreRaman --watchdog --port P --parent PID     laser watchdog process (started by the program itself)
 // --screenshot saves the window after 15 s and quits (with --sim a spectrum of CCl4 is measured first and
-// saved in <temp>/libreramen-screenshot; --demo series: a series instead; --window-size WxH: window size;
+// saved in <temp>/libreraman-screenshot; --demo series: a series instead; --window-size WxH: window size;
 // --area Data|Library|Analysis|Calibration: that area is shown when the picture is taken).
 //
-// Single instance: a second LibreRamen of the same user asks the running one to come to the front and exits
-// (per-user QLocalServer "libreramen-gui-<user>"). Not for --sim, --screenshot and --selftest, which may run
+// Single instance: a second LibreRaman of the same user asks the running one to come to the front and exits
+// (per-user QLocalServer "libreraman-gui-<user>"). Not for --sim, --screenshot and --selftest, which may run
 // next to the real program (they do not get the local API port then; the REMOTE tile says why).
+#include "core/legacyname.h"
+#include "gui/desktopentry.h"
 #include "controller.h"
 #include "decimalpoint.h"
 #include "icon.h"
@@ -78,7 +80,7 @@ int selftest(QApplication& app) {
             MeasurePage* m = win.measurePage();
             m->exposureBox()->setValue(0.2);
             m->averagesBox()->setValue(1);
-            m->setFolder(QDir(QDir::homePath()).filePath(QStringLiteral("libreramen-smoke")));
+            m->setFolder(QDir(QDir::homePath()).filePath(QStringLiteral("libreraman-smoke")));
             m->measureOnce();
         });
     });
@@ -108,7 +110,7 @@ QString instanceKey() {
     if (user.isEmpty())
         user = qEnvironmentVariable("USERNAME");
     user.replace(QRegularExpression(QStringLiteral("[^A-Za-z0-9_.-]")), QStringLiteral("_"));
-    return QStringLiteral("libreramen-gui-") + (user.isEmpty() ? QStringLiteral("user") : user);
+    return QStringLiteral("libreraman-gui-") + (user.isEmpty() ? QStringLiteral("user") : user);
 }
 
 // True if another instance was found (and asked to show its window).
@@ -143,11 +145,15 @@ int main(int argc, char** argv) {
 
     QApplication app(argc, argv);
     lr::gui::useDecimalPoint(app);                     // "1.5 s", not "1,5 s" on European systems
-    QApplication::setApplicationName(QStringLiteral("LibreRamen"));
-    QApplication::setOrganizationName(QStringLiteral("LibreRamen"));
-    QApplication::setApplicationVersion(QStringLiteral(LIBRERAMEN_VERSION));
-    QGuiApplication::setDesktopFileName(QStringLiteral("io.github.ohlincha.libreramen"));   // Wayland app id
+    QApplication::setApplicationName(QStringLiteral("LibreRaman"));
+    QApplication::setOrganizationName(QStringLiteral("LibreRaman"));
+    QApplication::setApplicationVersion(QStringLiteral(LIBRERAMAN_VERSION));
+    QGuiApplication::setDesktopFileName(QStringLiteral("io.github.ohlincha.libreraman"));   // Wayland app id
     QApplication::setWindowIcon(appIcon());
+    lr::legacy::env();                                  // carried over from LibreRamen (<= 0.3.9)
+    lr::legacy::configDir();
+    lr::legacy::appData();
+    lr::gui::desktop::migrateOldLauncher();
     const QStringList args = app.arguments().mid(1);
     theme::apply(app, args.contains(QStringLiteral("--dark"))    ? theme::Mode::Dark
                       : args.contains(QStringLiteral("--light")) ? theme::Mode::Light
@@ -165,7 +171,7 @@ int main(int argc, char** argv) {
     if (!simulate && shot.isEmpty()) {
         const QString key = instanceKey();
         if (raiseRunningInstance(key)) {
-            printLine(QStringLiteral("LibreRamen is already running; its window was brought to the front."));
+            printLine(QStringLiteral("LibreRaman is already running; its window was brought to the front."));
             return 0;
         }
         QLocalServer::removeServer(key);                    // stale (Unix: after a crash)
@@ -227,7 +233,7 @@ int main(int argc, char** argv) {
                     ctl.simPressArm();
                     win.simulatorSample()->setCurrentText(QStringLiteral("carbon tetrachloride"));
                     MeasurePage* m = win.measurePage();
-                    m->setFolder(QDir(QDir::tempPath()).filePath(QStringLiteral("libreramen-screenshot")));
+                    m->setFolder(QDir(QDir::tempPath()).filePath(QStringLiteral("libreraman-screenshot")));
                     m->sampleEdit()->setText(QStringLiteral("CCl4"));
                     m->exposureBox()->setValue(0.5);
                     m->averagesBox()->setValue(1);

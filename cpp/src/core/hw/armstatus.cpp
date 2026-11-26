@@ -66,7 +66,7 @@ std::unique_ptr<HidTransport> openMcp2200() {
     hid_device* d = hid_open_path(path.constData());
     if (!d) {
 #if defined(Q_OS_MACOS)
-        throw HardwareError("Cannot open the MCP2200 (macOS: allow LibreRamen under System Settings > "
+        throw HardwareError("Cannot open the MCP2200 (macOS: allow LibreRaman under System Settings > "
                             "Privacy & Security > Input Monitoring)");
 #else
         throw HardwareError(("cannot open the MCP2200 (" + hidErr(nullptr) + ")").toStdString());

@@ -14,7 +14,7 @@
 namespace lr::gui {
 
 namespace {
-const QString kGitHubDocs = QStringLiteral("https://github.com/ohlincha/libreramen/blob/main/docs/");
+const QString kGitHubDocs = QStringLiteral("https://github.com/ohlincha/libreraman/blob/main/docs/");
 }
 
 HelpBrowser::HelpBrowser(QWidget* parent) : QTextBrowser(parent) {
@@ -70,7 +70,7 @@ void HelpBrowser::follow(const QUrl& link) {
 }
 
 HelpWindow::HelpWindow(QWidget* parent) : QWidget(parent, Qt::Window) {
-    setWindowTitle(QStringLiteral("LibreRamen help"));
+    setWindowTitle(QStringLiteral("LibreRaman help"));
     resize(980, 860);
     auto* v = new QVBoxLayout(this);
     v->setContentsMargins(6, 6, 6, 6);

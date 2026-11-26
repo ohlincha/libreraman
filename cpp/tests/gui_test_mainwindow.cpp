@@ -116,7 +116,7 @@ private:
 
 void GuiTestMainWindow::initTestCase() {
     QVERIFY(m_tmp.isValid());
-    QCoreApplication::setOrganizationName(QStringLiteral("LibreRamenTest"));
+    QCoreApplication::setOrganizationName(QStringLiteral("LibreRamanTest"));
     QCoreApplication::setApplicationName(QStringLiteral("gui_test_mainwindow"));
     QSettings::setDefaultFormat(QSettings::IniFormat);              // keep the user's settings untouched
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, m_settingsDir.path());
@@ -161,9 +161,9 @@ void GuiTestMainWindow::windowAndPages() {
     QCOMPARE(m_win->currentArea(), 2);
     QCOMPARE(g_recorder->activations, 1);
     m_win->showArea(0);
-    QVERIFY(m_win->windowTitle().startsWith(QStringLiteral("LibreRamen")));
+    QVERIFY(m_win->windowTitle().startsWith(QStringLiteral("LibreRaman")));
     QVERIFY(!m_win->measurePage()->measureButton()->isEnabled());   // nothing connected yet
-    QVERIFY(m_win->measurePage()->folder().contains(QStringLiteral("LibreRamen")));
+    QVERIFY(m_win->measurePage()->folder().contains(QStringLiteral("LibreRaman")));
     // linked exposure / scans / acquisition time
     MeasurePage* m = m_win->measurePage();
     m->exposureBox()->setValue(2.0);

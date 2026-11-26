@@ -1,9 +1,9 @@
-"""Client for the local HTTP/JSON API of the running LibreRamen application (standard library only).
+"""Client for the local HTTP/JSON API of the running LibreRaman application (standard library only).
 
 The application writes ``api.json`` ({"url", "port", "token", ...}, readable by the user only) when its API
-starts; this client reads it (or $LIBRERAMEN_API_FILE, or $LIBRERAMEN_API_URL + $LIBRERAMEN_API_TOKEN):
+starts; this client reads it (or $LIBRERAMAN_API_FILE, or $LIBRERAMAN_API_URL + $LIBRERAMAN_API_TOKEN):
 
-    from libreramen.client import Client
+    from libreraman.client import Client
     c = Client()                       # finds the running application
     print(c.status())
     job = c.measure(exposure_s=1, averages=3, sample="CCl4")    # needs "Allow remote measurements" in the GUI
@@ -33,8 +33,8 @@ class ApiError(RuntimeError):
 
 
 def default_api_file() -> Path:
-    """Where the application writes its API file (QStandardPaths::GenericConfigLocation/LibreRamen/api.json)."""
-    env = os.environ.get("LIBRERAMEN_API_FILE")
+    """Where the application writes its API file (QStandardPaths::GenericConfigLocation/LibreRaman/api.json)."""
+    env = os.environ.get("LIBRERAMAN_API_FILE")
     if env:
         return Path(env)
     if sys.platform == "win32":
@@ -43,14 +43,14 @@ def default_api_file() -> Path:
         base = Path.home() / "Library" / "Preferences"
     else:
         base = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
-    return base / "LibreRamen" / "api.json"
+    return base / "LibreRaman" / "api.json"
 
 
 class Client:
     def __init__(self, url: str | None = None, token: str | None = None, api_file: str | os.PathLike | None = None,
                  client_name: str = "python", timeout: float = 30.0):
         if url is None and token is None and api_file is None:
-            url, token = os.environ.get("LIBRERAMEN_API_URL"), os.environ.get("LIBRERAMEN_API_TOKEN")
+            url, token = os.environ.get("LIBRERAMAN_API_URL"), os.environ.get("LIBRERAMAN_API_TOKEN")
             if not (url and token):
                 url = token = None
         if url is None or token is None:
@@ -58,8 +58,8 @@ class Client:
             try:
                 info = json.loads(path.read_text(encoding="utf-8"))
             except OSError:
-                raise ApiError(f"LibreRamen is not running, or its API is switched off (no API file {path}). "
-                               "Start the LibreRamen application.") from None
+                raise ApiError(f"LibreRaman is not running, or its API is switched off (no API file {path}). "
+                               "Start the LibreRaman application.") from None
             url = url or info["url"]
             token = token or info["token"]
         self.url = url.rstrip("/")
@@ -71,7 +71,7 @@ class Client:
     def request(self, method: str, path: str, body: dict | None = None, timeout: float | None = None):
         data = json.dumps(body).encode() if body is not None else (b"{}" if method == "POST" else None)
         req = urllib.request.Request(self.url + path, data=data, method=method, headers={
-            "Authorization": f"Bearer {self.token}", "X-LibreRamen-Client": self.client_name,
+            "Authorization": f"Bearer {self.token}", "X-LibreRaman-Client": self.client_name,
             "Content-Type": "application/json", "Accept": "application/json"})
         try:
             with urllib.request.urlopen(req, timeout=timeout or self.timeout) as r:
@@ -84,7 +84,7 @@ class Client:
             msg = payload.get("error") if isinstance(payload, dict) else None
             raise ApiError(msg or f"HTTP {e.code}", e.code, payload) from None
         except urllib.error.URLError as e:
-            raise ApiError(f"cannot connect to LibreRamen at {self.url}: {e.reason}") from None
+            raise ApiError(f"cannot connect to LibreRaman at {self.url}: {e.reason}") from None
 
     # ---- endpoints
     def status(self):
@@ -141,5 +141,5 @@ def _data(id, x, y, settings):
     return body
 
 
-if __name__ == "__main__":      # python -m libreramen.client  -> status
+if __name__ == "__main__":      # python -m libreraman.client  -> status
     print(json.dumps(Client().status(), indent=2))

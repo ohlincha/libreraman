@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# CI check of a deployed LibreRamen.app: every Mach-O file contains all architectures, needs at most the
+# CI check of a deployed LibreRaman.app: every Mach-O file contains all architectures, needs at most the
 # given macOS version, and links only system libraries or libraries inside the bundle.
-#   check-bundle.sh LibreRamen.app 12.0 "arm64 x86_64"
+#   check-bundle.sh LibreRaman.app 12.0 "arm64 x86_64"
 set -uo pipefail
 app=$1 min=$2 archs=$3
 fail=0 n=0

@@ -2,7 +2,7 @@
 // Minimal user-space driver for the I/O board's Prolific PL2303 (HXA) over libusb (Python: hardware.Pl2303Usb).
 //
 // Windows' current Prolific driver refuses this chip ("PL2303HXA PHASED OUT SINCE 2012"). With WinUSB bound
-// to it (LibreRamen-Setup / Zadig) we talk to it directly, using the requests the vendor's driver sent in the
+// to it (LibreRaman-Setup / Zadig) we talk to it directly, using the requests the vendor's driver sent in the
 // captures: vendor set-up sequence, CDC line coding (115200 8N1) and control lines (DTR/RTS off),
 // bulk OUT 0x02 / IN 0x83. Compiles on every platform; Cora::connect() uses it on Windows only.
 //

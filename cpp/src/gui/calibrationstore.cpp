@@ -163,7 +163,7 @@ QString accept(const calib::Result& r, int channel, const QString& serial, const
         o[QLatin1String("spectra")] = QJsonArray::fromStringList(spectra);
     if (laserNmEquiv > 0)
         o[QLatin1String("laser_nm_equiv")] = laserNmEquiv;
-    o[QLatin1String("software")] = QStringLiteral("LibreRamen " LIBRERAMEN_VERSION);
+    o[QLatin1String("software")] = QStringLiteral("LibreRaman " LIBRERAMAN_VERSION);
     const QByteArray data = QJsonDocument(o).toJson(QJsonDocument::Indented);
     writeAll(hist, data);
     writeAll(activePath(serial, channel), data);

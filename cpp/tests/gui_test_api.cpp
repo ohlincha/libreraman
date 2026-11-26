@@ -1,7 +1,7 @@
 // Local API (gui/apiserver.h) with the main window and the simulator at high speed (offscreen, 127.0.0.1 only):
 // token required, status/info, remote measurements refused unless allowed at the instrument, busy (409),
 // stop always allowed (laser off), series progress, processing/peaks, the command line (--remote) and the
-// MCP server (LibreRamenMCP) as clients.
+// MCP server (LibreRamanMCP) as clients.
 #include "gui/apiserver.h"
 #include "gui/controller.h"
 #include "gui/mainwindow.h"
@@ -127,12 +127,12 @@ Proc GuiTestApi::run(const QString& exe, const QStringList& args, int timeoutMs)
 
 void GuiTestApi::initTestCase() {
     QVERIFY(m_tmp.isValid());
-    QCoreApplication::setOrganizationName(QStringLiteral("LibreRamenTest"));
+    QCoreApplication::setOrganizationName(QStringLiteral("LibreRamanTest"));
     QCoreApplication::setApplicationName(QStringLiteral("gui_test_api"));
     QSettings::setDefaultFormat(QSettings::IniFormat);
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, m_settingsDir.path());
     m_apiFile = m_tmp.filePath(QStringLiteral("config/api.json"));
-    qputenv("LIBRERAMEN_API_FILE", m_apiFile.toUtf8());      // also for the CLI and MCP child processes
+    qputenv("LIBRERAMAN_API_FILE", m_apiFile.toUtf8());      // also for the CLI and MCP child processes
     theme::apply(*qApp, theme::Mode::Light);
     setDialogsEnabled(false);
     m_ctl = new Controller;
@@ -556,7 +556,7 @@ void GuiTestApi::mcpServer() {
                                        {"capabilities", QJsonObject{}},
                                        {"clientInfo", QJsonObject{{"name", "test"}, {"version", "1"}}}});
     QCOMPARE(r.value("result").toObject().value("protocolVersion").toString(), QStringLiteral("2025-06-18"));
-    QCOMPARE(r.value("result").toObject().value("serverInfo").toObject().value("name").toString(), QStringLiteral("libreramen"));
+    QCOMPARE(r.value("result").toObject().value("serverInfo").toObject().value("name").toString(), QStringLiteral("libreraman"));
     QVERIFY(r.value("result").toObject().value("capabilities").toObject().contains("tools"));
     mcp.write(R"({"jsonrpc":"2.0","method":"notifications/initialized"})" "\n");   // no reply
 

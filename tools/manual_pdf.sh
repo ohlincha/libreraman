@@ -1,5 +1,5 @@
 #!/bin/sh
-# Makes docs/LibreRamen-QuickStart.pdf and docs/LibreRamen-Manual.pdf from docs/QUICKSTART.md and docs/MANUAL.md:
+# Makes docs/LibreRaman-QuickStart.pdf and docs/LibreRaman-Manual.pdf from docs/QUICKSTART.md and docs/MANUAL.md:
 # pandoc → one self-contained HTML (pictures embedded, docs/manual.css) → Chrome headless → PDF.
 # Needs pandoc and google-chrome (or chromium; set CHROME=...). Links to other .md files become links to the
 # GitHub pages (a PDF has no relative links). Run again after changing the documents and commit the PDFs.
@@ -10,11 +10,11 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 cat > "$tmp/links.lua" <<'LUA'
 -- relative links to Markdown files → their page on GitHub
-local base = "https://github.com/ohlincha/libreramen/blob/main/docs/"
+local base = "https://github.com/ohlincha/libreraman/blob/main/docs/"
 function Link(l)
   if not l.target:match("^%a+:") and l.target:match("%.md") then
     local t = l.target
-    if t:match("^%.%./") then t = "https://github.com/ohlincha/libreramen/blob/main/" .. t:sub(4)
+    if t:match("^%.%./") then t = "https://github.com/ohlincha/libreraman/blob/main/" .. t:sub(4)
     else t = base .. t end
     l.target = t
   end
@@ -28,5 +28,5 @@ make_pdf() {   # markdown title pdf
         --print-to-pdf="$PWD/$3" "file://$tmp/x.html" 2>/dev/null
     echo "$3"
 }
-make_pdf QUICKSTART.md "LibreRamen quick start" LibreRamen-QuickStart.pdf
-make_pdf MANUAL.md "LibreRamen manual" LibreRamen-Manual.pdf
+make_pdf QUICKSTART.md "LibreRaman quick start" LibreRaman-QuickStart.pdf
+make_pdf MANUAL.md "LibreRaman manual" LibreRaman-Manual.pdf
