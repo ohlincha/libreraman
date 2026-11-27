@@ -11,3 +11,5 @@ tables of library entries use snip4, like the Measure page. No separate setting:
 Evidence and caveats in [baselines](../processing/baselines.md). Old libraries: automatic peak tables (those
 identical to the old classic-SNIP picking, no labels) are re-picked once when opened read-write; the info key
 `peak_baseline` records the method, so the schema version stays 1 and older LibreRaman still opens the file.
+
+Later (user, 2026-11-28): more matching methods may be added if worth it; not scheduled.
